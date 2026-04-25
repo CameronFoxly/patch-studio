@@ -2,13 +2,9 @@
 
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
+import { SliderInput } from "@/components/ui/slider-input";
 import { Switch } from "@/components/ui/switch";
 import type { Layer, Envelope } from "@/lib/types";
-
-function first(v: number | readonly number[]): number {
-  return Array.isArray(v) ? v[0] : (v as number);
-}
 
 function ADSRPreview({ envelope }: { envelope: Envelope }) {
   const a = envelope.attack ?? 0;
@@ -118,73 +114,10 @@ export function EnvelopePanel({ layer }: { layer: Layer }) {
           <ADSRPreview envelope={env} />
 
           <div className="space-y-3">
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <Label className="text-xs">Attack</Label>
-                <span className="text-xs text-muted-foreground">
-                  {(env.attack ?? 0).toFixed(2)}s
-                </span>
-              </div>
-              <Slider
-                min={0}
-                max={5}
-                step={0.01}
-                value={[env.attack ?? 0]}
-                onValueChange={(v) => setEnvelope({ ...env, attack: first(v) })}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <Label className="text-xs">Decay</Label>
-                <span className="text-xs text-muted-foreground">
-                  {env.decay.toFixed(2)}s
-                </span>
-              </div>
-              <Slider
-                min={0}
-                max={5}
-                step={0.01}
-                value={[env.decay]}
-                onValueChange={(v) => setEnvelope({ ...env, decay: first(v) })}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <Label className="text-xs">Sustain</Label>
-                <span className="text-xs text-muted-foreground">
-                  {(env.sustain ?? 1).toFixed(2)}
-                </span>
-              </div>
-              <Slider
-                min={0}
-                max={1}
-                step={0.01}
-                value={[env.sustain ?? 1]}
-                onValueChange={(v) =>
-                  setEnvelope({ ...env, sustain: first(v) })
-                }
-              />
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <Label className="text-xs">Release</Label>
-                <span className="text-xs text-muted-foreground">
-                  {(env.release ?? 0).toFixed(2)}s
-                </span>
-              </div>
-              <Slider
-                min={0}
-                max={5}
-                step={0.01}
-                value={[env.release ?? 0]}
-                onValueChange={(v) =>
-                  setEnvelope({ ...env, release: first(v) })
-                }
-              />
-            </div>
+            <SliderInput label="Attack" unit="s" min={0} max={5} step={0.01} value={env.attack ?? 0} onChange={(v) => setEnvelope({ ...env, attack: v })} />
+            <SliderInput label="Decay" unit="s" min={0} max={5} step={0.01} value={env.decay} onChange={(v) => setEnvelope({ ...env, decay: v })} />
+            <SliderInput label="Sustain" min={0} max={1} step={0.01} value={env.sustain ?? 1} onChange={(v) => setEnvelope({ ...env, sustain: v })} />
+            <SliderInput label="Release" unit="s" min={0} max={5} step={0.01} value={env.release ?? 0} onChange={(v) => setEnvelope({ ...env, release: v })} />
           </div>
         </>
       )}
