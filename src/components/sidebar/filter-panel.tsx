@@ -2,9 +2,8 @@
 
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { SliderInput } from "@/components/ui/slider-input";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -16,10 +15,6 @@ import {
 } from "@/components/ui/select";
 import type { Layer, BiquadFilter, BiquadFilterType } from "@/lib/types";
 import { PlusIcon, XIcon } from "lucide-react";
-
-function first(v: number | readonly number[]): number {
-  return Array.isArray(v) ? v[0] : (v as number);
-}
 
 const BIQUAD_TYPES: { value: BiquadFilterType; label: string }[] = [
   { value: "lowpass", label: "Low Pass" },
@@ -114,54 +109,35 @@ export function FilterPanel({ layer }: { layer: Layer }) {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs">Frequency (Hz)</Label>
-            <Slider
-              min={20}
-              max={20000}
-              step={1}
-              value={[filter.frequency]}
-              onValueChange={(v) =>
-                updateFilter(i, { ...filter, frequency: first(v) })
-              }
-            />
-            <span className="text-xs text-muted-foreground">
-              {filter.frequency} Hz
-            </span>
-          </div>
+          <SliderInput
+            label="Frequency"
+            unit="Hz"
+            min={20}
+            max={20000}
+            step={1}
+            value={filter.frequency}
+            onChange={(v) => updateFilter(i, { ...filter, frequency: v })}
+          />
 
-          <div className="space-y-2">
-            <Label className="text-xs">Resonance (Q)</Label>
-            <Slider
-              min={0.1}
-              max={30}
-              step={0.1}
-              value={[filter.resonance ?? 1]}
-              onValueChange={(v) =>
-                updateFilter(i, { ...filter, resonance: first(v) })
-              }
-            />
-            <span className="text-xs text-muted-foreground">
-              {(filter.resonance ?? 1).toFixed(1)}
-            </span>
-          </div>
+          <SliderInput
+            label="Resonance (Q)"
+            min={0.1}
+            max={30}
+            step={0.1}
+            value={filter.resonance ?? 1}
+            onChange={(v) => updateFilter(i, { ...filter, resonance: v })}
+          />
 
           {GAIN_TYPES.includes(filter.type) && (
-            <div className="space-y-2">
-              <Label className="text-xs">Gain (dB)</Label>
-              <Slider
-                min={-40}
-                max={40}
-                step={0.5}
-                value={[filter.gain ?? 0]}
-                onValueChange={(v) =>
-                  updateFilter(i, { ...filter, gain: first(v) })
-                }
-              />
-              <span className="text-xs text-muted-foreground">
-                {(filter.gain ?? 0).toFixed(1)} dB
-              </span>
-            </div>
+            <SliderInput
+              label="Gain"
+              unit="dB"
+              min={-40}
+              max={40}
+              step={0.5}
+              value={filter.gain ?? 0}
+              onChange={(v) => updateFilter(i, { ...filter, gain: v })}
+            />
           )}
 
           <Separator />
@@ -184,60 +160,48 @@ export function FilterPanel({ layer }: { layer: Layer }) {
             </div>
             {filter.envelope && (
               <div className="space-y-2 pl-2 border-l-2 border-muted">
-                <div className="space-y-1">
-                  <Label className="text-xs">Attack (s)</Label>
-                  <Slider
-                    min={0}
-                    max={2}
-                    step={0.01}
-                    value={[filter.envelope.attack]}
-                    onValueChange={(v) =>
-                      updateFilter(i, {
-                        ...filter,
-                        envelope: { ...filter.envelope!, attack: first(v) },
-                      })
-                    }
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    {filter.envelope.attack.toFixed(2)}s
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Peak (Hz)</Label>
-                  <Input
-                    type="number"
-                    min={20}
-                    max={20000}
-                    value={filter.envelope.peak}
-                    onChange={(e) =>
-                      updateFilter(i, {
-                        ...filter,
-                        envelope: {
-                          ...filter.envelope!,
-                          peak: Number(e.target.value) || 2000,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Decay (s)</Label>
-                  <Slider
-                    min={0}
-                    max={5}
-                    step={0.01}
-                    value={[filter.envelope.decay]}
-                    onValueChange={(v) =>
-                      updateFilter(i, {
-                        ...filter,
-                        envelope: { ...filter.envelope!, decay: first(v) },
-                      })
-                    }
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    {filter.envelope.decay.toFixed(2)}s
-                  </span>
-                </div>
+                <SliderInput
+                  label="Attack"
+                  unit="s"
+                  min={0}
+                  max={2}
+                  step={0.01}
+                  value={filter.envelope.attack}
+                  onChange={(v) =>
+                    updateFilter(i, {
+                      ...filter,
+                      envelope: { ...filter.envelope!, attack: v },
+                    })
+                  }
+                />
+                <SliderInput
+                  label="Peak"
+                  unit="Hz"
+                  min={20}
+                  max={20000}
+                  step={1}
+                  value={filter.envelope.peak}
+                  onChange={(v) =>
+                    updateFilter(i, {
+                      ...filter,
+                      envelope: { ...filter.envelope!, peak: v },
+                    })
+                  }
+                />
+                <SliderInput
+                  label="Decay"
+                  unit="s"
+                  min={0}
+                  max={5}
+                  step={0.01}
+                  value={filter.envelope.decay}
+                  onChange={(v) =>
+                    updateFilter(i, {
+                      ...filter,
+                      envelope: { ...filter.envelope!, decay: v },
+                    })
+                  }
+                />
               </div>
             )}
           </div>
