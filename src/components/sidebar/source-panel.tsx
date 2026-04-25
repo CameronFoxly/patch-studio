@@ -6,13 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { SliderInput } from "@/components/ui/slider-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type {
   Layer,
   Source,
@@ -23,14 +16,104 @@ import type {
   NoiseColor,
 } from "@/lib/types";
 
-const SOURCE_MODES = [
-  { value: "oscillator", label: "Oscillator" },
-  { value: "noise", label: "Noise" },
-  { value: "wavetable", label: "Wavetable" },
-] as const;
+/* ── SVG wave shape icons ── */
 
-const WAVEFORMS: OscillatorType[] = ["sine", "triangle", "square", "sawtooth"];
-const NOISE_COLORS: NoiseColor[] = ["white", "pink", "brown"];
+function WaveIcon({ d, className }: { d: string; className?: string }) {
+  return (
+    <svg viewBox="0 0 40 20" className={`w-full h-full ${className ?? ""}`} preserveAspectRatio="none">
+      <path d={d} fill="none" stroke="currentColor" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+const WAVE_PATHS: Record<string, string> = {
+  sine: "M 0 10 Q 5 0, 10 10 Q 15 20, 20 10 Q 25 0, 30 10 Q 35 20, 40 10",
+  triangle: "M 0 10 L 5 2 L 15 18 L 25 2 L 35 18 L 40 10",
+  square: "M 0 15 L 0 5 L 10 5 L 10 15 L 20 15 L 20 5 L 30 5 L 30 15 L 40 15",
+  sawtooth: "M 0 15 L 10 5 L 10 15 L 20 5 L 20 15 L 30 5 L 30 15 L 40 5",
+};
+
+function NoiseIcon({ density }: { density: "high" | "mid" | "low" }) {
+  const seeds = density === "high"
+    ? [2, 8, 4, 14, 6, 10, 3, 16, 7, 12, 5, 9, 15, 4, 11, 8, 13, 6, 10, 3]
+    : density === "mid"
+      ? [4, 10, 6, 14, 8, 12, 5, 15, 7, 11, 9, 13, 6, 10, 8, 12, 5, 14, 7, 11]
+      : [6, 11, 8, 12, 9, 11, 7, 13, 10, 12, 8, 10, 11, 9, 12, 8, 11, 10, 9, 11];
+  const pts = seeds.map((y, i) => `${(i / (seeds.length - 1)) * 40},${y}`).join(" ");
+  return (
+    <svg viewBox="0 0 40 20" className="w-full h-full" preserveAspectRatio="none">
+      <polyline points={pts} fill="none" stroke="currentColor" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+function WavetableIcon() {
+  return (
+    <svg viewBox="0 0 40 20" className="w-full h-full" preserveAspectRatio="none">
+      <path d="M 0 10 Q 3 3, 8 10 Q 11 14, 14 10 L 16 6 L 18 14 L 20 10 Q 24 2, 28 10 Q 31 16, 34 10 Q 37 5, 40 10" fill="none" stroke="currentColor" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+/* ── Toggle button group ── */
+
+function ToggleGroup<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: T; label: string; icon: React.ReactNode }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={`flex flex-col items-center gap-1 rounded-md border px-1 py-1.5 transition-colors cursor-pointer ${
+              value === opt.value
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-muted bg-muted/20 text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground"
+            }`}
+          >
+            <div className="h-5 w-full px-0.5">{opt.icon}</div>
+            <span className="text-[10px] leading-none">{opt.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Mode / waveform / noise option configs ── */
+
+const MODE_OPTIONS: { value: string; label: string; icon: React.ReactNode }[] = [
+  { value: "oscillator", label: "Oscillator", icon: <WaveIcon d={WAVE_PATHS.sine} /> },
+  { value: "noise", label: "Noise", icon: <NoiseIcon density="high" /> },
+  { value: "wavetable", label: "Wavetable", icon: <WavetableIcon /> },
+];
+
+const WAVEFORM_OPTIONS: { value: OscillatorType; label: string; icon: React.ReactNode }[] = [
+  { value: "sine", label: "Sine", icon: <WaveIcon d={WAVE_PATHS.sine} /> },
+  { value: "triangle", label: "Triangle", icon: <WaveIcon d={WAVE_PATHS.triangle} /> },
+  { value: "square", label: "Square", icon: <WaveIcon d={WAVE_PATHS.square} /> },
+  { value: "sawtooth", label: "Saw", icon: <WaveIcon d={WAVE_PATHS.sawtooth} /> },
+];
+
+const NOISE_OPTIONS: { value: NoiseColor; label: string; icon: React.ReactNode }[] = [
+  { value: "white", label: "White", icon: <NoiseIcon density="high" /> },
+  { value: "pink", label: "Pink", icon: <NoiseIcon density="mid" /> },
+  { value: "brown", label: "Brown", icon: <NoiseIcon density="low" /> },
+];
+
+/* ── Components ── */
 
 function getSourceMode(source: Source): string {
   if (source.type === "noise") return "noise";
@@ -47,55 +130,31 @@ export function SourcePanel({ layer }: { layer: Layer }) {
     updateLayerSource(layer.id, next);
   }
 
-  function handleModeChange(nextMode: string | null) {
-    if (!nextMode || nextMode === mode) return;
+  function handleModeChange(nextMode: string) {
+    if (nextMode === mode) return;
     if (nextMode === "oscillator") {
       setSource({ type: "sine", frequency: 440 });
     } else if (nextMode === "noise") {
       setSource({ type: "noise", color: "white" });
     } else {
-      setSource({
-        type: "wavetable",
-        harmonics: [1, 0.5, 0.25],
-        frequency: 440,
-      });
+      setSource({ type: "wavetable", harmonics: [1, 0.5, 0.25], frequency: 440 });
     }
   }
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label className="text-xs">Mode</Label>
-        <Select value={mode} onValueChange={handleModeChange}>
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SOURCE_MODES.map((m) => (
-              <SelectItem key={m.value} value={m.value}>
-                {m.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <ToggleGroup label="Mode" options={MODE_OPTIONS} value={mode} onChange={handleModeChange} />
 
       <Separator />
 
       {mode === "oscillator" && (
-        <OscillatorControls
-          source={source as OscillatorSource}
-          onChange={setSource}
-        />
+        <OscillatorControls source={source as OscillatorSource} onChange={setSource} />
       )}
       {mode === "noise" && (
         <NoiseControls source={source as NoiseSource} onChange={setSource} />
       )}
       {mode === "wavetable" && (
-        <WavetableControls
-          source={source as WavetableSource}
-          onChange={setSource}
-        />
+        <WavetableControls source={source as WavetableSource} onChange={setSource} />
       )}
     </div>
   );
@@ -116,26 +175,12 @@ function OscillatorControls({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label className="text-xs">Waveform</Label>
-        <Select
-          value={source.type}
-          onValueChange={(v) => {
-            if (v) onChange({ ...source, type: v as OscillatorType });
-          }}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {WAVEFORMS.map((w) => (
-              <SelectItem key={w} value={w}>
-                {w.charAt(0).toUpperCase() + w.slice(1)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <ToggleGroup
+        label="Waveform"
+        options={WAVEFORM_OPTIONS}
+        value={source.type}
+        onChange={(v) => onChange({ ...source, type: v })}
+      />
 
       <SliderInput
         label="Frequency"
@@ -209,26 +254,12 @@ function NoiseControls({
   onChange: (s: Source) => void;
 }) {
   return (
-    <div className="space-y-2">
-      <Label className="text-xs">Color</Label>
-      <Select
-        value={source.color ?? "white"}
-        onValueChange={(v) => {
-          if (v) onChange({ ...source, color: v as NoiseColor });
-        }}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {NOISE_COLORS.map((c) => (
-            <SelectItem key={c} value={c}>
-              {c.charAt(0).toUpperCase() + c.slice(1)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <ToggleGroup
+      label="Color"
+      options={NOISE_OPTIONS}
+      value={source.color ?? "white"}
+      onChange={(v) => onChange({ ...source, color: v })}
+    />
   );
 }
 
