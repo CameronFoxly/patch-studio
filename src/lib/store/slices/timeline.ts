@@ -30,12 +30,12 @@ export const createTimelineSlice: StateCreator<
 > = (set) => ({
   isPlaying: false,
   currentTime: 0,
-  duration: 10,
-  zoom: 100,
+  duration: 2,
+  zoom: 400,
   scrollX: 0,
   isLooping: false,
   regionStart: 0,
-  regionEnd: 5,
+  regionEnd: 2,
 
   setPlaying: (playing) => set({ isPlaying: playing }),
   setCurrentTime: (time) => set({ currentTime: time }),
