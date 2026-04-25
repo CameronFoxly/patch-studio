@@ -5,7 +5,7 @@ import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { SliderInput } from "@/components/ui/slider-input";
 import {
   Select,
   SelectContent,
@@ -15,10 +15,6 @@ import {
 } from "@/components/ui/select";
 import type { Layer, Effect, EffectType } from "@/lib/types";
 import { PlusIcon, XIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
-
-function first(v: number | readonly number[]): number {
-  return Array.isArray(v) ? v[0] : (v as number);
-}
 
 const EFFECT_TYPES: { value: EffectType; label: string }[] = [
   { value: "reverb", label: "Reverb" },
@@ -71,42 +67,6 @@ function defaultEffect(type: EffectType): Effect {
   return defaults[type];
 }
 
-function ParamSlider({
-  label,
-  value,
-  min,
-  max,
-  step,
-  format,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  format?: (v: number) => string;
-  onChange: (v: number) => void;
-}) {
-  return (
-    <div className="space-y-1">
-      <div className="flex justify-between">
-        <Label className="text-xs">{label}</Label>
-        <span className="text-xs text-muted-foreground">
-          {format ? format(value) : value.toFixed(2)}
-        </span>
-      </div>
-      <Slider
-        min={min}
-        max={max}
-        step={step}
-        value={[value]}
-        onValueChange={(v) => onChange(first(v))}
-      />
-    </div>
-  );
-}
-
 function EffectParams({
   effect,
   onChange,
@@ -119,97 +79,97 @@ function EffectParams({
     case "reverb":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Decay" value={e.decay ?? 2} min={0.1} max={10} step={0.1} onChange={(v) => onChange({ ...e, decay: v })} />
-          <ParamSlider label="Pre-Delay" value={e.preDelay ?? 0} min={0} max={0.5} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, preDelay: v })} />
-          <ParamSlider label="Damping" value={e.damping ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, damping: v })} />
-          <ParamSlider label="Room Size" value={e.roomSize ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, roomSize: v })} />
-          <ParamSlider label="Mix" value={e.mix ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+          <SliderInput label="Decay" value={e.decay ?? 2} min={0.1} max={10} step={0.1} onChange={(v) => onChange({ ...e, decay: v })} />
+          <SliderInput label="Pre-Delay" value={e.preDelay ?? 0} min={0} max={0.5} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, preDelay: v })} />
+          <SliderInput label="Damping" value={e.damping ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, damping: v })} />
+          <SliderInput label="Room Size" value={e.roomSize ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, roomSize: v })} />
+          <SliderInput label="Mix" value={e.mix ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
         </div>
       );
     case "delay":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Time" value={e.time ?? 0.25} min={0.01} max={2} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, time: v })} />
-          <ParamSlider label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
-          <ParamSlider label="Mix" value={e.mix ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+          <SliderInput label="Time" value={e.time ?? 0.25} min={0.01} max={2} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, time: v })} />
+          <SliderInput label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
+          <SliderInput label="Mix" value={e.mix ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
         </div>
       );
     case "chorus":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Rate" value={e.rate ?? 1.5} min={0.1} max={10} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
-          <ParamSlider label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
-          <ParamSlider label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+          <SliderInput label="Rate" value={e.rate ?? 1.5} min={0.1} max={10} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
+          <SliderInput label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
+          <SliderInput label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
         </div>
       );
     case "phaser":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Rate" value={e.rate ?? 0.5} min={0.1} max={10} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
-          <ParamSlider label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
-          <ParamSlider label="Stages" value={e.stages ?? 4} min={2} max={12} step={2} format={(v) => `${v}`} onChange={(v) => onChange({ ...e, stages: v })} />
-          <ParamSlider label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
-          <ParamSlider label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+          <SliderInput label="Rate" value={e.rate ?? 0.5} min={0.1} max={10} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
+          <SliderInput label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
+          <SliderInput label="Stages" value={e.stages ?? 4} min={2} max={12} step={2} format={(v) => `${v}`} onChange={(v) => onChange({ ...e, stages: v })} />
+          <SliderInput label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
+          <SliderInput label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
         </div>
       );
     case "flanger":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Rate" value={e.rate ?? 0.5} min={0.1} max={10} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
-          <ParamSlider label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
-          <ParamSlider label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
-          <ParamSlider label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+          <SliderInput label="Rate" value={e.rate ?? 0.5} min={0.1} max={10} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
+          <SliderInput label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
+          <SliderInput label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
+          <SliderInput label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
         </div>
       );
     case "tremolo":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Rate" value={e.rate ?? 4} min={0.1} max={20} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
-          <ParamSlider label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
+          <SliderInput label="Rate" value={e.rate ?? 4} min={0.1} max={20} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
+          <SliderInput label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
         </div>
       );
     case "vibrato":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Rate" value={e.rate ?? 5} min={0.1} max={20} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
-          <ParamSlider label="Depth" value={e.depth ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
+          <SliderInput label="Rate" value={e.rate ?? 5} min={0.1} max={20} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
+          <SliderInput label="Depth" value={e.depth ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
         </div>
       );
     case "bitcrusher":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Bits" value={e.bits ?? 8} min={1} max={16} step={1} format={(v) => `${v}`} onChange={(v) => onChange({ ...e, bits: v })} />
-          <ParamSlider label="Sample Rate Reduction" value={e.sampleRateReduction ?? 1} min={1} max={40} step={1} format={(v) => `${v}x`} onChange={(v) => onChange({ ...e, sampleRateReduction: v })} />
-          <ParamSlider label="Mix" value={e.mix ?? 1} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+          <SliderInput label="Bits" value={e.bits ?? 8} min={1} max={16} step={1} format={(v) => `${v}`} onChange={(v) => onChange({ ...e, bits: v })} />
+          <SliderInput label="Sample Rate Reduction" value={e.sampleRateReduction ?? 1} min={1} max={40} step={1} format={(v) => `${v}x`} onChange={(v) => onChange({ ...e, sampleRateReduction: v })} />
+          <SliderInput label="Mix" value={e.mix ?? 1} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
         </div>
       );
     case "compressor":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Threshold" value={e.threshold ?? -24} min={-100} max={0} step={1} format={(v) => `${v} dB`} onChange={(v) => onChange({ ...e, threshold: v })} />
-          <ParamSlider label="Knee" value={e.knee ?? 30} min={0} max={40} step={1} format={(v) => `${v} dB`} onChange={(v) => onChange({ ...e, knee: v })} />
-          <ParamSlider label="Ratio" value={e.ratio ?? 12} min={1} max={20} step={0.5} format={(v) => `${v}:1`} onChange={(v) => onChange({ ...e, ratio: v })} />
-          <ParamSlider label="Attack" value={e.attack ?? 0.003} min={0} max={1} step={0.001} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, attack: v })} />
-          <ParamSlider label="Release" value={e.release ?? 0.25} min={0} max={1} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, release: v })} />
+          <SliderInput label="Threshold" value={e.threshold ?? -24} min={-100} max={0} step={1} format={(v) => `${v} dB`} onChange={(v) => onChange({ ...e, threshold: v })} />
+          <SliderInput label="Knee" value={e.knee ?? 30} min={0} max={40} step={1} format={(v) => `${v} dB`} onChange={(v) => onChange({ ...e, knee: v })} />
+          <SliderInput label="Ratio" value={e.ratio ?? 12} min={1} max={20} step={0.5} format={(v) => `${v}:1`} onChange={(v) => onChange({ ...e, ratio: v })} />
+          <SliderInput label="Attack" value={e.attack ?? 0.003} min={0} max={1} step={0.001} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, attack: v })} />
+          <SliderInput label="Release" value={e.release ?? 0.25} min={0} max={1} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, release: v })} />
         </div>
       );
     case "distortion":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Amount" value={e.amount ?? 50} min={0} max={100} step={1} format={(v) => `${v}`} onChange={(v) => onChange({ ...e, amount: v })} />
-          <ParamSlider label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+          <SliderInput label="Amount" value={e.amount ?? 50} min={0} max={100} step={1} format={(v) => `${v}`} onChange={(v) => onChange({ ...e, amount: v })} />
+          <SliderInput label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
         </div>
       );
     case "gain":
       return (
         <div className="space-y-2">
-          <ParamSlider label="Value" value={e.value ?? 1} min={0} max={2} step={0.01} onChange={(v) => onChange({ ...e, value: v })} />
+          <SliderInput label="Value" value={e.value ?? 1} min={0} max={2} step={0.01} onChange={(v) => onChange({ ...e, value: v })} />
         </div>
       );
     case "pan":
       return (
         <div className="space-y-2">
-          <ParamSlider
+          <SliderInput
             label="Pan"
             value={e.value ?? 0}
             min={-1}
@@ -244,7 +204,7 @@ function EffectParams({
               onChange={(ev) => onChange({ ...e, url: ev.target.value })}
             />
           </div>
-          <ParamSlider label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+          <SliderInput label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
         </div>
       );
     default:
