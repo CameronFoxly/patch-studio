@@ -16,19 +16,19 @@ export default function Home() {
       <Toolbar />
       <TransportBar />
       <Group orientation="vertical" className="flex-1 min-h-0">
-        <Panel defaultSize={75} minSize={30}>
+        <Panel defaultSize={80} minSize={20}>
           <Group orientation="horizontal" className="h-full">
-            <Panel defaultSize={70} minSize={30}>
+            <Panel defaultSize={75} minSize={10}>
               <Timeline />
             </Panel>
-            <Separator className="w-1.5 bg-border hover:bg-primary/20 transition-colors cursor-col-resize" />
-            <Panel defaultSize={30} minSize={15} maxSize={50}>
+            <Separator className="w-1.5 bg-border hover:bg-primary/20 transition-colors cursor-col-resize data-[resize-handle-active]:bg-primary/40" />
+            <Panel defaultSize={25} minSize={10}>
               <Sidebar />
             </Panel>
           </Group>
         </Panel>
-        <Separator className="h-1.5 bg-border hover:bg-primary/20 transition-colors cursor-row-resize" />
-        <Panel defaultSize={25} minSize={5} maxSize={50} collapsible>
+        <Separator className="h-1.5 bg-border hover:bg-primary/20 transition-colors cursor-row-resize data-[resize-handle-active]:bg-primary/40" />
+        <Panel defaultSize={20} minSize={3} collapsible>
           <SequenceEditor />
         </Panel>
       </Group>

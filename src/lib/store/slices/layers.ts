@@ -33,6 +33,7 @@ export interface LayersSlice {
   updateLayerName: (id: string, name: string) => void;
   toggleLayerMute: (id: string) => void;
   toggleLayerSolo: (id: string) => void;
+  toggleLayerEnvelopeOverlay: (id: string) => void;
 
   setLayers: (layers: Layer[]) => void;
   clearLayers: () => void;
@@ -158,6 +159,15 @@ export const createLayersSlice: StateCreator<
       layers: updateLayer(get().layers, id, (l) => ({
         ...l,
         solo: !l.solo,
+      })),
+    });
+  },
+
+  toggleLayerEnvelopeOverlay: (id) => {
+    set({
+      layers: updateLayer(get().layers, id, (l) => ({
+        ...l,
+        showEnvelope: !l.showEnvelope,
       })),
     });
   },

@@ -14,7 +14,7 @@ import {
   downloadPatch,
   importPatch,
 } from "@/lib/audio/patch-converter";
-import { Undo2, Redo2, Download, Upload, FilePlus, Music } from "lucide-react";
+import { Undo2, Redo2, Download, Upload, FilePlus, AudioWaveform } from "lucide-react";
 import { PresetsMenu } from "./presets-menu";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 
@@ -71,9 +71,17 @@ export function Toolbar() {
     <div className="flex items-center gap-2 px-4 py-2 border-b bg-card">
       {/* Logo / title */}
       <div className="flex items-center gap-2 mr-2">
-        <Music className="h-5 w-5 text-primary" />
+        <AudioWaveform className="h-5 w-5 text-primary" />
         <span className="text-sm font-semibold tracking-tight">
-          Audio Studio
+          Patch Studio for{" "}
+          <a
+            href="https://audio.raphaelsalaja.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            @web-kits/audio
+          </a>
         </span>
       </div>
 

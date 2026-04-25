@@ -130,4 +130,5 @@ export interface Layer {
   effects?: Effect[];
   muted?: boolean;
   solo?: boolean;
+  showEnvelope?: boolean;
 }
