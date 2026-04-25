@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
+import { SliderInput } from "@/components/ui/slider-input";
 import {
   Select,
   SelectContent,
@@ -22,11 +22,6 @@ import type {
   OscillatorType,
   NoiseColor,
 } from "@/lib/types";
-
-/** Extract first value from Slider onValueChange callback. */
-function first(v: number | readonly number[]): number {
-  return Array.isArray(v) ? v[0] : (v as number);
-}
 
 const SOURCE_MODES = [
   { value: "oscillator", label: "Oscillator" },
@@ -142,33 +137,25 @@ function OscillatorControls({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-xs">Frequency (Hz)</Label>
-        <Input
-          type="number"
-          min={20}
-          max={20000}
-          step={1}
-          value={freq}
-          onChange={(e) =>
-            onChange({ ...source, frequency: Number(e.target.value) || 440 })
-          }
-        />
-      </div>
+      <SliderInput
+        label="Frequency"
+        unit="Hz"
+        min={20}
+        max={20000}
+        step={1}
+        value={freq}
+        onChange={(v) => onChange({ ...source, frequency: v })}
+      />
 
-      <div className="space-y-2">
-        <Label className="text-xs">Detune (cents)</Label>
-        <Slider
-          min={-1200}
-          max={1200}
-          step={1}
-          value={[source.detune ?? 0]}
-          onValueChange={(v) => onChange({ ...source, detune: first(v) })}
-        />
-        <span className="text-xs text-muted-foreground">
-          {source.detune ?? 0} cents
-        </span>
-      </div>
+      <SliderInput
+        label="Detune"
+        unit="¢"
+        min={-1200}
+        max={1200}
+        step={1}
+        value={source.detune ?? 0}
+        onChange={(v) => onChange({ ...source, detune: v })}
+      />
 
       <Separator />
 
@@ -188,36 +175,26 @@ function OscillatorControls({
 
       {source.fm && (
         <div className="space-y-3 pl-2 border-l-2 border-muted">
-          <div className="space-y-2">
-            <Label className="text-xs">Ratio</Label>
-            <Slider
-              min={0.1}
-              max={16}
-              step={0.1}
-              value={[source.fm.ratio]}
-              onValueChange={(v) =>
-                onChange({ ...source, fm: { ...source.fm!, ratio: first(v) } })
-              }
-            />
-            <span className="text-xs text-muted-foreground">
-              {source.fm.ratio.toFixed(1)}
-            </span>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs">Depth</Label>
-            <Slider
-              min={0}
-              max={1000}
-              step={1}
-              value={[source.fm.depth]}
-              onValueChange={(v) =>
-                onChange({ ...source, fm: { ...source.fm!, depth: first(v) } })
-              }
-            />
-            <span className="text-xs text-muted-foreground">
-              {source.fm.depth}
-            </span>
-          </div>
+          <SliderInput
+            label="Ratio"
+            min={0.1}
+            max={16}
+            step={0.1}
+            value={source.fm.ratio}
+            onChange={(v) =>
+              onChange({ ...source, fm: { ...source.fm!, ratio: v } })
+            }
+          />
+          <SliderInput
+            label="Depth"
+            min={0}
+            max={1000}
+            step={1}
+            value={source.fm.depth}
+            onChange={(v) =>
+              onChange({ ...source, fm: { ...source.fm!, depth: v } })
+            }
+          />
         </div>
       )}
     </div>
@@ -264,19 +241,15 @@ function WavetableControls({
 }) {
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label className="text-xs">Frequency (Hz)</Label>
-        <Input
-          type="number"
-          min={20}
-          max={20000}
-          step={1}
-          value={source.frequency}
-          onChange={(e) =>
-            onChange({ ...source, frequency: Number(e.target.value) || 440 })
-          }
-        />
-      </div>
+      <SliderInput
+        label="Frequency"
+        unit="Hz"
+        min={20}
+        max={20000}
+        step={1}
+        value={source.frequency}
+        onChange={(v) => onChange({ ...source, frequency: v })}
+      />
       <div className="space-y-2">
         <Label className="text-xs">Harmonics (comma-separated)</Label>
         <Input
