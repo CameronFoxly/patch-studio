@@ -7,6 +7,7 @@ import { WaveformCanvas } from "./waveform-canvas";
 import type { Layer } from "@/lib/types";
 import { Volume2, VolumeX, Trash2, Copy, Star } from "lucide-react";
 
+
 interface Props {
   layer: Layer;
   isSelected: boolean;
@@ -18,13 +19,20 @@ export function TimelineLayer({ layer, isSelected }: Props) {
   const duplicateLayer = useStore((s) => s.duplicateLayer);
   const toggleLayerMute = useStore((s) => s.toggleLayerMute);
   const toggleLayerSolo = useStore((s) => s.toggleLayerSolo);
+  const zoom = useStore((s) => s.zoom);
 
   const handleClick = useCallback(() => {
     selectLayer(layer.id);
   }, [selectLayer, layer.id]);
 
-  // Calculate the visual offset based on delay (200px per second)
-  const delayOffset = (layer.delay || 0) * 200;
+  // Calculate visual offset and width based on zoom (pixels per second)
+  const delayOffset = (layer.delay || 0) * zoom;
+
+  const env = layer.envelope;
+  const soundDuration = env
+    ? (env.attack || 0) + env.decay + (env.release || 0) + 0.5
+    : 2;
+  const blockWidth = soundDuration * zoom;
 
   const sourceLabel = (() => {
     if (layer.source.type === "noise") {
@@ -112,9 +120,9 @@ export function TimelineLayer({ layer, isSelected }: Props) {
       <div className="flex-1 relative overflow-hidden">
         <div
           className="absolute inset-y-1 rounded-md bg-primary/10 border border-primary/20"
-          style={{ left: `${delayOffset}px`, width: "300px" }}
+          style={{ left: `${delayOffset}px`, width: `${blockWidth}px` }}
         >
-          <WaveformCanvas source={layer.source} />
+          <WaveformCanvas layer={layer} />
         </div>
       </div>
     </div>
