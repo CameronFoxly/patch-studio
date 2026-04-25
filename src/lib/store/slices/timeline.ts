@@ -1,0 +1,35 @@
+import type { StateCreator } from "zustand";
+import type { StoreState } from "../index";
+
+export interface TimelineSlice {
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  zoom: number;
+  scrollX: number;
+
+  setPlaying: (playing: boolean) => void;
+  setCurrentTime: (time: number) => void;
+  setDuration: (duration: number) => void;
+  setZoom: (zoom: number) => void;
+  setScrollX: (scrollX: number) => void;
+}
+
+export const createTimelineSlice: StateCreator<
+  StoreState,
+  [],
+  [],
+  TimelineSlice
+> = (set) => ({
+  isPlaying: false,
+  currentTime: 0,
+  duration: 10,
+  zoom: 100,
+  scrollX: 0,
+
+  setPlaying: (playing) => set({ isPlaying: playing }),
+  setCurrentTime: (time) => set({ currentTime: time }),
+  setDuration: (duration) => set({ duration }),
+  setZoom: (zoom) => set({ zoom }),
+  setScrollX: (scrollX) => set({ scrollX }),
+});

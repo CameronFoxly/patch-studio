@@ -1,0 +1,34 @@
+import { create } from "zustand";
+import { temporal } from "zundo";
+import { useStore as useZustandStore } from "zustand";
+
+import { type LayersSlice, createLayersSlice } from "./slices/layers";
+import { type TimelineSlice, createTimelineSlice } from "./slices/timeline";
+import { type SequenceSlice, createSequenceSlice } from "./slices/sequence";
+import { type UISlice, createUISlice } from "./slices/ui";
+
+export type StoreState = LayersSlice & TimelineSlice & SequenceSlice & UISlice;
+
+export const useStore = create<StoreState>()(
+  temporal(
+    (...a) => ({
+      ...createLayersSlice(...a),
+      ...createTimelineSlice(...a),
+      ...createSequenceSlice(...a),
+      ...createUISlice(...a),
+    }),
+    {
+      // Only track undoable state (layers, sequence) — not transient UI/timeline state
+      equality: (pastState, currentState) =>
+        pastState.layers === currentState.layers &&
+        pastState.sequenceSteps === currentState.sequenceSteps &&
+        pastState.sequenceOptions === currentState.sequenceOptions,
+    },
+  ),
+);
+
+export const useTemporalStore = <T>(
+  selector: (
+    state: ReturnType<typeof useStore.temporal.getState>,
+  ) => T,
+) => useZustandStore(useStore.temporal, selector);
