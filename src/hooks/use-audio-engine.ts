@@ -31,9 +31,16 @@ export function useAudioEngine() {
 
   const triggerSound = useCallback(async () => {
     stopVoice();
+    if (!isPlayingRef.current) return;
     const currentLayers = useStore.getState().layers;
     try {
-      voiceRef.current = await playSound(currentLayers);
+      const voice = await playSound(currentLayers);
+      // Check again after async — stop() may have been called during await
+      if (!isPlayingRef.current) {
+        if (voice?.stop) voice.stop();
+        return;
+      }
+      voiceRef.current = voice;
     } catch (e) {
       console.error("Playback error:", e);
     }
@@ -52,6 +59,8 @@ export function useAudioEngine() {
     startTimeRef.current = performance.now();
 
     const animate = () => {
+      if (!isPlayingRef.current) return;
+
       const { isLooping, regionStart, regionEnd } = useStore.getState();
       const elapsed = (performance.now() - startTimeRef.current) / 1000;
       let time = regionStart + elapsed;
