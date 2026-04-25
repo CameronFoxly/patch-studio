@@ -2,9 +2,8 @@
 
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
+import { SliderInput } from "@/components/ui/slider-input";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
@@ -14,10 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Layer, Panner3D, PanningModel, DistanceModel } from "@/lib/types";
-
-function first(v: number | readonly number[]): number {
-  return Array.isArray(v) ? v[0] : (v as number);
-}
 
 const PANNING_MODELS: PanningModel[] = ["equalpower", "HRTF"];
 const DISTANCE_MODELS: DistanceModel[] = ["linear", "inverse", "exponential"];
@@ -36,36 +31,6 @@ function defaultPanner(): Panner3D {
     coneOuterAngle: 360,
     coneOuterGain: 0,
   };
-}
-
-function NumericField({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min?: number;
-  max?: number;
-  step?: number;
-  onChange: (v: number) => void;
-}) {
-  return (
-    <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
-      <Input
-        type="number"
-        min={min}
-        max={max}
-        step={step ?? 0.1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-      />
-    </div>
-  );
 }
 
 export function SpatialPanel({ layer }: { layer: Layer }) {
@@ -94,19 +59,28 @@ export function SpatialPanel({ layer }: { layer: Layer }) {
         <>
           <div className="space-y-2">
             <Label className="text-xs font-medium">Position</Label>
-            <div className="grid grid-cols-3 gap-2">
-              <NumericField
+            <div className="space-y-2">
+              <SliderInput
                 label="X"
+                min={-100}
+                max={100}
+                step={0.1}
                 value={panner.positionX ?? 0}
                 onChange={(v) => update({ positionX: v })}
               />
-              <NumericField
+              <SliderInput
                 label="Y"
+                min={-100}
+                max={100}
+                step={0.1}
                 value={panner.positionY ?? 0}
                 onChange={(v) => update({ positionY: v })}
               />
-              <NumericField
+              <SliderInput
                 label="Z"
+                min={-100}
+                max={100}
+                step={0.1}
                 value={panner.positionZ ?? 0}
                 onChange={(v) => update({ positionZ: v })}
               />
@@ -160,86 +134,62 @@ export function SpatialPanel({ layer }: { layer: Layer }) {
           <Separator />
 
           <div className="space-y-3">
-            <NumericField
+            <SliderInput
               label="Ref Distance"
-              value={panner.refDistance ?? 1}
               min={0}
+              max={100}
               step={0.1}
+              value={panner.refDistance ?? 1}
               onChange={(v) => update({ refDistance: v })}
             />
-            <NumericField
+            <SliderInput
               label="Max Distance"
-              value={panner.maxDistance ?? 10000}
               min={0}
+              max={50000}
               step={100}
+              value={panner.maxDistance ?? 10000}
               onChange={(v) => update({ maxDistance: v })}
             />
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <Label className="text-xs">Rolloff Factor</Label>
-                <span className="text-xs text-muted-foreground">
-                  {(panner.rolloffFactor ?? 1).toFixed(2)}
-                </span>
-              </div>
-              <Slider
-                min={0}
-                max={10}
-                step={0.1}
-                value={[panner.rolloffFactor ?? 1]}
-                onValueChange={(v) => update({ rolloffFactor: first(v) })}
-              />
-            </div>
+            <SliderInput
+              label="Rolloff Factor"
+              min={0}
+              max={10}
+              step={0.1}
+              value={panner.rolloffFactor ?? 1}
+              onChange={(v) => update({ rolloffFactor: v })}
+            />
           </div>
 
           <Separator />
 
           <div className="space-y-3">
             <Label className="text-xs font-medium">Cone</Label>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <Label className="text-xs">Inner Angle</Label>
-                <span className="text-xs text-muted-foreground">
-                  {panner.coneInnerAngle ?? 360}°
-                </span>
-              </div>
-              <Slider
-                min={0}
-                max={360}
-                step={1}
-                value={[panner.coneInnerAngle ?? 360]}
-                onValueChange={(v) => update({ coneInnerAngle: first(v) })}
-              />
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <Label className="text-xs">Outer Angle</Label>
-                <span className="text-xs text-muted-foreground">
-                  {panner.coneOuterAngle ?? 360}°
-                </span>
-              </div>
-              <Slider
-                min={0}
-                max={360}
-                step={1}
-                value={[panner.coneOuterAngle ?? 360]}
-                onValueChange={(v) => update({ coneOuterAngle: first(v) })}
-              />
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <Label className="text-xs">Outer Gain</Label>
-                <span className="text-xs text-muted-foreground">
-                  {(panner.coneOuterGain ?? 0).toFixed(2)}
-                </span>
-              </div>
-              <Slider
-                min={0}
-                max={1}
-                step={0.01}
-                value={[panner.coneOuterGain ?? 0]}
-                onValueChange={(v) => update({ coneOuterGain: first(v) })}
-              />
-            </div>
+            <SliderInput
+              label="Inner Angle"
+              unit="°"
+              min={0}
+              max={360}
+              step={1}
+              value={panner.coneInnerAngle ?? 360}
+              onChange={(v) => update({ coneInnerAngle: v })}
+            />
+            <SliderInput
+              label="Outer Angle"
+              unit="°"
+              min={0}
+              max={360}
+              step={1}
+              value={panner.coneOuterAngle ?? 360}
+              onChange={(v) => update({ coneOuterAngle: v })}
+            />
+            <SliderInput
+              label="Outer Gain"
+              min={0}
+              max={1}
+              step={0.01}
+              value={panner.coneOuterGain ?? 0}
+              onChange={(v) => update({ coneOuterGain: v })}
+            />
           </div>
         </>
       )}

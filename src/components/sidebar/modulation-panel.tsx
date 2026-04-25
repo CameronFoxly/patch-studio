@@ -3,7 +3,7 @@
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { SliderInput } from "@/components/ui/slider-input";
 import {
   Select,
   SelectContent,
@@ -13,10 +13,6 @@ import {
 } from "@/components/ui/select";
 import type { Layer, LFO, OscillatorType, LFOTarget } from "@/lib/types";
 import { PlusIcon, XIcon } from "lucide-react";
-
-function first(v: number | readonly number[]): number {
-  return Array.isArray(v) ? v[0] : (v as number);
-}
 
 const LFO_WAVEFORMS: { value: OscillatorType; label: string }[] = [
   { value: "sine", label: "Sine" },
@@ -136,39 +132,24 @@ export function ModulationPanel({ layer }: { layer: Layer }) {
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <Label className="text-xs">Frequency</Label>
-              <span className="text-xs text-muted-foreground">
-                {lfo.frequency.toFixed(1)} Hz
-              </span>
-            </div>
-            <Slider
-              min={0.01}
-              max={40}
-              step={0.01}
-              value={[lfo.frequency]}
-              onValueChange={(v) =>
-                updateLFO(i, { ...lfo, frequency: first(v) })
-              }
-            />
-          </div>
+          <SliderInput
+            label="Frequency"
+            unit="Hz"
+            min={0.01}
+            max={40}
+            step={0.01}
+            value={lfo.frequency}
+            onChange={(v) => updateLFO(i, { ...lfo, frequency: v })}
+          />
 
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <Label className="text-xs">Depth</Label>
-              <span className="text-xs text-muted-foreground">
-                {lfo.depth.toFixed(1)}
-              </span>
-            </div>
-            <Slider
-              min={0}
-              max={1000}
-              step={1}
-              value={[lfo.depth]}
-              onValueChange={(v) => updateLFO(i, { ...lfo, depth: first(v) })}
-            />
-          </div>
+          <SliderInput
+            label="Depth"
+            min={0}
+            max={1000}
+            step={1}
+            value={lfo.depth}
+            onChange={(v) => updateLFO(i, { ...lfo, depth: v })}
+          />
         </div>
       ))}
 

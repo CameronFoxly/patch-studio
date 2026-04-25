@@ -40,7 +40,8 @@ export async function fetchPatchFile(collectionId: string): Promise<RawPatchFile
   const cached = patchCache.get(collectionId);
   if (cached) return cached;
 
-  const res = await fetch(`/presets/${collectionId}.json`);
+  const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  const res = await fetch(`${base}/presets/${collectionId}.json`);
   if (!res.ok) throw new Error(`Failed to fetch preset collection: ${collectionId}`);
   const data: RawPatchFile = await res.json();
   patchCache.set(collectionId, data);
