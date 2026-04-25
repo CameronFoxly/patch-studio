@@ -20,7 +20,7 @@ export function Sidebar() {
 
   if (!layer) {
     return (
-      <div className="w-80 border-l bg-card flex items-center justify-center p-6">
+      <div className="h-full border-l bg-card flex items-center justify-center p-6">
         <p className="text-sm text-muted-foreground text-center">
           Select a layer to edit its properties
         </p>
@@ -29,7 +29,7 @@ export function Sidebar() {
   }
 
   return (
-    <div className="w-80 border-l bg-card flex flex-col">
+    <div className="h-full border-l bg-card flex flex-col">
       <div className="px-4 py-3 border-b">
         <h2 className="font-semibold text-sm truncate">{layer.name}</h2>
       </div>

@@ -27,8 +27,10 @@ export const useStore = create<StoreState>()(
   ),
 );
 
-export const useTemporalStore = <T>(
-  selector: (
-    state: ReturnType<typeof useStore.temporal.getState>,
-  ) => T,
-) => useZustandStore(useStore.temporal, selector);
+// Hook to subscribe to temporal store state (for canUndo/canRedo)
+export function useTemporalState<T>(selector: (state: ReturnType<typeof useStore.temporal.getState>) => T): T {
+  return useZustandStore(useStore.temporal, selector);
+}
+
+// Direct access to temporal store for imperative actions
+export const temporalStore = useStore.temporal;

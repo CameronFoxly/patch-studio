@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useStore } from "@/lib/store";
+import { useStore, temporalStore } from "@/lib/store";
 import { useAudioEngine } from "./use-audio-engine";
 
 function isInputFocused() {
@@ -27,13 +27,13 @@ export function useKeyboardShortcuts() {
       // Cmd+Z = undo
       if (isCmd && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
-        useStore.temporal.getState().undo();
+        temporalStore.getState().undo();
       }
 
       // Cmd+Shift+Z or Cmd+Y = redo
       if (isCmd && (e.key === "Z" || e.key === "y")) {
         e.preventDefault();
-        useStore.temporal.getState().redo();
+        temporalStore.getState().redo();
       }
     }
 

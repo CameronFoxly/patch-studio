@@ -12,7 +12,7 @@ export function SequenceEditor() {
   const addStep = useStore((s) => s.addSequenceStep);
 
   return (
-    <div className="border-t bg-card">
+    <div className="h-full overflow-auto border-t bg-card">
       <button
         onClick={toggleSequenceEditor}
         className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors"

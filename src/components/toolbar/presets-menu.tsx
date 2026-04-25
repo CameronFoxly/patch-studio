@@ -3,6 +3,7 @@
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -24,18 +25,20 @@ export function PresetsMenu() {
         }
       />
       <DropdownMenuContent>
-        <DropdownMenuLabel>Sound Collections</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {presetCollections.map((c) => (
-          <DropdownMenuItem key={c.id}>
-            <div>
-              <div className="font-medium text-sm">{c.name}</div>
-              <div className="text-xs text-muted-foreground">
-                {c.description}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Sound Collections</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {presetCollections.map((c) => (
+            <DropdownMenuItem key={c.id}>
+              <div>
+                <div className="font-medium text-sm">{c.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  {c.description}
+                </div>
               </div>
-            </div>
-          </DropdownMenuItem>
-        ))}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

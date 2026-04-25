@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useStore, useTemporalStore } from "@/lib/store";
+import { useStore, useTemporalState, temporalStore } from "@/lib/store";
 import {
   exportPatch,
   downloadPatch,
@@ -16,6 +16,7 @@ import {
 } from "@/lib/audio/patch-converter";
 import { Undo2, Redo2, Download, Upload, FilePlus, Music } from "lucide-react";
 import { PresetsMenu } from "./presets-menu";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 export function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -25,14 +26,11 @@ export function Toolbar() {
   const setLayers = useStore((s) => s.setLayers);
   const selectLayer = useStore((s) => s.selectLayer);
 
-  const { undo, redo, pastStates, futureStates } = useTemporalStore(
-    (state) => ({
-      undo: state.undo,
-      redo: state.redo,
-      pastStates: state.pastStates,
-      futureStates: state.futureStates,
-    }),
-  );
+  const canUndo = useTemporalState((s) => s.pastStates.length > 0);
+  const canRedo = useTemporalState((s) => s.futureStates.length > 0);
+
+  const handleUndo = () => temporalStore.getState().undo();
+  const handleRedo = () => temporalStore.getState().redo();
 
   const handleNew = () => {
     clearLayers();
@@ -131,8 +129,8 @@ export function Toolbar() {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => undo()}
-              disabled={pastStates.length === 0}
+              onClick={() => handleUndo()}
+              disabled={!canUndo}
             />
           }
         >
@@ -148,8 +146,8 @@ export function Toolbar() {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => redo()}
-              disabled={futureStates.length === 0}
+              onClick={() => handleRedo()}
+              disabled={!canRedo}
             />
           }
         >
@@ -157,6 +155,10 @@ export function Toolbar() {
         </TooltipTrigger>
         <TooltipContent>Redo</TooltipContent>
       </Tooltip>
+
+      <div className="flex-1" />
+      <Separator orientation="vertical" className="h-6" />
+      <ThemeToggle />
 
       {/* Hidden file input */}
       <input

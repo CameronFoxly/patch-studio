@@ -12,7 +12,7 @@ export function Timeline() {
   const selectedLayerId = useStore((s) => s.selectedLayerId);
 
   return (
-    <div className="flex-1 flex flex-col bg-background">
+    <div className="h-full flex-1 flex flex-col bg-background">
       {/* Time ruler */}
       <div className="h-8 border-b bg-muted/30 flex items-end px-4">
         <div className="flex gap-[100px] text-[10px] text-muted-foreground font-mono">
