@@ -13,7 +13,7 @@ interface VolumeFaderProps {
   format?: (v: number) => string;
   onChange: (v: number) => void;
   amplitude?: number; // 0-1, live signal level for meter visualization
-  clipThreshold?: number; // value above which clipping warning shows (default 0.95)
+  clipThreshold?: number; // amplitude level above which clipping warning shows (default 0.95)
   height?: number; // track height in px (default 120)
 }
 
@@ -48,7 +48,7 @@ export function VolumeFader({
   const trackRef = useRef<HTMLDivElement>(null);
 
   const norm = (value - min) / (max - min);
-  const isClipping = value >= (max * clipThreshold);
+  const isClipping = amplitude >= clipThreshold;
 
   function formatValue(v: number): string {
     if (format) return format(v);
