@@ -41,7 +41,7 @@ export function Sidebar() {
             </TabsList>
           </div>
           <ScrollArea className="flex-1">
-            <div className="p-4">
+            <div className="p-4 min-h-full bg-card">
               <TabsContent value="global-effects" className="mt-0">
                 <GlobalEffectsPanel />
               </TabsContent>
@@ -90,7 +90,7 @@ export function Sidebar() {
           </TabsList>
         </div>
         <ScrollArea className="flex-1">
-          <div className="p-4">
+          <div className="p-4 min-h-full bg-card">
             <TabsContent value="source" className="mt-0">
               <SourcePanel layer={layer} />
             </TabsContent>
