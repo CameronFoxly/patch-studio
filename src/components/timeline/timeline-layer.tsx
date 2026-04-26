@@ -7,6 +7,7 @@ import { WaveformCanvas } from "./waveform-canvas";
 import { EnvelopeOverlay } from "./envelope-overlay";
 import type { Layer } from "@/lib/types";
 import { Volume2, VolumeX, Trash2, Copy, Star, GripVertical, Activity } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface Props {
   layer: Layer;
@@ -188,70 +189,106 @@ export function TimelineLayer({
           </p>
         </div>
         <div className="flex gap-0.5 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            title={layer.showEnvelope ? "Hide envelope" : "Show envelope"}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleLayerEnvelopeOverlay(layer.id);
-            }}
-          >
-            <Activity
-              className={`h-3 w-3 ${layer.showEnvelope ? "text-primary" : ""}`}
-            />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleLayerMute(layer.id);
-            }}
-          >
-            {layer.muted ? (
-              <VolumeX className="h-3 w-3" />
-            ) : (
-              <Volume2 className="h-3 w-3" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleLayerSolo(layer.id);
-            }}
-          >
-            <Star
-              className={`h-3 w-3 ${layer.solo ? "fill-yellow-500 text-yellow-500" : ""}`}
-            />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.stopPropagation();
-              duplicateLayer(layer.id);
-            }}
-          >
-            <Copy className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              removeLayer(layer.id);
-            }}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLayerEnvelopeOverlay(layer.id);
+                    }}
+                  >
+                    <Activity
+                      className={`h-3 w-3 ${layer.showEnvelope ? "text-primary" : ""}`}
+                    />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">Envelope overlay</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLayerMute(layer.id);
+                    }}
+                  >
+                    {layer.muted ? (
+                      <VolumeX className="h-3 w-3" />
+                    ) : (
+                      <Volume2 className="h-3 w-3" />
+                    )}
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">{layer.muted ? "Unmute" : "Mute"}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLayerSolo(layer.id);
+                    }}
+                  >
+                    <Star
+                      className={`h-3 w-3 ${layer.solo ? "fill-yellow-500 text-yellow-500" : ""}`}
+                    />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">Solo</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      duplicateLayer(layer.id);
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">Duplicate</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeLayer(layer.id);
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">Delete</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
