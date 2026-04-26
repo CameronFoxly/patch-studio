@@ -5,10 +5,12 @@ import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { SliderInput } from "@/components/ui/slider-input";
 import { Button } from "@/components/ui/button";
 import { PianoKeyboardDialog } from "@/components/ui/piano-keyboard";
 import { Piano } from "lucide-react";
+import { RotaryKnob } from "@/components/ui/rotary-knob";
+import { KnobRow } from "@/components/ui/knob-row";
+import { ToggleGroup } from "@/components/ui/toggle-group";
 import { HarmonicsEditor } from "./harmonics-editor";
 import type {
   Layer,
@@ -56,43 +58,6 @@ function WavetableIcon() {
     <svg viewBox="0 0 40 20" className="w-full h-full" preserveAspectRatio="none">
       <path d="M 0 10 Q 3 3, 8 10 Q 11 14, 14 10 L 16 6 L 18 14 L 20 10 Q 24 2, 28 10 Q 31 16, 34 10 Q 37 5, 40 10" fill="none" stroke="currentColor" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
     </svg>
-  );
-}
-
-/* ── Toggle button group ── */
-
-function ToggleGroup<T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: { value: T; label: string; icon: React.ReactNode }[];
-  value: T;
-  onChange: (v: T) => void;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
-      <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
-        {options.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={`flex flex-col items-center gap-1 rounded-md border px-1 py-1.5 transition-colors cursor-pointer ${
-              value === opt.value
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-muted bg-muted/20 text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground"
-            }`}
-          >
-            <div className="h-5 w-full px-0.5">{opt.icon}</div>
-            <span className="text-[10px] leading-none">{opt.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -187,41 +152,44 @@ function OscillatorControls({
         onChange={(v) => onChange({ ...source, type: v })}
       />
 
-      <SliderInput
-        label="Frequency"
-        unit="Hz"
-        min={20}
-        max={20000}
-        step={1}
-        value={freq}
-        onChange={(v) => onChange({ ...source, frequency: v })}
-        action={
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => setPianoOpen(!pianoOpen)}
-            title="Note picker"
-          >
-            <Piano className="size-3" />
-          </Button>
-        }
-      />
+      <KnobRow>
+        <RotaryKnob
+          label="Frequency"
+          unit="Hz"
+          min={20}
+          max={20000}
+          step={1}
+          value={freq}
+          onChange={(v) => onChange({ ...source, frequency: v })}
+        />
+
+        <RotaryKnob
+          label="Detune"
+          unit="¢"
+          min={-1200}
+          max={1200}
+          step={1}
+          value={source.detune ?? 0}
+          onChange={(v) => onChange({ ...source, detune: v })}
+        />
+      </KnobRow>
+
+      <div className="flex justify-center">
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => setPianoOpen(!pianoOpen)}
+          title="Note picker"
+        >
+          <Piano className="size-3" />
+        </Button>
+      </div>
 
       <PianoKeyboardDialog
         open={pianoOpen}
         onClose={() => setPianoOpen(false)}
         currentFrequency={freq}
         onNoteSelect={(v) => onChange({ ...source, frequency: v })}
-      />
-
-      <SliderInput
-        label="Detune"
-        unit="¢"
-        min={-1200}
-        max={1200}
-        step={1}
-        value={source.detune ?? 0}
-        onChange={(v) => onChange({ ...source, detune: v })}
       />
 
       <Separator />
@@ -241,27 +209,29 @@ function OscillatorControls({
       </div>
 
       {source.fm && (
-        <div className="space-y-3 pl-2 border-l-2 border-muted">
-          <SliderInput
-            label="Ratio"
-            min={0.1}
-            max={16}
-            step={0.1}
-            value={source.fm.ratio}
-            onChange={(v) =>
-              onChange({ ...source, fm: { ...source.fm!, ratio: v } })
-            }
-          />
-          <SliderInput
-            label="Depth"
-            min={0}
-            max={1000}
-            step={1}
-            value={source.fm.depth}
-            onChange={(v) =>
-              onChange({ ...source, fm: { ...source.fm!, depth: v } })
-            }
-          />
+        <div className="pl-2 border-l-2 border-muted">
+          <KnobRow>
+            <RotaryKnob
+              label="Ratio"
+              min={0.1}
+              max={16}
+              step={0.1}
+              value={source.fm.ratio}
+              onChange={(v) =>
+                onChange({ ...source, fm: { ...source.fm!, ratio: v } })
+              }
+            />
+            <RotaryKnob
+              label="Depth"
+              min={0}
+              max={1000}
+              step={1}
+              value={source.fm.depth}
+              onChange={(v) =>
+                onChange({ ...source, fm: { ...source.fm!, depth: v } })
+              }
+            />
+          </KnobRow>
         </div>
       )}
     </div>
@@ -296,25 +266,28 @@ function WavetableControls({
 
   return (
     <div className="space-y-4">
-      <SliderInput
-        label="Frequency"
-        unit="Hz"
-        min={20}
-        max={20000}
-        step={1}
-        value={source.frequency}
-        onChange={(v) => onChange({ ...source, frequency: v })}
-        action={
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => setPianoOpen(!pianoOpen)}
-            title="Note picker"
-          >
-            <Piano className="size-3" />
-          </Button>
-        }
-      />
+      <KnobRow>
+        <RotaryKnob
+          label="Frequency"
+          unit="Hz"
+          min={20}
+          max={20000}
+          step={1}
+          value={source.frequency}
+          onChange={(v) => onChange({ ...source, frequency: v })}
+        />
+      </KnobRow>
+
+      <div className="flex justify-center">
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => setPianoOpen(!pianoOpen)}
+          title="Note picker"
+        >
+          <Piano className="size-3" />
+        </Button>
+      </div>
 
       <PianoKeyboardDialog
         open={pianoOpen}

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
-import { SliderInput } from "@/components/ui/slider-input";
+import { RotaryKnob } from "@/components/ui/rotary-knob";
+import { KnobRow } from "@/components/ui/knob-row";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -248,36 +249,38 @@ export function FilterPanel({ layer }: { layer: Layer }) {
                 </Select>
               </div>
 
-              <SliderInput
-                label="Frequency"
-                unit="Hz"
-                min={20}
-                max={20000}
-                step={1}
-                value={(selected as BiquadFilter).frequency}
-                onChange={(v) => updateFilter(selectedIndex, { ...(selected as BiquadFilter), frequency: v })}
-              />
-
-              <SliderInput
-                label="Resonance (Q)"
-                min={0.1}
-                max={30}
-                step={0.1}
-                value={(selected as BiquadFilter).resonance ?? 1}
-                onChange={(v) => updateFilter(selectedIndex, { ...(selected as BiquadFilter), resonance: v })}
-              />
-
-              {GAIN_TYPES.includes((selected as BiquadFilter).type) && (
-                <SliderInput
-                  label="Gain"
-                  unit="dB"
-                  min={-40}
-                  max={40}
-                  step={0.5}
-                  value={(selected as BiquadFilter).gain ?? 0}
-                  onChange={(v) => updateFilter(selectedIndex, { ...(selected as BiquadFilter), gain: v })}
+              <KnobRow>
+                <RotaryKnob
+                  label="Frequency"
+                  unit="Hz"
+                  min={20}
+                  max={20000}
+                  step={1}
+                  value={(selected as BiquadFilter).frequency}
+                  onChange={(v) => updateFilter(selectedIndex, { ...(selected as BiquadFilter), frequency: v })}
                 />
-              )}
+
+                <RotaryKnob
+                  label="Q"
+                  min={0.1}
+                  max={30}
+                  step={0.1}
+                  value={(selected as BiquadFilter).resonance ?? 1}
+                  onChange={(v) => updateFilter(selectedIndex, { ...(selected as BiquadFilter), resonance: v })}
+                />
+
+                {GAIN_TYPES.includes((selected as BiquadFilter).type) && (
+                  <RotaryKnob
+                    label="Gain"
+                    unit="dB"
+                    min={-40}
+                    max={40}
+                    step={0.5}
+                    value={(selected as BiquadFilter).gain ?? 0}
+                    onChange={(v) => updateFilter(selectedIndex, { ...(selected as BiquadFilter), gain: v })}
+                  />
+                )}
+              </KnobRow>
 
               <Separator />
 
@@ -298,49 +301,51 @@ export function FilterPanel({ layer }: { layer: Layer }) {
                   />
                 </div>
                 {(selected as BiquadFilter).envelope && (
-                  <div className="space-y-2 pl-2 border-l-2 border-muted">
-                    <SliderInput
-                      label="Attack"
-                      unit="s"
-                      min={0}
-                      max={2}
-                      step={0.01}
-                      value={(selected as BiquadFilter).envelope!.attack}
-                      onChange={(v) =>
-                        updateFilter(selectedIndex, {
-                          ...(selected as BiquadFilter),
-                          envelope: { ...(selected as BiquadFilter).envelope!, attack: v },
-                        })
-                      }
-                    />
-                    <SliderInput
-                      label="Peak"
-                      unit="Hz"
-                      min={20}
-                      max={20000}
-                      step={1}
-                      value={(selected as BiquadFilter).envelope!.peak}
-                      onChange={(v) =>
-                        updateFilter(selectedIndex, {
-                          ...(selected as BiquadFilter),
-                          envelope: { ...(selected as BiquadFilter).envelope!, peak: v },
-                        })
-                      }
-                    />
-                    <SliderInput
-                      label="Decay"
-                      unit="s"
-                      min={0}
-                      max={5}
-                      step={0.01}
-                      value={(selected as BiquadFilter).envelope!.decay}
-                      onChange={(v) =>
-                        updateFilter(selectedIndex, {
-                          ...(selected as BiquadFilter),
-                          envelope: { ...(selected as BiquadFilter).envelope!, decay: v },
-                        })
-                      }
-                    />
+                  <div className="pl-2 border-l-2 border-muted">
+                    <KnobRow>
+                      <RotaryKnob
+                        label="Attack"
+                        unit="s"
+                        min={0}
+                        max={2}
+                        step={0.01}
+                        value={(selected as BiquadFilter).envelope!.attack}
+                        onChange={(v) =>
+                          updateFilter(selectedIndex, {
+                            ...(selected as BiquadFilter),
+                            envelope: { ...(selected as BiquadFilter).envelope!, attack: v },
+                          })
+                        }
+                      />
+                      <RotaryKnob
+                        label="Peak"
+                        unit="Hz"
+                        min={20}
+                        max={20000}
+                        step={1}
+                        value={(selected as BiquadFilter).envelope!.peak}
+                        onChange={(v) =>
+                          updateFilter(selectedIndex, {
+                            ...(selected as BiquadFilter),
+                            envelope: { ...(selected as BiquadFilter).envelope!, peak: v },
+                          })
+                        }
+                      />
+                      <RotaryKnob
+                        label="Decay"
+                        unit="s"
+                        min={0}
+                        max={5}
+                        step={0.01}
+                        value={(selected as BiquadFilter).envelope!.decay}
+                        onChange={(v) =>
+                          updateFilter(selectedIndex, {
+                            ...(selected as BiquadFilter),
+                            envelope: { ...(selected as BiquadFilter).envelope!, decay: v },
+                          })
+                        }
+                      />
+                    </KnobRow>
                   </div>
                 )}
               </div>

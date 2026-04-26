@@ -210,12 +210,24 @@ export function WaveformCanvas({ layer }: Props) {
 
     drawWaveform(canvas, layer);
 
-    const observer = new ResizeObserver(() => {
+    const resizeObserver = new ResizeObserver(() => {
       drawWaveform(canvas, layer);
     });
-    observer.observe(canvas);
+    resizeObserver.observe(canvas);
 
-    return () => observer.disconnect();
+    // Redraw when theme changes (dark class toggled on <html>)
+    const themeObserver = new MutationObserver(() => {
+      drawWaveform(canvas, layer);
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => {
+      resizeObserver.disconnect();
+      themeObserver.disconnect();
+    };
   }, [layer]);
 
   return (
