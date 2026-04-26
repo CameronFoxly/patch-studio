@@ -38,6 +38,7 @@ export function TimelineLayer({
   const updateLayerDelay = useStore((s) => s.updateLayerDelay);
   const updateLayerName = useStore((s) => s.updateLayerName);
   const updateLayerEnvelope = useStore((s) => s.updateLayerEnvelope);
+  const updateLayerGain = useStore((s) => s.updateLayerGain);
   const zoom = useStore((s) => s.zoom);
 
   const [isDragging, setIsDragging] = useState(false);
@@ -270,6 +271,7 @@ export function TimelineLayer({
               layer={layer}
               blockWidth={blockWidth}
               onUpdateEnvelope={(env) => updateLayerEnvelope(layer.id, env)}
+              onUpdateGain={(g) => updateLayerGain(layer.id, g)}
             />
           )}
           {/* Delay label */}
