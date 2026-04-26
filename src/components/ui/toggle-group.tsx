@@ -31,7 +31,7 @@ export function ToggleGroup<T extends string>({
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={`flex flex-col items-center gap-1 rounded-md border px-1 py-1.5 transition-colors cursor-pointer ${
+            className={`flex flex-col items-center gap-1 rounded-sm border px-1 py-1.5 transition-colors cursor-pointer ${
               value === opt.value
                 ? "border-primary bg-primary/10 text-primary"
                 : "border-muted bg-muted/20 text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground"

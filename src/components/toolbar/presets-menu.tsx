@@ -103,7 +103,7 @@ export function PresetsMenu() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
 
           {/* Panel */}
-          <div className="absolute top-full left-0 mt-1 z-50 flex bg-popover border border-border rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 flex bg-popover border border-border rounded-md shadow-xl overflow-hidden">
             {/* Collection list */}
             <div className="w-52 border-r border-border flex-shrink-0">
               <div className="px-3 py-2 border-b border-border">

@@ -105,7 +105,7 @@ function generateBuffer(layer: Layer, totalDuration: number): Float32Array {
   return buffer;
 }
 
-const CORNER_RADIUS = 6;
+const CORNER_RADIUS = 4;
 
 function drawWaveform(canvas: HTMLCanvasElement, layer: Layer) {
   const ctx = canvas.getContext("2d");
@@ -233,7 +233,7 @@ export function WaveformCanvas({ layer }: Props) {
   return (
     <canvas
       ref={canvasRef}
-      className="w-full h-full text-primary rounded-md"
+      className="w-full h-full text-primary rounded-sm"
       style={{ display: "block" }}
     />
   );

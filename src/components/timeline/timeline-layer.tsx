@@ -257,7 +257,7 @@ export function TimelineLayer({
       {/* Waveform area */}
       <div className="flex-1 relative overflow-hidden">
         <div
-          className={`absolute inset-y-1 rounded-md bg-primary/10 border border-primary/20 ${
+          className={`absolute inset-y-1 rounded-sm bg-primary/10 border border-primary/20 ${
             isDragging ? "cursor-grabbing ring-2 ring-primary/40" : "cursor-grab hover:border-primary/40"
           }`}
           style={{ left: `${delayOffset}px`, width: `${blockWidth}px` }}

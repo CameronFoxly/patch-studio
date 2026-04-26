@@ -125,7 +125,7 @@ export function PianoKeyboardDialog({
 
   return createPortal(
     <div
-      className="fixed z-50 w-[304px] rounded-xl bg-popover p-3 text-popover-foreground ring-1 ring-foreground/10 shadow-lg"
+      className="fixed z-50 w-[304px] rounded-md bg-popover p-3 text-popover-foreground ring-1 ring-foreground/10 shadow-lg"
       style={{ left: position.x, top: position.y }}
     >
       {/* Draggable title bar */}
