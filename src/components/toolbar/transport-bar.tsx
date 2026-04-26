@@ -11,24 +11,40 @@ export function TransportBar() {
   const isLooping = useStore((s) => s.isLooping);
   const setLooping = useStore((s) => s.setLooping);
   const currentTime = useStore((s) => s.currentTime);
-  const duration = useStore((s) => s.duration);
-  const setDuration = useStore((s) => s.setDuration);
+  const regionStart = useStore((s) => s.regionStart);
+  const regionEnd = useStore((s) => s.regionEnd);
+  const setRegionStart = useStore((s) => s.setRegionStart);
+  const setRegionEnd = useStore((s) => s.setRegionEnd);
   const { play, stop } = useAudioEngine();
   const layerCount = useStore((s) => s.layers.length);
 
-  const [durationText, setDurationText] = useState(duration.toFixed(1));
-  const [focused, setFocused] = useState(false);
+  const [startText, setStartText] = useState(regionStart.toFixed(2));
+  const [endText, setEndText] = useState(regionEnd.toFixed(2));
+  const [startFocused, setStartFocused] = useState(false);
+  const [endFocused, setEndFocused] = useState(false);
 
   useEffect(() => {
-    if (!focused) setDurationText(duration.toFixed(1));
-  }, [duration, focused]);
+    if (!startFocused) setStartText(regionStart.toFixed(2));
+  }, [regionStart, startFocused]);
 
-  function commitDuration() {
-    const parsed = parseFloat(durationText);
-    if (!isNaN(parsed) && parsed > 0) {
-      setDuration(Math.min(300, Math.max(0.1, parsed)));
+  useEffect(() => {
+    if (!endFocused) setEndText(regionEnd.toFixed(2));
+  }, [regionEnd, endFocused]);
+
+  function commitStart() {
+    const parsed = parseFloat(startText);
+    if (!isNaN(parsed) && parsed >= 0) {
+      setRegionStart(Math.min(parsed, regionEnd - 0.01));
     }
-    setDurationText(duration.toFixed(1));
+    setStartText(regionStart.toFixed(2));
+  }
+
+  function commitEnd() {
+    const parsed = parseFloat(endText);
+    if (!isNaN(parsed) && parsed > 0) {
+      setRegionEnd(Math.max(parsed, regionStart + 0.01));
+    }
+    setEndText(regionEnd.toFixed(2));
   }
 
   return (
@@ -58,19 +74,38 @@ export function TransportBar() {
       <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground ml-2">
         <span>{currentTime.toFixed(2)}s</span>
         <span className="text-border">|</span>
-        <span>Length:</span>
+        <span>Preview Range:</span>
         <input
           type="text"
           inputMode="decimal"
-          value={focused ? durationText : `${duration.toFixed(1)}s`}
-          onChange={(e) => setDurationText(e.target.value)}
+          value={startFocused ? startText : `${regionStart.toFixed(2)}s`}
+          onChange={(e) => setStartText(e.target.value)}
           onFocus={() => {
-            setFocused(true);
-            setDurationText(duration.toFixed(1));
+            setStartFocused(true);
+            setStartText(regionStart.toFixed(2));
           }}
           onBlur={() => {
-            setFocused(false);
-            commitDuration();
+            setStartFocused(false);
+            commitStart();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          className="h-5 w-12 rounded border border-input bg-background px-1 text-center text-xs tabular-nums outline-none focus:ring-1 focus:ring-ring"
+        />
+        <span>–</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={endFocused ? endText : `${regionEnd.toFixed(2)}s`}
+          onChange={(e) => setEndText(e.target.value)}
+          onFocus={() => {
+            setEndFocused(true);
+            setEndText(regionEnd.toFixed(2));
+          }}
+          onBlur={() => {
+            setEndFocused(false);
+            commitEnd();
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") e.currentTarget.blur();
