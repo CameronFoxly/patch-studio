@@ -39,7 +39,7 @@ export function RotaryKnob({
   unit,
   format,
   onChange,
-  size = 48,
+  size = 72,
 }: RotaryKnobProps) {
   const [text, setText] = useState(() => formatDisplay(value));
   const [focused, setFocused] = useState(false);
