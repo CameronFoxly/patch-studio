@@ -38,7 +38,6 @@ export function TransportBar() {
         variant={isPlaying ? "destructive" : "default"}
         onClick={isPlaying ? stop : play}
         disabled={layerCount === 0}
-        className="gap-2"
       >
         {isPlaying ? (
           <Square className="h-4 w-4" />
@@ -51,7 +50,6 @@ export function TransportBar() {
         size="sm"
         variant={isLooping ? "secondary" : "ghost"}
         onClick={() => setLooping(!isLooping)}
-        className="gap-1.5"
         title="Toggle loop"
       >
         <Repeat className={`h-4 w-4 ${isLooping ? "text-primary" : "text-muted-foreground"}`} />

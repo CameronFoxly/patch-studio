@@ -90,7 +90,6 @@ export function PresetsMenu() {
       <Button
         variant="outline"
         size="sm"
-        className="gap-2"
         onClick={() => setOpen(!open)}
       >
         <Library className="h-4 w-4" />
