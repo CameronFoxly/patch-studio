@@ -5,12 +5,14 @@ import { SliderInput } from "@/components/ui/slider-input";
 import { VolumeFader } from "@/components/ui/volume-fader";
 import { RotaryKnob } from "@/components/ui/rotary-knob";
 import { Separator } from "@/components/ui/separator";
+import { useMasterAmplitude } from "@/hooks/use-master-amplitude";
 import type { Layer } from "@/lib/types";
 
 export function GainPanPanel({ layer }: { layer: Layer }) {
   const updateLayerGain = useStore((s) => s.updateLayerGain);
   const updateLayerPan = useStore((s) => s.updateLayerPan);
   const updateLayerDelay = useStore((s) => s.updateLayerDelay);
+  const amplitude = useMasterAmplitude();
 
   const gain = layer.gain ?? 0.8;
   const pan = layer.pan ?? 0;
@@ -26,6 +28,7 @@ export function GainPanPanel({ layer }: { layer: Layer }) {
           step={0.01}
           value={gain}
           onChange={(v) => updateLayerGain(layer.id, v)}
+          amplitude={amplitude}
         />
 
         <div className="flex flex-col items-center justify-center pt-4">

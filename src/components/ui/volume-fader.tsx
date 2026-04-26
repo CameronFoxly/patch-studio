@@ -123,7 +123,7 @@ export function VolumeFader({
 
       <div
         ref={trackRef}
-        className="relative w-6 rounded-sm bg-muted border border-border select-none"
+        className="relative w-6 rounded-[3px] bg-muted border border-border select-none"
         style={{ height, touchAction: "none" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -149,10 +149,10 @@ export function VolumeFader({
 
         {/* Rectangular thumb */}
         <div
-          className={`absolute left-0 right-0 h-3 rounded-sm border transition-colors ${
+          className={`absolute left-0 right-0 h-3 rounded-[2px] border transition-colors ${
             isDragging
               ? "bg-primary border-primary shadow-sm"
-              : "bg-card border-border hover:border-primary/60"
+              : "bg-neutral-300 dark:bg-neutral-600 border-border hover:border-primary/60"
           } ${isClipping ? "ring-1 ring-red-500 border-red-500" : ""}`}
           style={{
             bottom: `calc(${thumbBottom}% - 6px)`,

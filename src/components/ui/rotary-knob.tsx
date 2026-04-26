@@ -15,7 +15,7 @@ interface RotaryKnobProps {
   size?: number;
 }
 
-const ARC_START = 135; // degrees from 12 o'clock, clockwise
+const ARC_START = 225; // degrees from 12 o'clock — gap centered at bottom (6 o'clock)
 const ARC_SWEEP = 270; // total arc degrees
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
