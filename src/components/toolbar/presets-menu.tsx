@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Library, Loader2, ChevronRight } from "lucide-react";
 import { presetCollections } from "@/lib/presets/registry";
 import { getSoundNames, loadPresetSound } from "@/lib/presets/loader";
 import { useStore } from "@/lib/store";
+import { ConfirmDialog } from "./confirm-dialog";
 
 function formatSoundName(key: string): string {
   return key
@@ -16,11 +17,15 @@ function formatSoundName(key: string): string {
 
 export function PresetsMenu() {
   const setLayers = useStore((s) => s.setLayers);
+  const setGlobalEffects = useStore((s) => s.setGlobalEffects);
   const selectLayer = useStore((s) => s.selectLayer);
+  const layers = useStore((s) => s.layers);
   const [open, setOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
   const [soundsMap, setSoundsMap] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const pendingPresetRef = useRef<{ collectionId: string; soundKey: string } | null>(null);
 
   // Fetch all collections on first open
   useEffect(() => {
@@ -44,16 +49,38 @@ export function PresetsMenu() {
     });
   }, [open, soundsMap]);
 
-  const handleSelect = useCallback(
+  const loadPreset = useCallback(
     async (collectionId: string, soundKey: string) => {
-      const layers = await loadPresetSound(collectionId, soundKey);
-      if (!layers || layers.length === 0) return;
-      setLayers(layers);
-      selectLayer(layers[0].id);
+      const loadedLayers = await loadPresetSound(collectionId, soundKey);
+      if (!loadedLayers || loadedLayers.length === 0) return;
+      setLayers(loadedLayers);
+      setGlobalEffects([]);
+      selectLayer(loadedLayers[0].id);
       setOpen(false);
     },
-    [setLayers, selectLayer],
+    [setLayers, setGlobalEffects, selectLayer],
   );
+
+  const handleSelect = useCallback(
+    (collectionId: string, soundKey: string) => {
+      // If there's existing work, confirm before overwriting
+      if (layers.length > 0) {
+        pendingPresetRef.current = { collectionId, soundKey };
+        setShowConfirm(true);
+      } else {
+        loadPreset(collectionId, soundKey);
+      }
+    },
+    [layers.length, loadPreset],
+  );
+
+  const handleConfirmLoad = useCallback(() => {
+    const pending = pendingPresetRef.current;
+    if (pending) {
+      loadPreset(pending.collectionId, pending.soundKey);
+      pendingPresetRef.current = null;
+    }
+  }, [loadPreset]);
 
   const activeCollection = presetCollections.find((c) => c.id === selectedCollection);
   const activeKeys = selectedCollection ? soundsMap[selectedCollection] : null;
@@ -145,6 +172,17 @@ export function PresetsMenu() {
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={(open) => {
+          setShowConfirm(open);
+          if (!open) pendingPresetRef.current = null;
+        }}
+        onConfirm={handleConfirmLoad}
+        title="Replace current patch?"
+        description="Loading a preset will replace your current layers and effects. This action can be undone."
+      />
     </div>
   );
 }
