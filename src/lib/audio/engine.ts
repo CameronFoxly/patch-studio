@@ -13,7 +13,12 @@ export function layersToSoundDefinition(
   layers: Layer[],
   globalEffects?: Effect[],
 ) {
-  const activeLayers = layers.filter((l) => !l.muted);
+  const activeLayers = layers.filter((l) => {
+    if (l.muted) return false;
+    const anySolo = layers.some((x) => x.solo);
+    if (anySolo && !l.solo) return false;
+    return true;
+  });
   if (activeLayers.length === 0) return null;
 
   if (activeLayers.length === 1) {

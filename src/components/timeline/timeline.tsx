@@ -289,19 +289,23 @@ export function Timeline() {
             </div>
           ) : (
             <div className="divide-y relative">
-              {layers.map((layer, index) => (
-                <TimelineLayer
-                  key={layer.id}
-                  layer={layer}
-                  index={index}
-                  isSelected={layer.id === selectedLayerId}
-                  isDragOver={dragOverIndex === index}
-                  controlsWidth={controlsWidth}
-                  onDragStart={() => handleDragStart(index)}
-                  onDragOver={() => handleDragOver(index)}
-                  onDragEnd={handleDragEnd}
-                />
-              ))}
+              {layers.map((layer, index) => {
+                const anySolo = layers.some((l) => l.solo);
+                return (
+                  <TimelineLayer
+                    key={layer.id}
+                    layer={layer}
+                    index={index}
+                    isSelected={layer.id === selectedLayerId}
+                    isDragOver={dragOverIndex === index}
+                    isFaded={anySolo && !layer.solo}
+                    controlsWidth={controlsWidth}
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={() => handleDragOver(index)}
+                    onDragEnd={handleDragEnd}
+                  />
+                );
+              })}
 
               {/* Playhead line across all layers */}
               <div

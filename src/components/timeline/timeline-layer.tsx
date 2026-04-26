@@ -14,6 +14,7 @@ interface Props {
   index: number;
   isSelected: boolean;
   isDragOver: boolean;
+  isFaded: boolean;
   controlsWidth: number;
   onDragStart: () => void;
   onDragOver: () => void;
@@ -25,6 +26,7 @@ export function TimelineLayer({
   index,
   isSelected,
   isDragOver,
+  isFaded,
   controlsWidth,
   onDragStart,
   onDragOver,
@@ -152,7 +154,7 @@ export function TimelineLayer({
       onDragEnd={onDragEnd}
       className={`flex items-stretch h-20 cursor-pointer transition-colors ${
         isSelected ? "bg-accent" : "hover:bg-muted/50"
-      } ${layer.muted ? "opacity-50" : ""} ${
+      } ${layer.muted || isFaded ? "opacity-50" : ""} ${
         isDragOver ? "border-t-2 border-primary" : ""
       }`}
     >
