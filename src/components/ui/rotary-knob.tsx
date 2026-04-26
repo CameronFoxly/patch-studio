@@ -137,7 +137,7 @@ export function RotaryKnob({
         <path
           d={describeArc(cx, cy, trackRadius, ARC_START, ARC_START + ARC_SWEEP)}
           fill="none"
-          className="stroke-muted"
+          className="stroke-muted pointer-events-none"
           strokeWidth={3}
           strokeLinecap="round"
         />
@@ -147,14 +147,14 @@ export function RotaryKnob({
           <path
             d={describeArc(cx, cy, trackRadius, ARC_START, currentAngle)}
             fill="none"
-            className="stroke-primary"
+            className="stroke-primary pointer-events-none"
             strokeWidth={3}
             strokeLinecap="round"
           />
         )}
 
         {/* Knob body */}
-        <circle cx={cx} cy={cy} r={indicatorRadius} className="fill-card stroke-border" strokeWidth={1} />
+        <circle cx={cx} cy={cy} r={indicatorRadius} className="fill-card stroke-border pointer-events-none" strokeWidth={1} />
 
         {/* Indicator line */}
         <line
@@ -162,10 +162,13 @@ export function RotaryKnob({
           y1={pointerInner.y}
           x2={pointer.x}
           y2={pointer.y}
-          className="stroke-primary"
+          className="stroke-primary pointer-events-none"
           strokeWidth={2}
           strokeLinecap="round"
         />
+
+        {/* Invisible hit area on top to prevent cursor flicker */}
+        <rect x={0} y={0} width={svgSize} height={svgSize} fill="transparent" className="cursor-ns-resize" />
       </svg>
 
       <input
