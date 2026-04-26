@@ -126,7 +126,7 @@ export function RotaryKnob({
         width={svgSize}
         height={svgSize}
         viewBox={`0 0 ${svgSize} ${svgSize}`}
-        className="cursor-grab active:cursor-grabbing select-none"
+        className="cursor-ns-resize select-none"
         style={{ touchAction: "none" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
