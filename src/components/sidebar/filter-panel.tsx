@@ -282,7 +282,7 @@ export function FilterPanel({ layer }: { layer: Layer }) {
                 )}
               </KnobRow>
 
-              <Separator />
+              <Separator className="-mx-3 data-horizontal:w-auto" />
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

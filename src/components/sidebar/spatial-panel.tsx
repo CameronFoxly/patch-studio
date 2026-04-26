@@ -87,7 +87,7 @@ export function SpatialPanel({ layer }: { layer: Layer }) {
             </div>
           </div>
 
-          <Separator />
+          <Separator className="-mx-4 data-horizontal:w-auto" />
 
           <div className="space-y-2">
             <Label className="text-xs">Panning Model</Label>
@@ -131,7 +131,7 @@ export function SpatialPanel({ layer }: { layer: Layer }) {
             </Select>
           </div>
 
-          <Separator />
+          <Separator className="-mx-4 data-horizontal:w-auto" />
 
           <div className="space-y-3">
             <SliderInput
@@ -160,7 +160,7 @@ export function SpatialPanel({ layer }: { layer: Layer }) {
             />
           </div>
 
-          <Separator />
+          <Separator className="-mx-4 data-horizontal:w-auto" />
 
           <div className="space-y-3">
             <Label className="text-xs font-medium">Cone</Label>

@@ -114,7 +114,7 @@ export function SourcePanel({ layer }: { layer: Layer }) {
     <div className="space-y-4">
       <ToggleGroup label="Mode" options={MODE_OPTIONS} value={mode} onChange={handleModeChange} />
 
-      <Separator />
+      <Separator className="-mx-4 data-horizontal:w-auto" />
 
       {mode === "oscillator" && (
         <OscillatorControls source={source as OscillatorSource} onChange={setSource} />
@@ -192,7 +192,7 @@ function OscillatorControls({
         onNoteSelect={(v) => onChange({ ...source, frequency: v })}
       />
 
-      <Separator />
+      <Separator className="-mx-4 data-horizontal:w-auto" />
 
       <div className="flex items-center justify-between">
         <Label className="text-xs">FM Synthesis</Label>

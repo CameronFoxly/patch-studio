@@ -46,7 +46,7 @@ export function GainPanPanel({ layer }: { layer: Layer }) {
         </div>
       </div>
 
-      <Separator />
+      <Separator className="-mx-4 data-horizontal:w-auto" />
 
       <SliderInput
         label="Onset Delay"
