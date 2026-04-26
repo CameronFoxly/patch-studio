@@ -22,6 +22,7 @@ export const useStore = create<StoreState>()(
       // Only track undoable state (layers, sequence) — not transient UI/timeline state
       equality: (pastState, currentState) =>
         pastState.layers === currentState.layers &&
+        pastState.globalEffects === currentState.globalEffects &&
         pastState.sequenceSteps === currentState.sequenceSteps &&
         pastState.sequenceOptions === currentState.sequenceOptions,
     },

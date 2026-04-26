@@ -10,37 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Layer, Effect, EffectType } from "@/lib/types";
+import type { Effect, EffectType } from "@/lib/types";
 import { PlusIcon, XIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { EFFECT_TYPES, EFFECT_LABEL_MAP, defaultEffect, EffectParams } from "./effect-controls";
 
-export function EffectsPanel({ layer }: { layer: Layer }) {
-  const updateLayerEffects = useStore((s) => s.updateLayerEffects);
-  const effects = layer.effects ?? [];
+export function GlobalEffectsPanel() {
+  const globalEffects = useStore((s) => s.globalEffects);
+  const addGlobalEffect = useStore((s) => s.addGlobalEffect);
+  const updateGlobalEffect = useStore((s) => s.updateGlobalEffect);
+  const removeGlobalEffect = useStore((s) => s.removeGlobalEffect);
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
-
-  function setEffects(next: Effect[]) {
-    updateLayerEffects(layer.id, next);
-  }
-
-  function updateEffect(index: number, updated: Effect) {
-    const next = [...effects];
-    next[index] = updated;
-    setEffects(next);
-  }
-
-  function removeEffect(index: number) {
-    setEffects(effects.filter((_, i) => i !== index));
-    setCollapsed((prev) => {
-      const next = { ...prev };
-      delete next[index];
-      return next;
-    });
-  }
-
-  function addEffect(type: EffectType) {
-    setEffects([...effects, defaultEffect(type)]);
-  }
 
   function toggleCollapsed(index: number) {
     setCollapsed((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -48,11 +27,17 @@ export function EffectsPanel({ layer }: { layer: Layer }) {
 
   return (
     <div className="space-y-3">
-      {effects.length === 0 && (
-        <p className="text-xs text-muted-foreground">No effects in chain</p>
+      <p className="text-xs text-muted-foreground">
+        Effects applied to the master bus after all layers are mixed.
+      </p>
+
+      {globalEffects.length === 0 && (
+        <p className="text-xs text-muted-foreground italic">
+          No master effects
+        </p>
       )}
 
-      {effects.map((effect, i) => (
+      {globalEffects.map((effect, i) => (
         <div key={i} className="rounded-md border">
           <div
             className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted/50"
@@ -74,7 +59,12 @@ export function EffectsPanel({ layer }: { layer: Layer }) {
               className="h-6 w-6"
               onClick={(e) => {
                 e.stopPropagation();
-                removeEffect(i);
+                removeGlobalEffect(i);
+                setCollapsed((prev) => {
+                  const next = { ...prev };
+                  delete next[i];
+                  return next;
+                });
               }}
             >
               <XIcon className="h-3 w-3" />
@@ -84,7 +74,7 @@ export function EffectsPanel({ layer }: { layer: Layer }) {
             <div className="px-3 pb-3">
               <EffectParams
                 effect={effect}
-                onChange={(updated) => updateEffect(i, updated)}
+                onChange={(updated) => updateGlobalEffect(i, updated)}
               />
             </div>
           )}
@@ -93,11 +83,11 @@ export function EffectsPanel({ layer }: { layer: Layer }) {
 
       <Select
         onValueChange={(v) => {
-          if (v) addEffect(v as EffectType);
+          if (v) addGlobalEffect(defaultEffect(v as EffectType));
         }}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Add effect..." />
+          <SelectValue placeholder="Add master effect..." />
         </SelectTrigger>
         <SelectContent>
           {EFFECT_TYPES.map((t) => (

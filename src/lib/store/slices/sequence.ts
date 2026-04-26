@@ -5,12 +5,14 @@ import type { StoreState } from "../index";
 export interface SequenceSlice {
   sequenceSteps: SequenceStep[];
   sequenceOptions: SequenceOptions;
+  activeStepIndex: number | null;
 
   addSequenceStep: () => void;
   removeSequenceStep: (id: string) => void;
   updateSequenceStep: (id: string, updates: Partial<SequenceStep>) => void;
   reorderSequenceSteps: (fromIndex: number, toIndex: number) => void;
   setSequenceOptions: (options: Partial<SequenceOptions>) => void;
+  setActiveStepIndex: (index: number | null) => void;
   clearSequence: () => void;
 }
 
@@ -22,13 +24,16 @@ export const createSequenceSlice: StateCreator<
 > = (set, get) => ({
   sequenceSteps: [],
   sequenceOptions: { bpm: 120, loop: false },
+  activeStepIndex: null,
 
   addSequenceStep: () => {
     const step: SequenceStep = {
       id: crypto.randomUUID(),
       name: `Step ${get().sequenceSteps.length + 1}`,
       sound: {},
-      duration: 0.5,
+      layerId: null,
+      wait: 60 / (get().sequenceOptions.bpm ?? 120),
+      volume: 1,
     };
     set({ sequenceSteps: [...get().sequenceSteps, step] });
   },
@@ -56,7 +61,15 @@ export const createSequenceSlice: StateCreator<
     set({ sequenceOptions: { ...get().sequenceOptions, ...options } });
   },
 
+  setActiveStepIndex: (index) => {
+    set({ activeStepIndex: index });
+  },
+
   clearSequence: () => {
-    set({ sequenceSteps: [], sequenceOptions: { bpm: 120, loop: false } });
+    set({
+      sequenceSteps: [],
+      sequenceOptions: { bpm: 120, loop: false },
+      activeStepIndex: null,
+    });
   },
 });

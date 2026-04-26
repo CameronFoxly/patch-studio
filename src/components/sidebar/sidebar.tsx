@@ -10,6 +10,7 @@ import { EffectsPanel } from "./effects-panel";
 import { ModulationPanel } from "./modulation-panel";
 import { SpatialPanel } from "./spatial-panel";
 import { GainPanPanel } from "./gain-pan-panel";
+import { GlobalEffectsPanel } from "./global-effects-panel";
 
 export function Sidebar() {
   const activeSidebarPanel = useStore((s) => s.activeSidebarPanel);
@@ -18,12 +19,35 @@ export function Sidebar() {
     s.layers.find((l) => l.id === s.selectedLayerId),
   );
 
+  // When no layer is selected, only show the Master panel
   if (!layer) {
     return (
-      <div className="h-full border-l bg-card flex items-center justify-center p-6">
-        <p className="text-sm text-muted-foreground text-center">
-          Select a layer to edit its properties
-        </p>
+      <div className="h-full border-l bg-card flex flex-col">
+        <div className="px-4 py-3 border-b">
+          <h2 className="font-semibold text-sm">Master</h2>
+        </div>
+        <Tabs
+          value="global-effects"
+          onValueChange={(v) => {
+            if (v) setActiveSidebarPanel(v as typeof activeSidebarPanel);
+          }}
+          className="flex-1 flex flex-col min-h-0"
+        >
+          <div className="px-2 border-b">
+            <TabsList className="w-full h-auto flex-wrap gap-1 bg-transparent p-1">
+              <TabsTrigger value="global-effects" className="text-xs px-2 py-1">
+                Master FX
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-4">
+              <TabsContent value="global-effects" className="mt-0">
+                <GlobalEffectsPanel />
+              </TabsContent>
+            </div>
+          </ScrollArea>
+        </Tabs>
       </div>
     );
   }
@@ -60,6 +84,9 @@ export function Sidebar() {
             <TabsTrigger value="spatial" className="text-xs px-2 py-1">
               Spatial
             </TabsTrigger>
+            <TabsTrigger value="global-effects" className="text-xs px-2 py-1">
+              Master FX
+            </TabsTrigger>
           </TabsList>
         </div>
         <ScrollArea className="flex-1">
@@ -81,6 +108,9 @@ export function Sidebar() {
             </TabsContent>
             <TabsContent value="spatial" className="mt-0">
               <SpatialPanel layer={layer} />
+            </TabsContent>
+            <TabsContent value="global-effects" className="mt-0">
+              <GlobalEffectsPanel />
             </TabsContent>
           </div>
         </ScrollArea>

@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { SliderInput } from "@/components/ui/slider-input";
 import { Button } from "@/components/ui/button";
 import { PianoKeyboardDialog } from "@/components/ui/piano-keyboard";
 import { Piano } from "lucide-react";
+import { HarmonicsEditor } from "./harmonics-editor";
 import type {
   Layer,
   Source,
@@ -322,25 +322,10 @@ function WavetableControls({
         currentFrequency={source.frequency}
         onNoteSelect={(v) => onChange({ ...source, frequency: v })}
       />
-      <div className="space-y-2">
-        <Label className="text-xs">Harmonics (comma-separated)</Label>
-        <Input
-          type="text"
-          value={source.harmonics.join(", ")}
-          onChange={(e) => {
-            const harmonics = e.target.value
-              .split(",")
-              .map((s) => parseFloat(s.trim()))
-              .filter((n) => !isNaN(n));
-            if (harmonics.length > 0) {
-              onChange({ ...source, harmonics });
-            }
-          }}
-        />
-        <span className="text-xs text-muted-foreground">
-          {source.harmonics.length} harmonics
-        </span>
-      </div>
+      <HarmonicsEditor
+        harmonics={source.harmonics}
+        onChange={(harmonics) => onChange({ ...source, harmonics })}
+      />
     </div>
   );
 }
