@@ -15,8 +15,16 @@ function formatSoundName(key: string): string {
     .join(" ");
 }
 
-export function PresetsMenu() {
+interface PresetsMenuProps {
+  /** "replace" replaces all layers; "append" adds to existing layers */
+  mode?: "replace" | "append";
+  /** Custom trigger button — if omitted, renders the default Presets button */
+  trigger?: React.ReactNode;
+}
+
+export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
   const setLayers = useStore((s) => s.setLayers);
+  const appendLayers = useStore((s) => s.appendLayers);
   const setGlobalEffects = useStore((s) => s.setGlobalEffects);
   const selectLayer = useStore((s) => s.selectLayer);
   const layers = useStore((s) => s.layers);
@@ -53,25 +61,33 @@ export function PresetsMenu() {
     async (collectionId: string, soundKey: string) => {
       const loadedLayers = await loadPresetSound(collectionId, soundKey);
       if (!loadedLayers || loadedLayers.length === 0) return;
-      setLayers(loadedLayers);
-      setGlobalEffects([]);
-      selectLayer(loadedLayers[0].id);
+
+      if (mode === "append") {
+        appendLayers(loadedLayers);
+        selectLayer(loadedLayers[0].id);
+      } else {
+        setLayers(loadedLayers);
+        setGlobalEffects([]);
+        selectLayer(loadedLayers[0].id);
+      }
       setOpen(false);
     },
-    [setLayers, setGlobalEffects, selectLayer],
+    [mode, setLayers, appendLayers, setGlobalEffects, selectLayer],
   );
 
   const handleSelect = useCallback(
     (collectionId: string, soundKey: string) => {
-      // If there's existing work, confirm before overwriting
-      if (layers.length > 0) {
+      if (mode === "append") {
+        // Append never needs confirmation — it doesn't destroy existing work
+        loadPreset(collectionId, soundKey);
+      } else if (layers.length > 0) {
         pendingPresetRef.current = { collectionId, soundKey };
         setShowConfirm(true);
       } else {
         loadPreset(collectionId, soundKey);
       }
     },
-    [layers.length, loadPreset],
+    [mode, layers.length, loadPreset],
   );
 
   const handleConfirmLoad = useCallback(() => {
@@ -87,14 +103,17 @@ export function PresetsMenu() {
 
   return (
     <div className="relative">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setOpen(!open)}
-      >
-        <Library className="h-4 w-4" />
-        Presets
-      </Button>
+      <div onClick={() => setOpen(!open)}>
+        {trigger ?? (
+          <Button
+            variant="outline"
+            size="sm"
+          >
+            <Library className="h-4 w-4" />
+            Presets
+          </Button>
+        )}
+      </div>
 
       {open && (
         <>
