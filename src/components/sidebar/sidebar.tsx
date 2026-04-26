@@ -34,7 +34,7 @@ export function Sidebar() {
           className="flex-1 flex flex-col min-h-0"
         >
           <div className="px-2 border-b">
-            <TabsList className="w-full h-auto flex-wrap gap-1 bg-transparent p-1">
+            <TabsList className="w-full group-data-horizontal/tabs:h-auto flex-wrap gap-1 bg-transparent p-1">
               <TabsTrigger value="global-effects" className="text-xs px-2 py-1">
                 Master FX
               </TabsTrigger>
@@ -65,7 +65,7 @@ export function Sidebar() {
         className="flex-1 flex flex-col min-h-0"
       >
         <div className="px-2 border-b">
-          <TabsList className="w-full h-auto flex-wrap gap-1 bg-transparent p-1">
+          <TabsList className="w-full group-data-horizontal/tabs:h-auto flex-wrap gap-1 bg-transparent p-1">
             <TabsTrigger value="source" className="text-xs px-2 py-1">
               Source
             </TabsTrigger>
