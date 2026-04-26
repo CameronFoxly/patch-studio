@@ -7,21 +7,23 @@ interface Props {
   layer: Layer;
   blockWidth: number;
   onUpdateEnvelope: (envelope: Envelope) => void;
+  onUpdateGain?: (gain: number) => void;
 }
 
 type DragPoint = "attack" | "decay" | "release" | null;
 
 const POINT_COLOR = "#3b82f6";
 
-export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope }: Props) {
+export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope, onUpdateGain }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<DragPoint>(null);
   const [hovered, setHovered] = useState<DragPoint>(null);
-  const dragStartRef = useRef<{ mouseX: number; mouseY: number; env: Envelope } | null>(null);
+  const dragStartRef = useRef<{ mouseX: number; mouseY: number; env: Envelope; gain: number } | null>(null);
 
   const env = layer.envelope;
   if (!env) return null;
 
+  const gain = layer.gain ?? 0.8;
   const attack = env.attack || 0;
   const decay = env.decay;
   const sustain = env.sustain ?? 0;
@@ -34,9 +36,9 @@ export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope }: Props) 
   const x0 = 0;
   const y0 = 100;
   const xA = timeToX(attack);
-  const yA = 0;
+  const yA = heightPct(gain);
   const xD = timeToX(attack + decay);
-  const yD = heightPct(sustain);
+  const yD = heightPct(sustain * gain);
   const xS = timeToX(totalDuration - release);
   const yS = yD;
   const xR = timeToX(totalDuration);
@@ -51,6 +53,7 @@ export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope }: Props) 
         mouseX: e.clientX,
         mouseY: e.clientY,
         env: { ...env },
+        gain: layer.gain ?? 0.8,
       };
 
       const handleMove = (moveE: MouseEvent) => {
@@ -64,6 +67,13 @@ export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope }: Props) 
         switch (point) {
           case "attack": {
             next.attack = Math.max(0, Math.min(2, (startEnv.attack || 0) + timeDelta));
+            // Vertical drag controls layer gain
+            if (onUpdateGain) {
+              const dy = moveE.clientY - dragStartRef.current.mouseY;
+              const gainDelta = dy / -100;
+              const newGain = Math.max(0, Math.min(1, dragStartRef.current.gain + gainDelta));
+              onUpdateGain(newGain);
+            }
             break;
           }
           case "decay": {
@@ -92,7 +102,7 @@ export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope }: Props) 
       window.addEventListener("mousemove", handleMove);
       window.addEventListener("mouseup", handleUp);
     },
-    [env, blockWidth, totalDuration, onUpdateEnvelope],
+    [env, blockWidth, totalDuration, onUpdateEnvelope, onUpdateGain, layer.gain],
   );
 
   const controlPoints: { id: DragPoint; cx: number; cy: number; label: string }[] = [

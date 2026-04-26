@@ -125,7 +125,7 @@ export function PianoKeyboardDialog({
 
   return createPortal(
     <div
-      className="fixed z-50 w-[304px] rounded-xl bg-popover p-3 text-popover-foreground ring-1 ring-foreground/10 shadow-lg"
+      className="fixed z-50 w-[304px] rounded-md bg-popover p-3 text-popover-foreground ring-1 ring-foreground/10 shadow-lg"
       style={{ left: position.x, top: position.y }}
     >
       {/* Draggable title bar */}
@@ -179,7 +179,7 @@ export function PianoKeyboardDialog({
                 className={`flex-1 rounded-b-md border transition-colors cursor-pointer flex flex-col items-center justify-end pb-1 ${
                   isActive
                     ? "bg-primary/20 border-primary text-primary"
-                    : "bg-background border-border hover:bg-muted text-muted-foreground"
+                    : "bg-white border-neutral-300 hover:bg-neutral-100 text-neutral-500 dark:border-neutral-400 dark:hover:bg-neutral-200 dark:text-neutral-400"
                 }`}
                 title={`${NOTE_NAMES[noteIndex]}${octave} — ${midiToFrequency(midi)} Hz`}
               >
@@ -211,7 +211,7 @@ export function PianoKeyboardDialog({
               className={`absolute top-0 h-[58%] rounded-b-md transition-colors cursor-pointer z-10 ${
                 isActive
                   ? "bg-primary text-primary-foreground border border-primary"
-                  : "bg-foreground border border-foreground/80 hover:bg-foreground/80"
+                  : "bg-neutral-900 border border-neutral-800 hover:bg-neutral-700 dark:bg-neutral-950 dark:border-neutral-800 dark:hover:bg-neutral-800"
               }`}
               style={{ left: `${left}%`, width: `${blackKeyWidth}%` }}
               title={`${NOTE_NAMES[noteIndex]}${octave} — ${midiToFrequency(midi)} Hz`}

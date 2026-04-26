@@ -2,7 +2,8 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { SliderInput } from "@/components/ui/slider-input";
+import { RotaryKnob } from "@/components/ui/rotary-knob";
+import { KnobRow } from "@/components/ui/knob-row";
 import type { Effect, EffectType } from "@/lib/types";
 
 export const EFFECT_TYPES: { value: EffectType; label: string }[] = [
@@ -72,98 +73,98 @@ export function EffectParams({
   switch (e.type) {
     case "reverb":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Decay" value={e.decay ?? 2} min={0.1} max={10} step={0.1} onChange={(v) => onChange({ ...e, decay: v })} />
-          <SliderInput label="Pre-Delay" value={e.preDelay ?? 0} min={0} max={0.5} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, preDelay: v })} />
-          <SliderInput label="Damping" value={e.damping ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, damping: v })} />
-          <SliderInput label="Room Size" value={e.roomSize ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, roomSize: v })} />
-          <SliderInput label="Mix" value={e.mix ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Decay" value={e.decay ?? 2} min={0.1} max={10} step={0.1} onChange={(v) => onChange({ ...e, decay: v })} />
+          <RotaryKnob label="Pre-Delay" value={e.preDelay ?? 0} min={0} max={0.5} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, preDelay: v })} />
+          <RotaryKnob label="Damping" value={e.damping ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, damping: v })} />
+          <RotaryKnob label="Room" value={e.roomSize ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, roomSize: v })} />
+          <RotaryKnob label="Mix" value={e.mix ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+        </KnobRow>
       );
     case "delay":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Time" value={e.time ?? 0.25} min={0.01} max={2} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, time: v })} />
-          <SliderInput label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
-          <SliderInput label="Mix" value={e.mix ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Time" value={e.time ?? 0.25} min={0.01} max={2} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, time: v })} />
+          <RotaryKnob label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
+          <RotaryKnob label="Mix" value={e.mix ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+        </KnobRow>
       );
     case "chorus":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Rate" value={e.rate ?? 1.5} min={0.1} max={10} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
-          <SliderInput label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
-          <SliderInput label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Rate" value={e.rate ?? 1.5} min={0.1} max={10} step={0.1} unit="Hz" onChange={(v) => onChange({ ...e, rate: v })} />
+          <RotaryKnob label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
+          <RotaryKnob label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+        </KnobRow>
       );
     case "phaser":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Rate" value={e.rate ?? 0.5} min={0.1} max={10} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
-          <SliderInput label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
-          <SliderInput label="Stages" value={e.stages ?? 4} min={2} max={12} step={2} format={(v) => `${v}`} onChange={(v) => onChange({ ...e, stages: v })} />
-          <SliderInput label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
-          <SliderInput label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Rate" value={e.rate ?? 0.5} min={0.1} max={10} step={0.1} unit="Hz" onChange={(v) => onChange({ ...e, rate: v })} />
+          <RotaryKnob label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
+          <RotaryKnob label="Stages" value={e.stages ?? 4} min={2} max={12} step={2} onChange={(v) => onChange({ ...e, stages: v })} />
+          <RotaryKnob label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
+          <RotaryKnob label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+        </KnobRow>
       );
     case "flanger":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Rate" value={e.rate ?? 0.5} min={0.1} max={10} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
-          <SliderInput label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
-          <SliderInput label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
-          <SliderInput label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Rate" value={e.rate ?? 0.5} min={0.1} max={10} step={0.1} unit="Hz" onChange={(v) => onChange({ ...e, rate: v })} />
+          <RotaryKnob label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
+          <RotaryKnob label="Feedback" value={e.feedback ?? 0.3} min={0} max={0.95} step={0.01} onChange={(v) => onChange({ ...e, feedback: v })} />
+          <RotaryKnob label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+        </KnobRow>
       );
     case "tremolo":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Rate" value={e.rate ?? 4} min={0.1} max={20} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
-          <SliderInput label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Rate" value={e.rate ?? 4} min={0.1} max={20} step={0.1} unit="Hz" onChange={(v) => onChange({ ...e, rate: v })} />
+          <RotaryKnob label="Depth" value={e.depth ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
+        </KnobRow>
       );
     case "vibrato":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Rate" value={e.rate ?? 5} min={0.1} max={20} step={0.1} format={(v) => `${v.toFixed(1)} Hz`} onChange={(v) => onChange({ ...e, rate: v })} />
-          <SliderInput label="Depth" value={e.depth ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Rate" value={e.rate ?? 5} min={0.1} max={20} step={0.1} unit="Hz" onChange={(v) => onChange({ ...e, rate: v })} />
+          <RotaryKnob label="Depth" value={e.depth ?? 0.3} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, depth: v })} />
+        </KnobRow>
       );
     case "bitcrusher":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Bits" value={e.bits ?? 8} min={1} max={16} step={1} format={(v) => `${v}`} onChange={(v) => onChange({ ...e, bits: v })} />
-          <SliderInput label="Sample Rate Reduction" value={e.sampleRateReduction ?? 1} min={1} max={40} step={1} format={(v) => `${v}x`} onChange={(v) => onChange({ ...e, sampleRateReduction: v })} />
-          <SliderInput label="Mix" value={e.mix ?? 1} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Bits" value={e.bits ?? 8} min={1} max={16} step={1} onChange={(v) => onChange({ ...e, bits: v })} />
+          <RotaryKnob label="SR Reduce" value={e.sampleRateReduction ?? 1} min={1} max={40} step={1} format={(v) => `${v}x`} onChange={(v) => onChange({ ...e, sampleRateReduction: v })} />
+          <RotaryKnob label="Mix" value={e.mix ?? 1} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+        </KnobRow>
       );
     case "compressor":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Threshold" value={e.threshold ?? -24} min={-100} max={0} step={1} format={(v) => `${v} dB`} onChange={(v) => onChange({ ...e, threshold: v })} />
-          <SliderInput label="Knee" value={e.knee ?? 30} min={0} max={40} step={1} format={(v) => `${v} dB`} onChange={(v) => onChange({ ...e, knee: v })} />
-          <SliderInput label="Ratio" value={e.ratio ?? 12} min={1} max={20} step={0.5} format={(v) => `${v}:1`} onChange={(v) => onChange({ ...e, ratio: v })} />
-          <SliderInput label="Attack" value={e.attack ?? 0.003} min={0} max={1} step={0.001} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, attack: v })} />
-          <SliderInput label="Release" value={e.release ?? 0.25} min={0} max={1} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, release: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Threshold" value={e.threshold ?? -24} min={-100} max={0} step={1} unit="dB" onChange={(v) => onChange({ ...e, threshold: v })} />
+          <RotaryKnob label="Knee" value={e.knee ?? 30} min={0} max={40} step={1} unit="dB" onChange={(v) => onChange({ ...e, knee: v })} />
+          <RotaryKnob label="Ratio" value={e.ratio ?? 12} min={1} max={20} step={0.5} format={(v) => `${v}:1`} onChange={(v) => onChange({ ...e, ratio: v })} />
+          <RotaryKnob label="Attack" value={e.attack ?? 0.003} min={0} max={1} step={0.001} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, attack: v })} />
+          <RotaryKnob label="Release" value={e.release ?? 0.25} min={0} max={1} step={0.01} format={(v) => `${(v * 1000).toFixed(0)}ms`} onChange={(v) => onChange({ ...e, release: v })} />
+        </KnobRow>
       );
     case "distortion":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Amount" value={e.amount ?? 50} min={0} max={100} step={1} format={(v) => `${v}`} onChange={(v) => onChange({ ...e, amount: v })} />
-          <SliderInput label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Amount" value={e.amount ?? 50} min={0} max={100} step={1} onChange={(v) => onChange({ ...e, amount: v })} />
+          <RotaryKnob label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+        </KnobRow>
       );
     case "gain":
       return (
-        <div className="space-y-2">
-          <SliderInput label="Value" value={e.value ?? 1} min={0} max={2} step={0.01} onChange={(v) => onChange({ ...e, value: v })} />
-        </div>
+        <KnobRow>
+          <RotaryKnob label="Value" value={e.value ?? 1} min={0} max={2} step={0.01} onChange={(v) => onChange({ ...e, value: v })} />
+        </KnobRow>
       );
     case "pan":
       return (
-        <div className="space-y-2">
-          <SliderInput
+        <KnobRow>
+          <RotaryKnob
             label="Pan"
             value={e.value ?? 0}
             min={-1}
@@ -178,7 +179,7 @@ export function EffectParams({
             }
             onChange={(v) => onChange({ ...e, value: v })}
           />
-        </div>
+        </KnobRow>
       );
     case "eq":
       return (
@@ -198,7 +199,9 @@ export function EffectParams({
               onChange={(ev) => onChange({ ...e, url: ev.target.value })}
             />
           </div>
-          <SliderInput label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+          <KnobRow>
+            <RotaryKnob label="Mix" value={e.mix ?? 0.5} min={0} max={1} step={0.01} onChange={(v) => onChange({ ...e, mix: v })} />
+          </KnobRow>
         </div>
       );
     default:

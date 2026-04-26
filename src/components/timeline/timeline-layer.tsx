@@ -7,12 +7,14 @@ import { WaveformCanvas } from "./waveform-canvas";
 import { EnvelopeOverlay } from "./envelope-overlay";
 import type { Layer } from "@/lib/types";
 import { Volume2, VolumeX, Trash2, Copy, Star, GripVertical, Activity } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface Props {
   layer: Layer;
   index: number;
   isSelected: boolean;
   isDragOver: boolean;
+  isFaded: boolean;
   controlsWidth: number;
   onDragStart: () => void;
   onDragOver: () => void;
@@ -24,6 +26,7 @@ export function TimelineLayer({
   index,
   isSelected,
   isDragOver,
+  isFaded,
   controlsWidth,
   onDragStart,
   onDragOver,
@@ -38,6 +41,7 @@ export function TimelineLayer({
   const updateLayerDelay = useStore((s) => s.updateLayerDelay);
   const updateLayerName = useStore((s) => s.updateLayerName);
   const updateLayerEnvelope = useStore((s) => s.updateLayerEnvelope);
+  const updateLayerGain = useStore((s) => s.updateLayerGain);
   const zoom = useStore((s) => s.zoom);
 
   const [isDragging, setIsDragging] = useState(false);
@@ -150,7 +154,7 @@ export function TimelineLayer({
       onDragEnd={onDragEnd}
       className={`flex items-stretch h-20 cursor-pointer transition-colors ${
         isSelected ? "bg-accent" : "hover:bg-muted/50"
-      } ${layer.muted ? "opacity-50" : ""} ${
+      } ${layer.muted || isFaded ? "opacity-50" : ""} ${
         isDragOver ? "border-t-2 border-primary" : ""
       }`}
     >
@@ -187,77 +191,113 @@ export function TimelineLayer({
           </p>
         </div>
         <div className="flex gap-0.5 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            title={layer.showEnvelope ? "Hide envelope" : "Show envelope"}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleLayerEnvelopeOverlay(layer.id);
-            }}
-          >
-            <Activity
-              className={`h-3 w-3 ${layer.showEnvelope ? "text-primary" : ""}`}
-            />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleLayerMute(layer.id);
-            }}
-          >
-            {layer.muted ? (
-              <VolumeX className="h-3 w-3" />
-            ) : (
-              <Volume2 className="h-3 w-3" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleLayerSolo(layer.id);
-            }}
-          >
-            <Star
-              className={`h-3 w-3 ${layer.solo ? "fill-yellow-500 text-yellow-500" : ""}`}
-            />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.stopPropagation();
-              duplicateLayer(layer.id);
-            }}
-          >
-            <Copy className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              removeLayer(layer.id);
-            }}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLayerEnvelopeOverlay(layer.id);
+                    }}
+                  >
+                    <Activity
+                      className={`h-3 w-3 ${layer.showEnvelope ? "text-primary" : ""}`}
+                    />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">Envelope overlay</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLayerMute(layer.id);
+                    }}
+                  >
+                    {layer.muted ? (
+                      <VolumeX className="h-3 w-3" />
+                    ) : (
+                      <Volume2 className="h-3 w-3" />
+                    )}
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">{layer.muted ? "Unmute" : "Mute"}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLayerSolo(layer.id);
+                    }}
+                  >
+                    <Star
+                      className={`h-3 w-3 ${layer.solo ? "fill-yellow-500 text-yellow-500" : ""}`}
+                    />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">Solo</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      duplicateLayer(layer.id);
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">Duplicate</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeLayer(layer.id);
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">Delete</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
       {/* Waveform area */}
       <div className="flex-1 relative overflow-hidden">
         <div
-          className={`absolute inset-y-1 rounded-md bg-primary/10 border border-primary/20 ${
+          className={`absolute inset-y-1 rounded-sm bg-primary/10 border border-primary/20 ${
             isDragging ? "cursor-grabbing ring-2 ring-primary/40" : "cursor-grab hover:border-primary/40"
           }`}
           style={{ left: `${delayOffset}px`, width: `${blockWidth}px` }}
@@ -270,6 +310,7 @@ export function TimelineLayer({
               layer={layer}
               blockWidth={blockWidth}
               onUpdateEnvelope={(env) => updateLayerEnvelope(layer.id, env)}
+              onUpdateGain={(g) => updateLayerGain(layer.id, g)}
             />
           )}
           {/* Delay label */}

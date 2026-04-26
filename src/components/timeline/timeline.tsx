@@ -4,8 +4,9 @@ import { useRef, useCallback, useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import { TimelineLayer } from "./timeline-layer";
 import { Button } from "@/components/ui/button";
-import { Plus, ZoomIn, ZoomOut } from "lucide-react";
+import { Plus, ZoomIn, ZoomOut, Library } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PresetsMenu } from "@/components/toolbar/presets-menu";
 
 const DEFAULT_CONTROLS_WIDTH = 220;
 const MIN_CONTROLS_WIDTH = 140;
@@ -265,31 +266,46 @@ export function Timeline() {
               <p className="text-sm mb-4">
                 No layers yet. Add a layer to get started.
               </p>
-              <Button
-                onClick={() => addLayer()}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Layer
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => addLayer()}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Layer
+                </Button>
+                <PresetsMenu
+                  mode="append"
+                  trigger={
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Library className="h-4 w-4" />
+                      Add Preset
+                    </Button>
+                  }
+                />
+              </div>
             </div>
           ) : (
             <div className="divide-y relative">
-              {layers.map((layer, index) => (
-                <TimelineLayer
-                  key={layer.id}
-                  layer={layer}
-                  index={index}
-                  isSelected={layer.id === selectedLayerId}
-                  isDragOver={dragOverIndex === index}
-                  controlsWidth={controlsWidth}
-                  onDragStart={() => handleDragStart(index)}
-                  onDragOver={() => handleDragOver(index)}
-                  onDragEnd={handleDragEnd}
-                />
-              ))}
+              {layers.map((layer, index) => {
+                const anySolo = layers.some((l) => l.solo);
+                return (
+                  <TimelineLayer
+                    key={layer.id}
+                    layer={layer}
+                    index={index}
+                    isSelected={layer.id === selectedLayerId}
+                    isDragOver={dragOverIndex === index}
+                    isFaded={anySolo && !layer.solo}
+                    controlsWidth={controlsWidth}
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={() => handleDragOver(index)}
+                    onDragEnd={handleDragEnd}
+                  />
+                );
+              })}
 
               {/* Playhead line across all layers */}
               <div
@@ -300,7 +316,7 @@ export function Timeline() {
           )}
 
           {layers.length > 0 && (
-            <div className="p-4">
+            <div className="p-4 flex gap-2">
               <Button
                 onClick={() => addLayer()}
                 variant="ghost"
@@ -310,6 +326,15 @@ export function Timeline() {
                 <Plus className="h-4 w-4" />
                 Add Layer
               </Button>
+              <PresetsMenu
+                mode="append"
+                trigger={
+                  <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                    <Library className="h-4 w-4" />
+                    Add Preset
+                  </Button>
+                }
+              />
             </div>
           )}
         </div>

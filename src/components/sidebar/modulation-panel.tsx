@@ -3,7 +3,9 @@
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { SliderInput } from "@/components/ui/slider-input";
+import { RotaryKnob } from "@/components/ui/rotary-knob";
+import { KnobRow } from "@/components/ui/knob-row";
+import { ToggleGroup } from "@/components/ui/toggle-group";
 import {
   Select,
   SelectContent,
@@ -14,11 +16,28 @@ import {
 import type { Layer, LFO, OscillatorType, LFOTarget } from "@/lib/types";
 import { PlusIcon, XIcon } from "lucide-react";
 
-const LFO_WAVEFORMS: { value: OscillatorType; label: string }[] = [
-  { value: "sine", label: "Sine" },
-  { value: "triangle", label: "Triangle" },
-  { value: "square", label: "Square" },
-  { value: "sawtooth", label: "Sawtooth" },
+/* ── SVG wave shape icons for LFO waveforms ── */
+
+function WaveIcon({ d }: { d: string }) {
+  return (
+    <svg viewBox="0 0 40 20" className="w-full h-full" preserveAspectRatio="none">
+      <path d={d} fill="none" stroke="currentColor" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+const WAVE_PATHS: Record<string, string> = {
+  sine: "M 0 10 Q 5 0, 10 10 Q 15 20, 20 10 Q 25 0, 30 10 Q 35 20, 40 10",
+  triangle: "M 0 10 L 5 2 L 15 18 L 25 2 L 35 18 L 40 10",
+  square: "M 0 15 L 0 5 L 10 5 L 10 15 L 20 15 L 20 5 L 30 5 L 30 15 L 40 15",
+  sawtooth: "M 0 15 L 10 5 L 10 15 L 20 5 L 20 15 L 30 5 L 30 15 L 40 5",
+};
+
+const LFO_WAVEFORM_OPTIONS: { value: OscillatorType; label: string; icon: React.ReactNode }[] = [
+  { value: "sine", label: "Sine", icon: <WaveIcon d={WAVE_PATHS.sine} /> },
+  { value: "triangle", label: "Triangle", icon: <WaveIcon d={WAVE_PATHS.triangle} /> },
+  { value: "square", label: "Square", icon: <WaveIcon d={WAVE_PATHS.square} /> },
+  { value: "sawtooth", label: "Saw", icon: <WaveIcon d={WAVE_PATHS.sawtooth} /> },
 ];
 
 const LFO_TARGETS: { value: LFOTarget; label: string }[] = [
@@ -90,26 +109,12 @@ export function ModulationPanel({ layer }: { layer: Layer }) {
             </Button>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs">Waveform</Label>
-            <Select
-              value={lfo.type}
-              onValueChange={(v) => {
-                if (v) updateLFO(i, { ...lfo, type: v as OscillatorType });
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LFO_WAVEFORMS.map((w) => (
-                  <SelectItem key={w.value} value={w.value}>
-                    {w.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <ToggleGroup
+            label="Waveform"
+            options={LFO_WAVEFORM_OPTIONS}
+            value={lfo.type}
+            onChange={(v) => updateLFO(i, { ...lfo, type: v })}
+          />
 
           <div className="space-y-2">
             <Label className="text-xs">Target</Label>
@@ -132,24 +137,25 @@ export function ModulationPanel({ layer }: { layer: Layer }) {
             </Select>
           </div>
 
-          <SliderInput
-            label="Frequency"
-            unit="Hz"
-            min={0.01}
-            max={40}
-            step={0.01}
-            value={lfo.frequency}
-            onChange={(v) => updateLFO(i, { ...lfo, frequency: v })}
-          />
-
-          <SliderInput
-            label="Depth"
-            min={0}
-            max={1000}
-            step={1}
-            value={lfo.depth}
-            onChange={(v) => updateLFO(i, { ...lfo, depth: v })}
-          />
+          <KnobRow>
+            <RotaryKnob
+              label="Frequency"
+              unit="Hz"
+              min={0.01}
+              max={40}
+              step={0.01}
+              value={lfo.frequency}
+              onChange={(v) => updateLFO(i, { ...lfo, frequency: v })}
+            />
+            <RotaryKnob
+              label="Depth"
+              min={0}
+              max={1000}
+              step={1}
+              value={lfo.depth}
+              onChange={(v) => updateLFO(i, { ...lfo, depth: v })}
+            />
+          </KnobRow>
         </div>
       ))}
 

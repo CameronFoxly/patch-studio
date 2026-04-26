@@ -3,7 +3,8 @@
 import { useCallback, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
-import { SliderInput } from "@/components/ui/slider-input";
+import { RotaryKnob } from "@/components/ui/rotary-knob";
+import { KnobRow } from "@/components/ui/knob-row";
 import { Switch } from "@/components/ui/switch";
 import type { Layer, Envelope } from "@/lib/types";
 
@@ -234,12 +235,12 @@ export function EnvelopePanel({ layer }: { layer: Layer }) {
         <>
           <ADSRGraph envelope={env} onChange={setEnvelope} />
 
-          <div className="space-y-3">
-            <SliderInput label="Attack" unit="s" min={0} max={5} step={0.01} value={env.attack ?? 0} onChange={(v) => setEnvelope({ ...env, attack: v })} />
-            <SliderInput label="Decay" unit="s" min={0} max={5} step={0.01} value={env.decay} onChange={(v) => setEnvelope({ ...env, decay: v })} />
-            <SliderInput label="Sustain" min={0} max={1} step={0.01} value={env.sustain ?? 1} onChange={(v) => setEnvelope({ ...env, sustain: v })} />
-            <SliderInput label="Release" unit="s" min={0} max={5} step={0.01} value={env.release ?? 0} onChange={(v) => setEnvelope({ ...env, release: v })} />
-          </div>
+          <KnobRow>
+            <RotaryKnob label="Attack" unit="s" min={0} max={5} step={0.01} value={env.attack ?? 0} onChange={(v) => setEnvelope({ ...env, attack: v })} />
+            <RotaryKnob label="Decay" unit="s" min={0} max={5} step={0.01} value={env.decay} onChange={(v) => setEnvelope({ ...env, decay: v })} />
+            <RotaryKnob label="Sustain" min={0} max={1} step={0.01} value={env.sustain ?? 1} onChange={(v) => setEnvelope({ ...env, sustain: v })} />
+            <RotaryKnob label="Release" unit="s" min={0} max={5} step={0.01} value={env.release ?? 0} onChange={(v) => setEnvelope({ ...env, release: v })} />
+          </KnobRow>
         </>
       )}
     </div>

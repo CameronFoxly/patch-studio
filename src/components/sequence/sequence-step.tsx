@@ -23,7 +23,7 @@ export function SequenceStep({ step, index, layers, isActive }: Props) {
 
   return (
     <div
-      className={`flex-shrink-0 w-32 h-28 rounded-lg border p-2 flex flex-col gap-1 transition-colors ${
+      className={`flex-shrink-0 w-32 h-28 rounded-md border p-2 flex flex-col gap-1 transition-colors ${
         isActive
           ? "border-primary bg-primary/10 ring-1 ring-primary/30"
           : "bg-background"

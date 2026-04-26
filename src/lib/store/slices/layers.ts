@@ -37,6 +37,7 @@ export interface LayersSlice {
   toggleLayerEnvelopeOverlay: (id: string) => void;
 
   setLayers: (layers: Layer[]) => void;
+  appendLayers: (layers: Layer[]) => void;
   clearLayers: () => void;
 
   setGlobalEffects: (effects: Effect[]) => void;
@@ -183,6 +184,7 @@ export const createLayersSlice: StateCreator<
   },
 
   setLayers: (layers) => set({ layers }),
+  appendLayers: (layers) => set({ layers: [...get().layers, ...layers] }),
   clearLayers: () => set({ layers: [] }),
 
   setGlobalEffects: (effects) => set({ globalEffects: effects }),
