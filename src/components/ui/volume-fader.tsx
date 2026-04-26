@@ -118,58 +118,62 @@ export function VolumeFader({
   const thumbBottom = norm * 100;
 
   return (
-    <div className="flex flex-col items-center gap-1.5 w-12">
+    <div className="flex flex-col items-center gap-1.5 w-14">
       <Label className="text-[10px] text-muted-foreground text-center">{label}</Label>
 
-      <div
-        ref={trackRef}
-        className="relative w-6 rounded-[3px] bg-muted border border-border select-none"
-        style={{ height, touchAction: "none" }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-      >
-        {/* Amplitude meter fill (background visualization) */}
-        {amplitude > 0 && (
-          <div
-            className="absolute bottom-0 left-0 right-0 rounded-sm opacity-30 transition-all duration-75"
-            style={{
-              height: `${meterNorm * 100}%`,
-              backgroundColor: getMeterColor(meterNorm),
-            }}
-          />
-        )}
-
-        {/* Value fill (shows current fader level) */}
+      <div className="flex gap-1 items-stretch" style={{ height }}>
+        {/* Fader track */}
         <div
-          className="absolute bottom-0 left-0 right-0 rounded-sm bg-primary/20"
-          style={{ height: `${norm * 100}%` }}
-        />
-
-        {/* Rectangular thumb */}
-        <div
-          className={`absolute left-0 right-0 h-3 rounded-[2px] border transition-colors ${
-            isDragging
-              ? "bg-primary border-primary shadow-sm"
-              : "bg-neutral-300 dark:bg-neutral-600 border-border hover:border-primary/60"
-          } ${isClipping ? "ring-1 ring-red-500 border-red-500" : ""}`}
-          style={{
-            bottom: `calc(${thumbBottom}% - 6px)`,
-            cursor: isDragging ? "grabbing" : "grab",
-          }}
+          ref={trackRef}
+          className="relative w-6 rounded-[3px] bg-muted border border-border select-none"
+          style={{ touchAction: "none" }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
         >
-          {/* Grip lines on thumb */}
-          <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 flex flex-col gap-px">
-            <div className="h-px bg-current opacity-20" />
-            <div className="h-px bg-current opacity-20" />
+          {/* Value fill (shows current fader level) */}
+          <div
+            className="absolute bottom-0 left-0 right-0 rounded-sm bg-neutral-400/30 dark:bg-neutral-500/30"
+            style={{ height: `${norm * 100}%` }}
+          />
+
+          {/* Rectangular thumb */}
+          <div
+            className={`absolute left-0 right-0 h-3 rounded-[2px] border transition-colors ${
+              isDragging
+                ? "bg-neutral-50 dark:bg-neutral-300 border-primary shadow-sm"
+                : "bg-neutral-100 dark:bg-neutral-400 border-border hover:border-primary/60"
+            } ${isClipping ? "ring-1 ring-red-500 border-red-500" : ""}`}
+            style={{
+              bottom: `calc(${thumbBottom}% - 6px)`,
+              cursor: isDragging ? "grabbing" : "grab",
+            }}
+          >
+            {/* Grip lines on thumb */}
+            <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 flex flex-col gap-px">
+              <div className="h-px bg-current opacity-20" />
+              <div className="h-px bg-current opacity-20" />
+            </div>
           </div>
         </div>
 
-        {/* Clipping indicator */}
-        {isClipping && (
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-        )}
+        {/* Amplitude meter bar (separate from fader) */}
+        <div className="relative w-1.5 rounded-[2px] bg-neutral-800 dark:bg-neutral-900 border border-border/50 overflow-hidden">
+          {amplitude > 0 && (
+            <div
+              className="absolute bottom-0 left-0 right-0 transition-all duration-75"
+              style={{
+                height: `${meterNorm * 100}%`,
+                backgroundColor: getMeterColor(meterNorm),
+              }}
+            />
+          )}
+          {/* Clipping indicator */}
+          {isClipping && (
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-red-500 animate-pulse" />
+          )}
+        </div>
       </div>
 
       <input
