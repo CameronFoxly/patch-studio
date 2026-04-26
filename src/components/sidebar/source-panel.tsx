@@ -176,12 +176,12 @@ function OscillatorControls({
 
       <div className="flex justify-center">
         <Button
-          variant="ghost"
-          size="icon-xs"
+          variant="outline"
+          size="sm"
           onClick={() => setPianoOpen(!pianoOpen)}
-          title="Note picker"
         >
-          <Piano className="size-3" />
+          <Piano className="size-3.5" />
+          Note Picker
         </Button>
       </div>
 
@@ -280,12 +280,12 @@ function WavetableControls({
 
       <div className="flex justify-center">
         <Button
-          variant="ghost"
-          size="icon-xs"
+          variant="outline"
+          size="sm"
           onClick={() => setPianoOpen(!pianoOpen)}
-          title="Note picker"
         >
-          <Piano className="size-3" />
+          <Piano className="size-3.5" />
+          Note Picker
         </Button>
       </div>
 
