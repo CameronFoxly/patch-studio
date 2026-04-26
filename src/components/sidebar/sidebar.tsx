@@ -112,9 +112,9 @@ export function Sidebar() {
             <TabsContent value="global-effects" className="mt-0">
               <GlobalEffectsPanel />
             </TabsContent>
-            <GainPanPanel layer={layer} />
           </div>
         </ScrollArea>
+        <GainPanPanel layer={layer} />
       </Tabs>
     </div>
   );
