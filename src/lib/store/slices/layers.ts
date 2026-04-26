@@ -12,6 +12,7 @@ import type { StoreState } from "../index";
 
 export interface LayersSlice {
   layers: Layer[];
+  globalEffects: Effect[];
 
   addLayer: (source?: Source) => string;
   removeLayer: (id: string) => void;
@@ -37,6 +38,11 @@ export interface LayersSlice {
 
   setLayers: (layers: Layer[]) => void;
   clearLayers: () => void;
+
+  setGlobalEffects: (effects: Effect[]) => void;
+  addGlobalEffect: (effect: Effect) => void;
+  updateGlobalEffect: (index: number, effect: Effect) => void;
+  removeGlobalEffect: (index: number) => void;
 }
 
 const DEFAULT_SOURCE: Source = {
@@ -73,6 +79,7 @@ export const createLayersSlice: StateCreator<
   LayersSlice
 > = (set, get) => ({
   layers: [INITIAL_LAYER],
+  globalEffects: [],
 
   addLayer: (source) => {
     const layer = defaultLayer(get().layers.length + 1);
@@ -177,4 +184,15 @@ export const createLayersSlice: StateCreator<
 
   setLayers: (layers) => set({ layers }),
   clearLayers: () => set({ layers: [] }),
+
+  setGlobalEffects: (effects) => set({ globalEffects: effects }),
+  addGlobalEffect: (effect) =>
+    set({ globalEffects: [...get().globalEffects, effect] }),
+  updateGlobalEffect: (index, effect) => {
+    const next = [...get().globalEffects];
+    next[index] = effect;
+    set({ globalEffects: next });
+  },
+  removeGlobalEffect: (index) =>
+    set({ globalEffects: get().globalEffects.filter((_, i) => i !== index) }),
 });

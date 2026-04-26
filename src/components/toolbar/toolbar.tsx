@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -17,13 +17,20 @@ import {
 import { Undo2, Redo2, Download, Upload, FilePlus, AudioWaveform } from "lucide-react";
 import { PresetsMenu } from "./presets-menu";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { ExportDialog } from "./export-dialog";
+import { ConfirmDialog } from "./confirm-dialog";
 
 export function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showExport, setShowExport] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const pendingFileRef = useRef<File | null>(null);
 
   const layers = useStore((s) => s.layers);
+  const globalEffects = useStore((s) => s.globalEffects);
   const clearLayers = useStore((s) => s.clearLayers);
   const setLayers = useStore((s) => s.setLayers);
+  const setGlobalEffects = useStore((s) => s.setGlobalEffects);
   const selectLayer = useStore((s) => s.selectLayer);
 
   const canUndo = useTemporalState((s) => s.pastStates.length > 0);
@@ -34,38 +41,58 @@ export function Toolbar() {
 
   const handleNew = () => {
     clearLayers();
+    setGlobalEffects([]);
     selectLayer(null);
   };
 
-  const handleExport = () => {
+  const handleExport = (name: string) => {
     if (layers.length === 0) return;
-    const patch = exportPatch("my-sound", layers);
+    const patch = exportPatch(name, layers, globalEffects.length > 0 ? globalEffects : undefined);
     downloadPatch(patch);
   };
 
-  const handleImport = () => {
+  const handleImportClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // If current state has work, ask for confirmation
+    if (layers.length > 0) {
+      pendingFileRef.current = file;
+      setShowImportConfirm(true);
+    } else {
+      processImport(file);
+    }
+
+    // Reset input so the same file can be re-imported
+    e.target.value = "";
+  };
+
+  const processImport = useCallback(async (file: File) => {
     try {
       const text = await file.text();
       const json = JSON.parse(text);
-      const { layers: imported } = importPatch(json);
+      const { layers: imported, globalEffects: importedGlobal } = importPatch(json);
       setLayers(imported);
+      setGlobalEffects(importedGlobal);
       if (imported.length > 0) {
         selectLayer(imported[0].id);
       }
     } catch (err) {
       console.error("Failed to import patch:", err);
     }
+  }, [setLayers, setGlobalEffects, selectLayer]);
 
-    // Reset input so the same file can be re-imported
-    e.target.value = "";
-  };
+  const handleImportConfirm = useCallback(() => {
+    const file = pendingFileRef.current;
+    if (file) {
+      processImport(file);
+      pendingFileRef.current = null;
+    }
+  }, [processImport]);
 
   return (
     <div className="flex items-center gap-2 px-4 py-2 border-b bg-card">
@@ -99,7 +126,7 @@ export function Toolbar() {
 
       <Tooltip>
         <TooltipTrigger
-          render={<Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleImport} />}
+          render={<Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleImportClick} />}
         >
           <Upload className="h-4 w-4" />
         </TooltipTrigger>
@@ -113,7 +140,7 @@ export function Toolbar() {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={handleExport}
+              onClick={() => layers.length > 0 && setShowExport(true)}
               disabled={layers.length === 0}
             />
           }
@@ -175,6 +202,25 @@ export function Toolbar() {
         accept=".json"
         className="hidden"
         onChange={handleFileChange}
+      />
+
+      {/* Export dialog */}
+      <ExportDialog
+        open={showExport}
+        onOpenChange={setShowExport}
+        onExport={handleExport}
+      />
+
+      {/* Import confirmation dialog */}
+      <ConfirmDialog
+        open={showImportConfirm}
+        onOpenChange={(open) => {
+          setShowImportConfirm(open);
+          if (!open) pendingFileRef.current = null;
+        }}
+        onConfirm={handleImportConfirm}
+        title="Replace current patch?"
+        description="Importing will replace your current layers and effects. This action can be undone."
       />
     </div>
   );

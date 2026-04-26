@@ -12,6 +12,7 @@ export function useAudioEngine() {
   const isPlayingRef = useRef(false);
 
   const layers = useStore((s) => s.layers);
+  const globalEffects = useStore((s) => s.globalEffects);
   const setPlaying = useStore((s) => s.setPlaying);
   const setCurrentTime = useStore((s) => s.setCurrentTime);
 
@@ -33,8 +34,9 @@ export function useAudioEngine() {
     stopVoice();
     if (!isPlayingRef.current) return;
     const currentLayers = useStore.getState().layers;
+    const currentGlobalEffects = useStore.getState().globalEffects;
     try {
-      const voice = await playSound(currentLayers);
+      const voice = await playSound(currentLayers, currentGlobalEffects);
       if (!isPlayingRef.current) {
         if (voice?.stop) voice.stop();
         return;
@@ -131,7 +133,7 @@ export function useAudioEngine() {
         retriggerTimerRef.current = null;
       }
     };
-  }, [layers, triggerSound]);
+  }, [layers, globalEffects, triggerSound]);
 
   return { play, stop };
 }
