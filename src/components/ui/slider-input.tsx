@@ -17,6 +17,7 @@ interface SliderInputProps {
   unit?: string;
   format?: (v: number) => string;
   onChange: (v: number) => void;
+  action?: React.ReactNode;
 }
 
 export function SliderInput({
@@ -28,6 +29,7 @@ export function SliderInput({
   unit,
   format,
   onChange,
+  action,
 }: SliderInputProps) {
   const [text, setText] = useState(() => formatDisplay(value));
   const [focused, setFocused] = useState(false);
@@ -61,7 +63,10 @@ export function SliderInput({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <Label className="text-xs shrink-0">{label}</Label>
+        <div className="flex items-center gap-1">
+          <Label className="text-xs shrink-0">{label}</Label>
+          {action}
+        </div>
         <input
           type="text"
           inputMode="decimal"
