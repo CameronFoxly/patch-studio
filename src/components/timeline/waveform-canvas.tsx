@@ -7,6 +7,9 @@ interface Props {
   layer: Layer;
 }
 
+// Virtual sample rate for waveform generation
+const VIRTUAL_SR = 8000;
+
 function getEnvelopeAmplitude(envelope: Envelope | undefined, t: number, totalDuration: number): number {
   if (!envelope) return 1;
   const { attack = 0, decay, sustain = 0, release = 0 } = envelope;
@@ -34,9 +37,19 @@ function getEnvelopeAmplitude(envelope: Envelope | undefined, t: number, totalDu
   return 0;
 }
 
-function getSourceSample(source: Layer["source"], phase: number): number {
+// Seeded PRNG for stable noise across redraws
+function mulberry32(seed: number) {
+  return () => {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function getSourceSample(source: Layer["source"], phase: number, rng: () => number): number {
   if (source.type === "noise") {
-    return (Math.random() - 0.5) * 2;
+    return (rng() - 0.5) * 2;
   }
   if (source.type === "wavetable") {
     const harmonics = source.harmonics || [1];
@@ -53,29 +66,139 @@ function getSourceSample(source: Layer["source"], phase: number): number {
   }
 }
 
-function computeSample(layer: Layer, tNorm: number, totalDuration: number, cyclesVisible: number): number {
-  const time = tNorm * totalDuration;
-  const envAmp = getEnvelopeAmplitude(layer.envelope, time, totalDuration);
-  const phase = tNorm * cyclesVisible * 2 * Math.PI;
+// Generate a full sample buffer at VIRTUAL_SR
+function generateBuffer(layer: Layer, totalDuration: number): Float32Array {
+  const numSamples = Math.ceil(totalDuration * VIRTUAL_SR);
+  const buffer = new Float32Array(numSamples);
+  const rng = mulberry32(42);
+
+  const freq = layer.source.type !== "noise" && "frequency" in layer.source
+    ? (typeof layer.source.frequency === "number" ? layer.source.frequency : layer.source.frequency.start)
+    : 440;
   const gain = layer.gain ?? 1;
 
-  let sample = getSourceSample(layer.source, phase);
-  sample *= envAmp * gain;
-
-  // Distortion hint: clip the signal
-  if (layer.effects?.some(e => e.type === "distortion")) {
-    sample = Math.max(-0.8, Math.min(0.8, sample * 1.5));
-  }
-
-  // Tremolo hint: amplitude modulation
+  const hasDistortion = layer.effects?.some(e => e.type === "distortion");
   const tremoloEffect = layer.effects?.find(e => e.type === "tremolo");
-  if (tremoloEffect && "rate" in tremoloEffect && "depth" in tremoloEffect) {
-    const tRate = tremoloEffect.rate || 5;
-    const tDepth = tremoloEffect.depth || 0.5;
-    sample *= 1 - tDepth * 0.5 * (1 + Math.sin(time * tRate * 2 * Math.PI));
+
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / VIRTUAL_SR;
+    const tNorm = t / totalDuration;
+    const envAmp = getEnvelopeAmplitude(layer.envelope, t, totalDuration);
+    const phase = tNorm * freq * totalDuration * 2 * Math.PI;
+
+    let sample = getSourceSample(layer.source, phase, rng);
+    sample *= envAmp * gain;
+
+    if (hasDistortion) {
+      sample = Math.max(-0.8, Math.min(0.8, sample * 1.5));
+    }
+
+    if (tremoloEffect && "rate" in tremoloEffect && "depth" in tremoloEffect) {
+      const tRate = tremoloEffect.rate || 5;
+      const tDepth = tremoloEffect.depth || 0.5;
+      sample *= 1 - tDepth * 0.5 * (1 + Math.sin(t * tRate * 2 * Math.PI));
+    }
+
+    buffer[i] = sample;
   }
 
-  return sample;
+  return buffer;
+}
+
+const CORNER_RADIUS = 6;
+
+function drawWaveform(canvas: HTMLCanvasElement, layer: Layer) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  if (w === 0 || h === 0) return;
+
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  ctx.scale(dpr, dpr);
+
+  const mid = h / 2;
+  const baseAmp = h * 0.4;
+
+  const env = layer.envelope;
+  const totalDuration = env
+    ? (env.attack || 0) + env.decay + (env.release || 0) + 0.5
+    : 2;
+
+  const buffer = generateBuffer(layer, totalDuration);
+  const numSamples = buffer.length;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Clip to rounded rect
+  ctx.beginPath();
+  ctx.roundRect(0, 0, w, h, CORNER_RADIUS);
+  ctx.clip();
+
+  const computedColor = getComputedStyle(canvas).color;
+
+  // Min/max decimation: for each pixel column, find the min and max sample
+  const minArr = new Float32Array(Math.ceil(w));
+  const maxArr = new Float32Array(Math.ceil(w));
+
+  for (let px = 0; px < w; px++) {
+    const sStart = Math.floor((px / w) * numSamples);
+    const sEnd = Math.max(sStart + 1, Math.floor(((px + 1) / w) * numSamples));
+
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (let s = sStart; s < sEnd && s < numSamples; s++) {
+      const v = buffer[s];
+      if (v < lo) lo = v;
+      if (v > hi) hi = v;
+    }
+    if (lo === Infinity) { lo = 0; hi = 0; }
+    minArr[px] = lo;
+    maxArr[px] = hi;
+  }
+
+  // Draw filled area (min to max envelope)
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = computedColor;
+  ctx.beginPath();
+  ctx.moveTo(0, mid - maxArr[0] * baseAmp);
+  for (let px = 1; px < w; px++) {
+    ctx.lineTo(px, mid - maxArr[px] * baseAmp);
+  }
+  for (let px = Math.ceil(w) - 1; px >= 0; px--) {
+    ctx.lineTo(px, mid - minArr[px] * baseAmp);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw waveform outline (top edge = max, bottom edge = min)
+  ctx.globalAlpha = 0.7;
+  ctx.strokeStyle = computedColor;
+  ctx.lineWidth = 1;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  // Top edge
+  ctx.beginPath();
+  ctx.moveTo(0, mid - maxArr[0] * baseAmp);
+  for (let px = 1; px < w; px++) {
+    ctx.lineTo(px, mid - maxArr[px] * baseAmp);
+  }
+  ctx.stroke();
+
+  // Bottom edge
+  ctx.beginPath();
+  ctx.moveTo(0, mid - minArr[0] * baseAmp);
+  for (let px = 1; px < w; px++) {
+    ctx.lineTo(px, mid - minArr[px] * baseAmp);
+  }
+  ctx.stroke();
+
+  ctx.globalAlpha = 1;
 }
 
 export function WaveformCanvas({ layer }: Props) {
@@ -84,68 +207,21 @@ export function WaveformCanvas({ layer }: Props) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
+    drawWaveform(canvas, layer);
 
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
+    const observer = new ResizeObserver(() => {
+      drawWaveform(canvas, layer);
+    });
+    observer.observe(canvas);
 
-    const w = rect.width;
-    const h = rect.height;
-    const mid = h / 2;
-    const baseAmp = h * 0.4;
-
-    const env = layer.envelope;
-    const totalDuration = env
-      ? (env.attack || 0) + env.decay + (env.release || 0) + 0.5
-      : 2;
-
-    const freq = layer.source.type !== "noise" && "frequency" in layer.source
-      ? (typeof layer.source.frequency === "number" ? layer.source.frequency : layer.source.frequency.start)
-      : 440;
-    const cyclesVisible = Math.min(freq * totalDuration, 200);
-
-    ctx.clearRect(0, 0, w, h);
-
-    const computedColor = getComputedStyle(canvas).color;
-    ctx.strokeStyle = computedColor;
-    ctx.lineWidth = 1.5;
-
-    // Draw filled area
-    ctx.globalAlpha = 0.15;
-    ctx.fillStyle = computedColor;
-    ctx.beginPath();
-    ctx.moveTo(0, mid);
-    for (let x = 0; x < w; x++) {
-      const sample = computeSample(layer, x / w, totalDuration, cyclesVisible);
-      ctx.lineTo(x, mid - sample * baseAmp);
-    }
-    ctx.lineTo(w, mid);
-    ctx.closePath();
-    ctx.fill();
-
-    // Draw waveform line
-    ctx.globalAlpha = 0.7;
-    ctx.beginPath();
-    for (let x = 0; x < w; x++) {
-      const sample = computeSample(layer, x / w, totalDuration, cyclesVisible);
-      const py = mid - sample * baseAmp;
-      if (x === 0) ctx.moveTo(x, py);
-      else ctx.lineTo(x, py);
-    }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+    return () => observer.disconnect();
   }, [layer]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="w-full h-full text-primary"
+      className="w-full h-full text-primary rounded-md"
       style={{ display: "block" }}
     />
   );

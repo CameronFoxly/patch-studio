@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
 import { SliderInput } from "@/components/ui/slider-input";
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FilterGraph } from "./filter-graph";
 import type { Layer, BiquadFilter, BiquadFilterType } from "@/lib/types";
 import { PlusIcon, XIcon } from "lucide-react";
 
@@ -42,6 +44,9 @@ function defaultFilter(): BiquadFilter {
 export function FilterPanel({ layer }: { layer: Layer }) {
   const updateLayerFilter = useStore((s) => s.updateLayerFilter);
   const filters = getFilters(layer);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(
+    filters.length > 0 ? 0 : null
+  );
 
   function setFilters(next: BiquadFilter[]) {
     if (next.length === 0) {
@@ -61,27 +66,42 @@ export function FilterPanel({ layer }: { layer: Layer }) {
 
   function removeFilter(index: number) {
     setFilters(filters.filter((_, i) => i !== index));
+    if (selectedIndex === index) {
+      setSelectedIndex(filters.length > 1 ? Math.max(0, index - 1) : null);
+    } else if (selectedIndex !== null && selectedIndex > index) {
+      setSelectedIndex(selectedIndex - 1);
+    }
   }
 
   function addFilter() {
-    setFilters([...filters, defaultFilter()]);
+    const newFilters = [...filters, defaultFilter()];
+    setFilters(newFilters);
+    setSelectedIndex(newFilters.length - 1);
   }
+
+  const selected = selectedIndex !== null ? filters[selectedIndex] : null;
 
   return (
     <div className="space-y-4">
-      {filters.length === 0 && (
-        <p className="text-xs text-muted-foreground">No filters configured</p>
-      )}
+      {/* EQ Graph */}
+      <FilterGraph
+        filters={filters}
+        selectedIndex={selectedIndex}
+        source={layer.source}
+        onSelectFilter={setSelectedIndex}
+        onUpdateFilter={updateFilter}
+      />
 
-      {filters.map((filter, i) => (
-        <div key={i} className="space-y-3 rounded-md border p-3">
+      {/* Selected filter controls */}
+      {selected && selectedIndex !== null && (
+        <div className="space-y-3 rounded-md border p-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium">Filter {i + 1}</span>
+            <span className="text-xs font-medium">Filter {selectedIndex + 1}</span>
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={() => removeFilter(i)}
+              onClick={() => removeFilter(selectedIndex)}
             >
               <XIcon className="h-3 w-3" />
             </Button>
@@ -90,10 +110,10 @@ export function FilterPanel({ layer }: { layer: Layer }) {
           <div className="space-y-2">
             <Label className="text-xs">Type</Label>
             <Select
-              value={filter.type}
+              value={selected.type}
               onValueChange={(v) => {
                 if (v)
-                  updateFilter(i, { ...filter, type: v as BiquadFilterType });
+                  updateFilter(selectedIndex, { ...selected, type: v as BiquadFilterType });
               }}
             >
               <SelectTrigger className="w-full">
@@ -115,8 +135,8 @@ export function FilterPanel({ layer }: { layer: Layer }) {
             min={20}
             max={20000}
             step={1}
-            value={filter.frequency}
-            onChange={(v) => updateFilter(i, { ...filter, frequency: v })}
+            value={selected.frequency}
+            onChange={(v) => updateFilter(selectedIndex, { ...selected, frequency: v })}
           />
 
           <SliderInput
@@ -124,19 +144,19 @@ export function FilterPanel({ layer }: { layer: Layer }) {
             min={0.1}
             max={30}
             step={0.1}
-            value={filter.resonance ?? 1}
-            onChange={(v) => updateFilter(i, { ...filter, resonance: v })}
+            value={selected.resonance ?? 1}
+            onChange={(v) => updateFilter(selectedIndex, { ...selected, resonance: v })}
           />
 
-          {GAIN_TYPES.includes(filter.type) && (
+          {GAIN_TYPES.includes(selected.type) && (
             <SliderInput
               label="Gain"
               unit="dB"
               min={-40}
               max={40}
               step={0.5}
-              value={filter.gain ?? 0}
-              onChange={(v) => updateFilter(i, { ...filter, gain: v })}
+              value={selected.gain ?? 0}
+              onChange={(v) => updateFilter(selectedIndex, { ...selected, gain: v })}
             />
           )}
 
@@ -146,10 +166,10 @@ export function FilterPanel({ layer }: { layer: Layer }) {
             <div className="flex items-center justify-between">
               <Label className="text-xs">Filter Envelope</Label>
               <Switch
-                checked={!!filter.envelope}
+                checked={!!selected.envelope}
                 onCheckedChange={(checked) =>
-                  updateFilter(i, {
-                    ...filter,
+                  updateFilter(selectedIndex, {
+                    ...selected,
                     envelope: checked
                       ? { attack: 0.01, peak: 2000, decay: 0.3 }
                       : undefined,
@@ -158,7 +178,7 @@ export function FilterPanel({ layer }: { layer: Layer }) {
                 size="sm"
               />
             </div>
-            {filter.envelope && (
+            {selected.envelope && (
               <div className="space-y-2 pl-2 border-l-2 border-muted">
                 <SliderInput
                   label="Attack"
@@ -166,11 +186,11 @@ export function FilterPanel({ layer }: { layer: Layer }) {
                   min={0}
                   max={2}
                   step={0.01}
-                  value={filter.envelope.attack}
+                  value={selected.envelope.attack}
                   onChange={(v) =>
-                    updateFilter(i, {
-                      ...filter,
-                      envelope: { ...filter.envelope!, attack: v },
+                    updateFilter(selectedIndex, {
+                      ...selected,
+                      envelope: { ...selected.envelope!, attack: v },
                     })
                   }
                 />
@@ -180,11 +200,11 @@ export function FilterPanel({ layer }: { layer: Layer }) {
                   min={20}
                   max={20000}
                   step={1}
-                  value={filter.envelope.peak}
+                  value={selected.envelope.peak}
                   onChange={(v) =>
-                    updateFilter(i, {
-                      ...filter,
-                      envelope: { ...filter.envelope!, peak: v },
+                    updateFilter(selectedIndex, {
+                      ...selected,
+                      envelope: { ...selected.envelope!, peak: v },
                     })
                   }
                 />
@@ -194,11 +214,11 @@ export function FilterPanel({ layer }: { layer: Layer }) {
                   min={0}
                   max={5}
                   step={0.01}
-                  value={filter.envelope.decay}
+                  value={selected.envelope.decay}
                   onChange={(v) =>
-                    updateFilter(i, {
-                      ...filter,
-                      envelope: { ...filter.envelope!, decay: v },
+                    updateFilter(selectedIndex, {
+                      ...selected,
+                      envelope: { ...selected.envelope!, decay: v },
                     })
                   }
                 />
@@ -206,7 +226,27 @@ export function FilterPanel({ layer }: { layer: Layer }) {
             )}
           </div>
         </div>
-      ))}
+      )}
+
+      {/* Filter list (chips for multi-filter) */}
+      {filters.length > 1 && (
+        <div className="flex flex-wrap gap-1.5">
+          {filters.map((f, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setSelectedIndex(i)}
+              className={`text-[10px] px-2 py-1 rounded-full border transition-colors cursor-pointer ${
+                selectedIndex === i
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-muted text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {i + 1}: {BIQUAD_TYPES.find((t) => t.value === f.type)?.label ?? f.type}
+            </button>
+          ))}
+        </div>
+      )}
 
       <Button
         variant="outline"

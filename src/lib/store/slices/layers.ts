@@ -63,13 +63,16 @@ function updateLayer(
   return layers.map((l) => (l.id === id ? updater(l) : l));
 }
 
+const INITIAL_LAYER = defaultLayer(1);
+export const INITIAL_LAYER_ID = INITIAL_LAYER.id;
+
 export const createLayersSlice: StateCreator<
   StoreState,
   [],
   [],
   LayersSlice
 > = (set, get) => ({
-  layers: [],
+  layers: [INITIAL_LAYER],
 
   addLayer: (source) => {
     const layer = defaultLayer(get().layers.length + 1);

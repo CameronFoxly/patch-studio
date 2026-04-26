@@ -35,7 +35,6 @@ export function useAudioEngine() {
     const currentLayers = useStore.getState().layers;
     try {
       const voice = await playSound(currentLayers);
-      // Check again after async — stop() may have been called during await
       if (!isPlayingRef.current) {
         if (voice?.stop) voice.stop();
         return;
@@ -98,19 +97,33 @@ export function useAudioEngine() {
     }
   }, [setPlaying, stopVoice, stopPlayhead]);
 
-  // Live retrigger: debounce 150ms after layer changes while playing
+  // Live retrigger: throttle — fire immediately on first change, then cooldown
+  const lastRetriggerRef = useRef<number>(0);
+
   useEffect(() => {
     if (!isPlayingRef.current) return;
 
-    if (retriggerTimerRef.current) {
-      clearTimeout(retriggerTimerRef.current);
-    }
-    retriggerTimerRef.current = setTimeout(() => {
-      if (isPlayingRef.current) {
-        triggerSound();
+    const now = Date.now();
+    const elapsed = now - lastRetriggerRef.current;
+    const COOLDOWN = 80; // ms between retriggers
+
+    if (elapsed >= COOLDOWN) {
+      // Fire immediately
+      lastRetriggerRef.current = now;
+      triggerSound();
+    } else {
+      // Schedule for end of cooldown
+      if (retriggerTimerRef.current) {
+        clearTimeout(retriggerTimerRef.current);
       }
-      retriggerTimerRef.current = null;
-    }, 150);
+      retriggerTimerRef.current = setTimeout(() => {
+        if (isPlayingRef.current) {
+          lastRetriggerRef.current = Date.now();
+          triggerSound();
+        }
+        retriggerTimerRef.current = null;
+      }, COOLDOWN - elapsed);
+    }
 
     return () => {
       if (retriggerTimerRef.current) {

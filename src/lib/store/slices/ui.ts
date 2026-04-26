@@ -26,7 +26,7 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (
   set,
   get,
 ) => ({
-  selectedLayerId: null,
+  selectedLayerId: null as string | null,
   activeSidebarPanel: "source",
   showSequenceEditor: false,
   sidebarWidth: 320,
