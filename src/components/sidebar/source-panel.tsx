@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { SliderInput } from "@/components/ui/slider-input";
+import { Button } from "@/components/ui/button";
+import { PianoKeyboardDialog } from "@/components/ui/piano-keyboard";
+import { Piano } from "lucide-react";
 import { HarmonicsEditor } from "./harmonics-editor";
 import type {
   Layer,
@@ -167,6 +171,7 @@ function OscillatorControls({
   source: OscillatorSource;
   onChange: (s: Source) => void;
 }) {
+  const [pianoOpen, setPianoOpen] = useState(false);
   const freq =
     typeof source.frequency === "number"
       ? source.frequency
@@ -190,6 +195,23 @@ function OscillatorControls({
         step={1}
         value={freq}
         onChange={(v) => onChange({ ...source, frequency: v })}
+        action={
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => setPianoOpen(!pianoOpen)}
+            title="Note picker"
+          >
+            <Piano className="size-3" />
+          </Button>
+        }
+      />
+
+      <PianoKeyboardDialog
+        open={pianoOpen}
+        onClose={() => setPianoOpen(false)}
+        currentFrequency={freq}
+        onNoteSelect={(v) => onChange({ ...source, frequency: v })}
       />
 
       <SliderInput
@@ -270,6 +292,8 @@ function WavetableControls({
   source: WavetableSource;
   onChange: (s: Source) => void;
 }) {
+  const [pianoOpen, setPianoOpen] = useState(false);
+
   return (
     <div className="space-y-4">
       <SliderInput
@@ -280,6 +304,23 @@ function WavetableControls({
         step={1}
         value={source.frequency}
         onChange={(v) => onChange({ ...source, frequency: v })}
+        action={
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => setPianoOpen(!pianoOpen)}
+            title="Note picker"
+          >
+            <Piano className="size-3" />
+          </Button>
+        }
+      />
+
+      <PianoKeyboardDialog
+        open={pianoOpen}
+        onClose={() => setPianoOpen(false)}
+        currentFrequency={source.frequency}
+        onNoteSelect={(v) => onChange({ ...source, frequency: v })}
       />
       <HarmonicsEditor
         harmonics={source.harmonics}
