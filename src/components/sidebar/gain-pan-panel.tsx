@@ -19,7 +19,7 @@ export function GainPanPanel({ layer }: { layer: Layer }) {
   const delay = layer.delay ?? 0;
 
   return (
-    <div className="px-4 py-3 space-y-3">
+    <div className="pt-3 space-y-3">
       <div className="flex items-start justify-center gap-4">
         <VolumeFader
           label="Gain"
