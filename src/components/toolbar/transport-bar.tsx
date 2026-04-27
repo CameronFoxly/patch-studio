@@ -106,7 +106,7 @@ export function TransportBar() {
 
         <Separator orientation="vertical" className="self-stretch -my-2" />
 
-        <span>Preview End:</span>
+        <span>Preview Range:</span>
         <input
           type="text"
           inputMode="decimal"
