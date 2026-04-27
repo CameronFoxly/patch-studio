@@ -155,7 +155,7 @@ export function RotaryKnob({
           <path
             d={describeArc(cx, cy, trackRadius, ARC_START, currentAngle)}
             fill="none"
-            className="stroke-primary pointer-events-none"
+            className="stroke-emerald-500 pointer-events-none"
             strokeWidth={3}
             strokeLinecap="round"
           />
@@ -170,7 +170,7 @@ export function RotaryKnob({
           y1={pointerInner.y}
           x2={pointer.x}
           y2={pointer.y}
-          className="stroke-primary pointer-events-none"
+          className="stroke-emerald-500 pointer-events-none"
           strokeWidth={2}
           strokeLinecap="round"
         />
