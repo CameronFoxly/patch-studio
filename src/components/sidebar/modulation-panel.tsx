@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RotaryKnob } from "@/components/ui/rotary-knob";
 import { KnobRow } from "@/components/ui/knob-row";
 import { ToggleGroup } from "@/components/ui/toggle-group";
+import { useCallback } from "react";
 import {
   Select,
   SelectContent,
@@ -63,7 +64,16 @@ function defaultLFO(): LFO {
 
 export function ModulationPanel({ layer }: { layer: Layer }) {
   const updateLayerLFO = useStore((s) => s.updateLayerLFO);
+  const setLfoInteractionLayerId = useStore((s) => s.setLfoInteractionLayerId);
   const lfos = getLFOs(layer);
+
+  const handleLfoDragStart = useCallback(() => {
+    setLfoInteractionLayerId(layer.id);
+  }, [layer.id, setLfoInteractionLayerId]);
+
+  const handleLfoDragEnd = useCallback(() => {
+    setLfoInteractionLayerId(null);
+  }, [setLfoInteractionLayerId]);
 
   function setLFOs(next: LFO[]) {
     if (next.length === 0) {
@@ -146,6 +156,8 @@ export function ModulationPanel({ layer }: { layer: Layer }) {
               step={0.01}
               value={lfo.frequency}
               onChange={(v) => updateLFO(i, { ...lfo, frequency: v })}
+              onDragStart={handleLfoDragStart}
+              onDragEnd={handleLfoDragEnd}
             />
             <RotaryKnob
               label="Depth"
@@ -154,6 +166,8 @@ export function ModulationPanel({ layer }: { layer: Layer }) {
               step={1}
               value={lfo.depth}
               onChange={(v) => updateLFO(i, { ...lfo, depth: v })}
+              onDragStart={handleLfoDragStart}
+              onDragEnd={handleLfoDragEnd}
             />
           </KnobRow>
         </div>

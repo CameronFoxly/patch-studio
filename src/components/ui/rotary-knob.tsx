@@ -12,6 +12,8 @@ interface RotaryKnobProps {
   unit?: string;
   format?: (v: number) => string;
   onChange: (v: number) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
   size?: number;
 }
 
@@ -39,6 +41,8 @@ export function RotaryKnob({
   unit,
   format,
   onChange,
+  onDragStart,
+  onDragEnd,
   size = 72,
 }: RotaryKnobProps) {
   const [text, setText] = useState(() => formatDisplay(value));
@@ -93,8 +97,9 @@ export function RotaryKnob({
       e.preventDefault();
       (e.target as Element).setPointerCapture(e.pointerId);
       dragRef.current = { startY: e.clientY, startValue: value };
+      onDragStart?.();
     },
-    [value],
+    [value, onDragStart],
   );
 
   const handlePointerMove = useCallback(
@@ -112,8 +117,11 @@ export function RotaryKnob({
   );
 
   const handlePointerUp = useCallback(() => {
-    dragRef.current = null;
-  }, []);
+    if (dragRef.current) {
+      dragRef.current = null;
+      onDragEnd?.();
+    }
+  }, [onDragEnd]);
 
   return (
     <div className="flex flex-col items-center gap-1 w-16">
