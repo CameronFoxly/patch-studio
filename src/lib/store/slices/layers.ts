@@ -35,6 +35,9 @@ export interface LayersSlice {
   toggleLayerMute: (id: string) => void;
   toggleLayerSolo: (id: string) => void;
   toggleLayerEnvelopeOverlay: (id: string) => void;
+  toggleLayerFilterBypass: (id: string, index: number) => void;
+  toggleLayerLFOBypass: (id: string, index: number) => void;
+  toggleLayerEffectBypass: (id: string, index: number) => void;
 
   setLayers: (layers: Layer[]) => void;
   appendLayers: (layers: Layer[]) => void;
@@ -44,6 +47,7 @@ export interface LayersSlice {
   addGlobalEffect: (effect: Effect) => void;
   updateGlobalEffect: (index: number, effect: Effect) => void;
   removeGlobalEffect: (index: number) => void;
+  toggleGlobalEffectBypass: (index: number) => void;
 }
 
 const DEFAULT_SOURCE: Source = {
@@ -183,6 +187,44 @@ export const createLayersSlice: StateCreator<
     });
   },
 
+  toggleLayerFilterBypass: (id, index) => {
+    set({
+      layers: updateLayer(get().layers, id, (l) => {
+        if (!l.filter) return l;
+        const filters = Array.isArray(l.filter) ? l.filter : [l.filter];
+        const updated = filters.map((f, i) =>
+          i === index ? { ...f, bypassed: !f.bypassed } : f,
+        );
+        return { ...l, filter: updated.length === 1 ? updated[0] : updated };
+      }),
+    });
+  },
+
+  toggleLayerLFOBypass: (id, index) => {
+    set({
+      layers: updateLayer(get().layers, id, (l) => {
+        if (!l.lfo) return l;
+        const lfos = Array.isArray(l.lfo) ? l.lfo : [l.lfo];
+        const updated = lfos.map((lfo, i) =>
+          i === index ? { ...lfo, bypassed: !lfo.bypassed } : lfo,
+        );
+        return { ...l, lfo: updated.length === 1 ? updated[0] : updated };
+      }),
+    });
+  },
+
+  toggleLayerEffectBypass: (id, index) => {
+    set({
+      layers: updateLayer(get().layers, id, (l) => {
+        if (!l.effects) return l;
+        const effects = l.effects.map((e, i) =>
+          i === index ? { ...e, bypassed: !e.bypassed } : e,
+        );
+        return { ...l, effects };
+      }),
+    });
+  },
+
   setLayers: (layers) => set({ layers }),
   appendLayers: (layers) => set({ layers: [...get().layers, ...layers] }),
   clearLayers: () => set({ layers: [] }),
@@ -197,4 +239,10 @@ export const createLayersSlice: StateCreator<
   },
   removeGlobalEffect: (index) =>
     set({ globalEffects: get().globalEffects.filter((_, i) => i !== index) }),
+
+  toggleGlobalEffectBypass: (index) => {
+    const next = [...get().globalEffects];
+    next[index] = { ...next[index], bypassed: !next[index].bypassed };
+    set({ globalEffects: next });
+  },
 });

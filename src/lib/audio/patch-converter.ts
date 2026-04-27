@@ -1,6 +1,10 @@
-import type { Layer } from "@/lib/types";
+import type { Layer, Filter, LFO } from "@/lib/types";
 import type { Effect } from "@/lib/types";
 import type { SoundPatch, SoundDefinition } from "@/lib/types";
+
+function stripBypassed<T extends { bypassed?: boolean }>(items: T[]): T[] {
+  return items.map(({ bypassed: _, ...rest }) => rest as T);
+}
 
 // Export: Convert store layers to a patch JSON object
 export function exportPatch(
@@ -10,17 +14,41 @@ export function exportPatch(
 ): SoundPatch {
   const definition: SoundDefinition = {};
 
+  function cleanLayer(layer: Layer) {
+    const {
+      id,
+      name: _layerName,
+      muted,
+      solo,
+      showEnvelope,
+      ...rest
+    } = layer;
+    if (rest.filter) {
+      const filters = Array.isArray(rest.filter) ? rest.filter : [rest.filter];
+      const cleaned = stripBypassed(filters);
+      rest.filter = cleaned.length === 1 ? cleaned[0] : cleaned.length > 0 ? cleaned : undefined;
+    }
+    if (rest.lfo) {
+      const lfos = Array.isArray(rest.lfo) ? rest.lfo : [rest.lfo];
+      const cleaned = stripBypassed(lfos);
+      rest.lfo = cleaned.length === 1 ? cleaned[0] : cleaned.length > 0 ? cleaned : undefined;
+    }
+    if (rest.effects) {
+      rest.effects = stripBypassed(rest.effects);
+    }
+    return rest;
+  }
+
   if (layers.length === 1) {
-    const { id, name: _layerName, muted, solo, ...rest } = layers[0];
-    Object.assign(definition, rest);
+    Object.assign(definition, cleanLayer(layers[0]));
   } else if (layers.length > 1) {
     definition.layers = layers.map(
-      ({ id, name: _layerName, muted, solo, ...rest }) => rest as Layer,
+      (l) => cleanLayer(l) as Layer,
     );
   }
 
   if (globalEffects && globalEffects.length > 0) {
-    definition.effects = globalEffects;
+    definition.effects = stripBypassed(globalEffects);
   }
 
   return {

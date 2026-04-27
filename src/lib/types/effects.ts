@@ -94,20 +94,24 @@ export interface ConvolverEffect {
   mix?: number;
 }
 
+export type EffectBase = {
+  bypassed?: boolean;
+};
+
 export type Effect =
-  | ReverbEffect
-  | DelayEffect
-  | ChorusEffect
-  | PhaserEffect
-  | FlangerEffect
-  | TremoloEffect
-  | VibratoEffect
-  | BitcrusherEffect
-  | CompressorEffect
-  | EQEffect
-  | DistortionEffect
-  | GainEffect
-  | PanEffect
-  | ConvolverEffect;
+  | (ReverbEffect & EffectBase)
+  | (DelayEffect & EffectBase)
+  | (ChorusEffect & EffectBase)
+  | (PhaserEffect & EffectBase)
+  | (FlangerEffect & EffectBase)
+  | (TremoloEffect & EffectBase)
+  | (VibratoEffect & EffectBase)
+  | (BitcrusherEffect & EffectBase)
+  | (CompressorEffect & EffectBase)
+  | (EQEffect & EffectBase)
+  | (DistortionEffect & EffectBase)
+  | (GainEffect & EffectBase)
+  | (PanEffect & EffectBase)
+  | (ConvolverEffect & EffectBase);
 
 export type EffectType = Effect["type"];

@@ -4,11 +4,15 @@ import { useCallback, useRef, useEffect } from "react";
 import { playSound } from "@/lib/audio/engine";
 import { useStore } from "@/lib/store";
 
+const CROSSFADE_RELEASE = 0.06; // seconds — old voice fade-out duration
+const RETRIGGER_COOLDOWN = 150; // ms — minimum gap between live retriggers
+
 export function useAudioEngine() {
   const voiceRef = useRef<any>(null);
   const rafRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   const retriggerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastRetriggerRef = useRef<number>(0);
   const isPlayingRef = useRef(false);
 
   const layers = useStore((s) => s.layers);
@@ -30,6 +34,8 @@ export function useAudioEngine() {
     }
   }, []);
 
+  // Hard retrigger: stop old voice immediately, start new one.
+  // Used at loop boundaries where we want a clean restart.
   const triggerSound = useCallback(async () => {
     stopVoice();
     if (!isPlayingRef.current) return;
@@ -46,6 +52,29 @@ export function useAudioEngine() {
       console.error("Playback error:", e);
     }
   }, [stopVoice]);
+
+  // Cross-fade retrigger: start new voice, then fade out old one.
+  // Used for live parameter tweaks so the transition is smooth.
+  const crossfadeRetrigger = useCallback(async () => {
+    if (!isPlayingRef.current) return;
+    const oldVoice = voiceRef.current;
+    const currentLayers = useStore.getState().layers;
+    const currentGlobalEffects = useStore.getState().globalEffects;
+    try {
+      const newVoice = await playSound(currentLayers, currentGlobalEffects);
+      if (!isPlayingRef.current) {
+        if (newVoice?.stop) newVoice.stop();
+        return;
+      }
+      voiceRef.current = newVoice;
+      // Fade out the old voice after the new one has started
+      if (oldVoice?.stop) {
+        oldVoice.stop(CROSSFADE_RELEASE);
+      }
+    } catch (e) {
+      console.error("Playback error:", e);
+    }
+  }, []);
 
   const play = useCallback(async () => {
     stopVoice();
@@ -99,32 +128,28 @@ export function useAudioEngine() {
     }
   }, [setPlaying, stopVoice, stopPlayhead]);
 
-  // Live retrigger: throttle — fire immediately on first change, then cooldown
-  const lastRetriggerRef = useRef<number>(0);
-
+  // Live parameter updates: cross-fade retrigger with throttle.
+  // Changes apply almost instantly via a smooth overlap, not a hard restart.
   useEffect(() => {
     if (!isPlayingRef.current) return;
 
     const now = Date.now();
     const elapsed = now - lastRetriggerRef.current;
-    const COOLDOWN = 80; // ms between retriggers
 
-    if (elapsed >= COOLDOWN) {
-      // Fire immediately
+    if (elapsed >= RETRIGGER_COOLDOWN) {
       lastRetriggerRef.current = now;
-      triggerSound();
+      crossfadeRetrigger();
     } else {
-      // Schedule for end of cooldown
       if (retriggerTimerRef.current) {
         clearTimeout(retriggerTimerRef.current);
       }
       retriggerTimerRef.current = setTimeout(() => {
         if (isPlayingRef.current) {
           lastRetriggerRef.current = Date.now();
-          triggerSound();
+          crossfadeRetrigger();
         }
         retriggerTimerRef.current = null;
-      }, COOLDOWN - elapsed);
+      }, RETRIGGER_COOLDOWN - elapsed);
     }
 
     return () => {
@@ -133,7 +158,7 @@ export function useAudioEngine() {
         retriggerTimerRef.current = null;
       }
     };
-  }, [layers, globalEffects, triggerSound]);
+  }, [layers, globalEffects, crossfadeRetrigger]);
 
   return { play, stop };
 }

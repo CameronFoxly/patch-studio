@@ -57,12 +57,14 @@ export interface BiquadFilter {
   resonance?: number;
   gain?: number;
   envelope?: FilterEnvelope;
+  bypassed?: boolean;
 }
 
 export interface IIRFilter {
   type: "iir";
   feedforward: number[];
   feedback: number[];
+  bypassed?: boolean;
 }
 
 export type Filter = BiquadFilter | IIRFilter;
@@ -92,6 +94,7 @@ export interface LFO {
   frequency: number;
   depth: number;
   target: LFOTarget;
+  bypassed?: boolean;
 }
 
 // Spatial / 3D Panner
