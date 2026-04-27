@@ -74,6 +74,7 @@ export function TransportBar() {
       <Button
         size="sm"
         variant={isPlaying ? "destructive" : "default"}
+        className={isPlaying ? "" : "bg-emerald-600 text-white hover:bg-emerald-700"}
         onClick={isPlaying ? stop : play}
         disabled={layerCount === 0}
       >
