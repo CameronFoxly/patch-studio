@@ -31,7 +31,7 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (
   selectedLayerId: null as string | null,
   activeSidebarPanel: "source",
   showSequenceEditor: false,
-  sidebarWidth: 320,
+  sidebarWidth: 256,
   lfoInteractionLayerId: null,
 
   selectLayer: (id) => set({ selectedLayerId: id }),

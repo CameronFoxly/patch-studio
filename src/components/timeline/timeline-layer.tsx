@@ -44,6 +44,9 @@ export function TimelineLayer({
   const updateLayerEnvelope = useStore((s) => s.updateLayerEnvelope);
   const updateLayerGain = useStore((s) => s.updateLayerGain);
   const zoom = useStore((s) => s.zoom);
+  const snapEnabled = useStore((s) => s.snapEnabled);
+  const bpm = useStore((s) => s.bpm);
+  const quantizeEnabled = useStore((s) => s.quantizeEnabled);
 
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -71,8 +74,12 @@ export function TimelineLayer({
         if (!dragStartRef.current) return;
         const dx = moveEvent.clientX - dragStartRef.current.mouseX;
         const deltaSeconds = dx / zoom;
-        const newDelay = Math.max(0, dragStartRef.current.startDelay + deltaSeconds);
-        updateLayerDelay(layer.id, Math.round(newDelay * 100) / 100);
+        let newDelay = Math.max(0, dragStartRef.current.startDelay + deltaSeconds);
+        if (snapEnabled) {
+          const snapStep = 60 / bpm / 8; // 1/32 note (beat / 8)
+          newDelay = Math.round(newDelay / snapStep) * snapStep;
+        }
+        updateLayerDelay(layer.id, Math.round(newDelay * 1000) / 1000);
       };
 
       const handleMouseUp = () => {
@@ -85,7 +92,7 @@ export function TimelineLayer({
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
     },
-    [layer.id, layer.delay, zoom, selectLayer, updateLayerDelay],
+    [layer.id, layer.delay, zoom, selectLayer, updateLayerDelay, snapEnabled, bpm],
   );
 
   // Editable layer name
@@ -297,6 +304,25 @@ export function TimelineLayer({
 
       {/* Waveform area */}
       <div className="flex-1 relative overflow-hidden">
+        {/* 1/32 note tick marks along the bottom */}
+        {quantizeEnabled && (() => {
+          const subStep = 60 / bpm / 8; // 1/32 note
+          const beatStep = 60 / bpm;
+          const tickCount = Math.ceil(10 / subStep) + 1;
+          return Array.from({ length: tickCount }, (_, i) => {
+            const time = i * subStep;
+            const isBeat = Math.abs(time % beatStep) < 0.0001 || Math.abs((time % beatStep) - beatStep) < 0.0001;
+            return (
+              <div
+                key={`tick-${i}`}
+                className={`absolute bottom-0 w-px pointer-events-none ${
+                  isBeat ? "h-2 bg-primary/25" : "h-1 bg-primary/12"
+                }`}
+                style={{ left: `${time * zoom}px` }}
+              />
+            );
+          });
+        })()}
         <div
           className={`absolute inset-y-1 rounded-sm bg-primary/10 border border-primary/20 ${
             isDragging ? "cursor-grabbing ring-2 ring-primary/40" : "cursor-grab hover:border-primary/40"

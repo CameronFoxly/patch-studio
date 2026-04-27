@@ -10,6 +10,9 @@ export interface TimelineSlice {
   isLooping: boolean;
   regionStart: number;
   regionEnd: number;
+  quantizeEnabled: boolean;
+  bpm: number;
+  snapEnabled: boolean;
 
   setPlaying: (playing: boolean) => void;
   setCurrentTime: (time: number) => void;
@@ -20,6 +23,9 @@ export interface TimelineSlice {
   setRegionStart: (time: number) => void;
   setRegionEnd: (time: number) => void;
   setRegion: (start: number, end: number) => void;
+  setQuantizeEnabled: (enabled: boolean) => void;
+  setBpm: (bpm: number) => void;
+  setSnapEnabled: (enabled: boolean) => void;
 }
 
 export const createTimelineSlice: StateCreator<
@@ -33,9 +39,12 @@ export const createTimelineSlice: StateCreator<
   duration: 2,
   zoom: 400,
   scrollX: 0,
-  isLooping: false,
+  isLooping: true,
   regionStart: 0,
   regionEnd: 2,
+  quantizeEnabled: false,
+  bpm: 120,
+  snapEnabled: false,
 
   setPlaying: (playing) => set({ isPlaying: playing }),
   setCurrentTime: (time) => set({ currentTime: time }),
@@ -46,4 +55,7 @@ export const createTimelineSlice: StateCreator<
   setRegionStart: (time) => set({ regionStart: Math.max(0, time) }),
   setRegionEnd: (time) => set({ regionEnd: Math.max(0, time) }),
   setRegion: (start, end) => set({ regionStart: Math.max(0, start), regionEnd: Math.max(0, end) }),
+  setQuantizeEnabled: (enabled) => set({ quantizeEnabled: enabled }),
+  setBpm: (bpm) => set({ bpm: Math.max(20, Math.min(300, bpm)) }),
+  setSnapEnabled: (enabled) => set({ snapEnabled: enabled }),
 });
