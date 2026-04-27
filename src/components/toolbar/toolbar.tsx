@@ -3,18 +3,13 @@
 import { useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useStore, useTemporalState, temporalStore } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import {
   exportPatch,
   downloadPatch,
   importPatch,
 } from "@/lib/audio/patch-converter";
-import { Undo2, Redo2, Download, Upload, FilePlus, AudioWaveform } from "lucide-react";
+import { Download, Upload, FilePlus, AudioWaveform } from "lucide-react";
 import { PresetsMenu } from "./presets-menu";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { ExportDialog } from "./export-dialog";
@@ -32,12 +27,6 @@ export function Toolbar() {
   const setLayers = useStore((s) => s.setLayers);
   const setGlobalEffects = useStore((s) => s.setGlobalEffects);
   const selectLayer = useStore((s) => s.selectLayer);
-
-  const canUndo = useTemporalState((s) => s.pastStates.length > 0);
-  const canRedo = useTemporalState((s) => s.futureStates.length > 0);
-
-  const handleUndo = () => temporalStore.getState().undo();
-  const handleRedo = () => temporalStore.getState().redo();
 
   const handleNew = () => {
     clearLayers();
@@ -114,84 +103,30 @@ export function Toolbar() {
 
       <Separator orientation="vertical" className="h-6" />
 
-      {/* File operations */}
-      <Tooltip>
-        <TooltipTrigger
-          render={<Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleNew} />}
-        >
-          <FilePlus className="h-4 w-4" />
-        </TooltipTrigger>
-        <TooltipContent>New patch</TooltipContent>
-      </Tooltip>
-
-      <Tooltip>
-        <TooltipTrigger
-          render={<Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleImportClick} />}
-        >
-          <Upload className="h-4 w-4" />
-        </TooltipTrigger>
-        <TooltipContent>Import patch</TooltipContent>
-      </Tooltip>
-
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => layers.length > 0 && setShowExport(true)}
-              disabled={layers.length === 0}
-            />
-          }
-        >
-          <Download className="h-4 w-4" />
-        </TooltipTrigger>
-        <TooltipContent>Export patch</TooltipContent>
-      </Tooltip>
-
-      <Separator orientation="vertical" className="h-6" />
-
       <PresetsMenu />
 
-      <Separator orientation="vertical" className="h-6" />
-
-      {/* Undo / Redo */}
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handleUndo()}
-              disabled={!canUndo}
-            />
-          }
-        >
-          <Undo2 className="h-4 w-4" />
-        </TooltipTrigger>
-        <TooltipContent>Undo</TooltipContent>
-      </Tooltip>
-
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handleRedo()}
-              disabled={!canRedo}
-            />
-          }
-        >
-          <Redo2 className="h-4 w-4" />
-        </TooltipTrigger>
-        <TooltipContent>Redo</TooltipContent>
-      </Tooltip>
-
       <div className="flex-1" />
+
+      {/* File operations with text labels */}
+      <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleNew}>
+        <FilePlus className="h-4 w-4" />
+        New
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleImportClick}>
+        <Upload className="h-4 w-4" />
+        Import
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 gap-1.5 text-xs"
+        onClick={() => layers.length > 0 && setShowExport(true)}
+        disabled={layers.length === 0}
+      >
+        <Download className="h-4 w-4" />
+        Export
+      </Button>
+
       <Separator orientation="vertical" className="h-6" />
       <ThemeToggle />
 
