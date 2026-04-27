@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 import { useAudioEngine } from "@/hooks/use-audio-engine";
-import { Play, Square, Repeat } from "lucide-react";
+import { Play, Square, Repeat, Grid3x3, Magnet } from "lucide-react";
 
 export function TransportBar() {
   const isPlaying = useStore((s) => s.isPlaying);
@@ -15,6 +15,12 @@ export function TransportBar() {
   const regionEnd = useStore((s) => s.regionEnd);
   const setRegionStart = useStore((s) => s.setRegionStart);
   const setRegionEnd = useStore((s) => s.setRegionEnd);
+  const quantizeEnabled = useStore((s) => s.quantizeEnabled);
+  const setQuantizeEnabled = useStore((s) => s.setQuantizeEnabled);
+  const bpm = useStore((s) => s.bpm);
+  const setBpm = useStore((s) => s.setBpm);
+  const snapEnabled = useStore((s) => s.snapEnabled);
+  const setSnapEnabled = useStore((s) => s.setSnapEnabled);
   const { play, stop } = useAudioEngine();
   const layerCount = useStore((s) => s.layers.length);
 
@@ -22,6 +28,8 @@ export function TransportBar() {
   const [endText, setEndText] = useState(regionEnd.toFixed(2));
   const [startFocused, setStartFocused] = useState(false);
   const [endFocused, setEndFocused] = useState(false);
+  const [bpmText, setBpmText] = useState(String(bpm));
+  const [bpmFocused, setBpmFocused] = useState(false);
 
   useEffect(() => {
     if (!startFocused) setStartText(regionStart.toFixed(2));
@@ -30,6 +38,10 @@ export function TransportBar() {
   useEffect(() => {
     if (!endFocused) setEndText(regionEnd.toFixed(2));
   }, [regionEnd, endFocused]);
+
+  useEffect(() => {
+    if (!bpmFocused) setBpmText(String(bpm));
+  }, [bpm, bpmFocused]);
 
   function commitStart() {
     const parsed = parseFloat(startText);
@@ -45,6 +57,14 @@ export function TransportBar() {
       setRegionEnd(Math.max(parsed, regionStart + 0.01));
     }
     setEndText(regionEnd.toFixed(2));
+  }
+
+  function commitBpm() {
+    const parsed = parseInt(bpmText, 10);
+    if (!isNaN(parsed) && parsed >= 20 && parsed <= 300) {
+      setBpm(parsed);
+    }
+    setBpmText(String(bpm));
   }
 
   return (
@@ -112,6 +132,50 @@ export function TransportBar() {
           }}
           className="h-5 w-12 rounded border border-input bg-background px-1 text-center text-xs tabular-nums outline-none focus:ring-1 focus:ring-ring"
         />
+      </div>
+
+      {/* Quantize / BPM / Snap controls */}
+      <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground ml-2">
+        <span className="text-border">|</span>
+        <Button
+          size="sm"
+          variant={quantizeEnabled ? "secondary" : "ghost"}
+          className="h-6 px-2 text-xs gap-1"
+          onClick={() => setQuantizeEnabled(!quantizeEnabled)}
+          title="Show quantize grid"
+        >
+          <Grid3x3 className={`h-3 w-3 ${quantizeEnabled ? "text-primary" : "text-muted-foreground"}`} />
+          Grid
+        </Button>
+        <span className="text-muted-foreground">BPM</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={bpmFocused ? bpmText : String(bpm)}
+          onChange={(e) => setBpmText(e.target.value)}
+          onFocus={() => {
+            setBpmFocused(true);
+            setBpmText(String(bpm));
+          }}
+          onBlur={() => {
+            setBpmFocused(false);
+            commitBpm();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          className="h-5 w-10 rounded border border-input bg-background px-1 text-center text-xs tabular-nums outline-none focus:ring-1 focus:ring-ring"
+        />
+        <Button
+          size="sm"
+          variant={snapEnabled ? "secondary" : "ghost"}
+          className="h-6 px-2 text-xs gap-1"
+          onClick={() => setSnapEnabled(!snapEnabled)}
+          title="Snap layers to grid"
+        >
+          <Magnet className={`h-3 w-3 ${snapEnabled ? "text-primary" : "text-muted-foreground"}`} />
+          Snap
+        </Button>
       </div>
     </div>
   );

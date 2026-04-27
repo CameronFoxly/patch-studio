@@ -44,6 +44,8 @@ export function TimelineLayer({
   const updateLayerEnvelope = useStore((s) => s.updateLayerEnvelope);
   const updateLayerGain = useStore((s) => s.updateLayerGain);
   const zoom = useStore((s) => s.zoom);
+  const snapEnabled = useStore((s) => s.snapEnabled);
+  const bpm = useStore((s) => s.bpm);
 
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -71,8 +73,12 @@ export function TimelineLayer({
         if (!dragStartRef.current) return;
         const dx = moveEvent.clientX - dragStartRef.current.mouseX;
         const deltaSeconds = dx / zoom;
-        const newDelay = Math.max(0, dragStartRef.current.startDelay + deltaSeconds);
-        updateLayerDelay(layer.id, Math.round(newDelay * 100) / 100);
+        let newDelay = Math.max(0, dragStartRef.current.startDelay + deltaSeconds);
+        if (snapEnabled) {
+          const gridStep = 60 / bpm;
+          newDelay = Math.round(newDelay / gridStep) * gridStep;
+        }
+        updateLayerDelay(layer.id, Math.round(newDelay * 1000) / 1000);
       };
 
       const handleMouseUp = () => {
@@ -85,7 +91,7 @@ export function TimelineLayer({
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
     },
-    [layer.id, layer.delay, zoom, selectLayer, updateLayerDelay],
+    [layer.id, layer.delay, zoom, selectLayer, updateLayerDelay, snapEnabled, bpm],
   );
 
   // Editable layer name

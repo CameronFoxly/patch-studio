@@ -1,22 +1,18 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { SliderInput } from "@/components/ui/slider-input";
 import { VolumeFader } from "@/components/ui/volume-fader";
 import { RotaryKnob } from "@/components/ui/rotary-knob";
-import { Separator } from "@/components/ui/separator";
 import { useMasterAmplitude } from "@/hooks/use-master-amplitude";
 import type { Layer } from "@/lib/types";
 
 export function GainPanPanel({ layer }: { layer: Layer }) {
   const updateLayerGain = useStore((s) => s.updateLayerGain);
   const updateLayerPan = useStore((s) => s.updateLayerPan);
-  const updateLayerDelay = useStore((s) => s.updateLayerDelay);
   const amplitude = useMasterAmplitude();
 
   const gain = layer.gain ?? 0.8;
   const pan = layer.pan ?? 0;
-  const delay = layer.delay ?? 0;
 
   return (
     <div className="border-t bg-card px-4 py-3 space-y-3">
@@ -46,17 +42,7 @@ export function GainPanPanel({ layer }: { layer: Layer }) {
         </div>
       </div>
 
-      <Separator className="-mx-4 data-horizontal:w-auto" />
 
-      <SliderInput
-        label="Onset Delay"
-        unit="s"
-        min={0}
-        max={30}
-        step={0.01}
-        value={delay}
-        onChange={(v) => updateLayerDelay(layer.id, v)}
-      />
     </div>
   );
 }

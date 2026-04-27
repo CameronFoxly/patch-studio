@@ -26,6 +26,8 @@ export function Timeline() {
   const setRegionStart = useStore((s) => s.setRegionStart);
   const setRegionEnd = useStore((s) => s.setRegionEnd);
   const reorderLayers = useStore((s) => s.reorderLayers);
+  const quantizeEnabled = useStore((s) => s.quantizeEnabled);
+  const bpm = useStore((s) => s.bpm);
   const containerRef = useRef<HTMLDivElement>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
 
@@ -54,6 +56,10 @@ export function Timeline() {
   // Ruler interval based on zoom
   const rulerInterval = zoom >= 200 ? 0.25 : zoom >= 80 ? 0.5 : 1;
   const rulerCount = Math.ceil(10 / rulerInterval) + 1;
+
+  // Quantize grid
+  const gridStep = 60 / bpm; // seconds per beat
+  const gridCount = quantizeEnabled ? Math.ceil(10 / gridStep) + 1 : 0;
 
   // Click + drag ruler to scrub
   const handleRulerMouseDown = useCallback(
@@ -225,6 +231,18 @@ export function Timeline() {
             })}
           </div>
 
+          {/* Quantize grid ticks on ruler */}
+          {quantizeEnabled && Array.from({ length: gridCount }, (_, i) => {
+            const time = i * gridStep;
+            return (
+              <div
+                key={`q-${i}`}
+                className="absolute bottom-0 w-px h-2 bg-primary/30 pointer-events-none"
+                style={{ left: `${time * zoom}px` }}
+              />
+            );
+          })}
+
           {/* Playhead on ruler */}
           <div
             className="absolute top-0 bottom-0 w-0.5 bg-destructive z-20 pointer-events-none"
@@ -303,6 +321,18 @@ export function Timeline() {
                     onDragStart={() => handleDragStart(index)}
                     onDragOver={() => handleDragOver(index)}
                     onDragEnd={handleDragEnd}
+                  />
+                );
+              })}
+
+              {/* Quantize grid lines across layers */}
+              {quantizeEnabled && Array.from({ length: gridCount }, (_, i) => {
+                const time = i * gridStep;
+                return (
+                  <div
+                    key={`grid-${i}`}
+                    className="absolute top-0 bottom-0 w-px bg-primary/10 pointer-events-none"
+                    style={{ left: `${controlsWidth + time * zoom}px` }}
                   />
                 );
               })}

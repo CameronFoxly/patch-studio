@@ -28,7 +28,7 @@ export default function Home() {
           </Group>
         </Panel>
         <Separator className="h-1.5 bg-border hover:bg-primary/20 transition-colors cursor-row-resize data-[resize-handle-active]:bg-primary/40" />
-        <Panel defaultSize={20} minSize={3} collapsible>
+        <Panel defaultSize={0} minSize={3} collapsible>
           <SequenceEditor />
         </Panel>
       </Group>
