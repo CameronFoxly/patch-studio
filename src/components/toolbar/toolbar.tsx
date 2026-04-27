@@ -9,16 +9,18 @@ import {
   downloadPatch,
   importPatch,
 } from "@/lib/audio/patch-converter";
-import { Download, Upload, FilePlus, AudioWaveform } from "lucide-react";
+import { Download, Upload, FilePlus, AudioWaveform, CircleHelp } from "lucide-react";
 import { PresetsMenu } from "./presets-menu";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { ExportDialog } from "./export-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
+import { HelpDialog } from "./help-dialog";
 
 export function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showExport, setShowExport] = useState(false);
   const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const pendingFileRef = useRef<File | null>(null);
 
   const layers = useStore((s) => s.layers);
@@ -130,6 +132,9 @@ export function Toolbar() {
 
       <Separator orientation="vertical" className="h-6" />
       <ThemeToggle />
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowHelp(true)}>
+        <CircleHelp className="h-4 w-4" />
+      </Button>
 
       {/* Hidden file input */}
       <input
@@ -158,6 +163,9 @@ export function Toolbar() {
         title="Replace current patch?"
         description="Importing will replace your current layers and effects. This action can be undone."
       />
+
+      {/* Help dialog */}
+      <HelpDialog open={showHelp} onOpenChange={setShowHelp} />
     </div>
   );
 }
