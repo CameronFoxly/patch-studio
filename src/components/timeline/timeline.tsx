@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, ZoomIn, ZoomOut, Library } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PresetsMenu } from "@/components/toolbar/presets-menu";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 const DEFAULT_CONTROLS_WIDTH = 220;
 const MIN_CONTROLS_WIDTH = 140;
@@ -254,25 +255,47 @@ export function Timeline() {
 
         {/* Zoom controls */}
         <div className="flex items-center gap-1 mx-2 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => setZoom(clampZoom(zoom * 0.8))}
-          >
-            <ZoomOut className="h-3.5 w-3.5" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setZoom(clampZoom(zoom * 0.8))}
+                  >
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">
+                Zoom out <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">⌘−</kbd>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <span className="text-[10px] text-muted-foreground font-mono w-10 text-center">
             {Math.round(zoom)}%
           </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => setZoom(clampZoom(zoom * 1.25))}
-          >
-            <ZoomIn className="h-3.5 w-3.5" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setZoom(clampZoom(zoom * 1.25))}
+                  >
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">
+                Zoom in <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">⌘+</kbd>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 

@@ -81,8 +81,23 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
           </a>
         </div>
 
-        <div className="pt-2 text-[10px] text-muted-foreground/60">
-          <p><strong>Shortcuts:</strong> Space = Play/Stop · ⌘Z = Undo · ⌘⇧Z = Redo</p>
+        <div className="pt-2 text-[10px] text-muted-foreground/60 space-y-1">
+          <p className="font-medium text-muted-foreground/80">Keyboard Shortcuts</p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+            <span>Space</span><span>Play / Stop</span>
+            <span>L</span><span>Toggle Loop</span>
+            <span>G</span><span>Toggle Grid</span>
+            <span>N</span><span>Toggle Snap</span>
+            <span>M</span><span>Mute Layer</span>
+            <span>S</span><span>Solo Layer</span>
+            <span>D</span><span>Duplicate Layer</span>
+            <span>⌫ / Delete</span><span>Delete Layer</span>
+            <span>⌘ +</span><span>Zoom In</span>
+            <span>⌘ −</span><span>Zoom Out</span>
+            <span>⌘ 0</span><span>Reset Zoom</span>
+            <span>⌘ Z</span><span>Undo</span>
+            <span>⌘ ⇧ Z</span><span>Redo</span>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
