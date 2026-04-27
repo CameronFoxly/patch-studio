@@ -102,8 +102,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
             <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">+</kbd><span>Zoom In</span>
             <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">⌘ ⇧ Z</kbd><span>Redo</span>
             <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">−</kbd><span>Zoom Out</span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">[</kbd><span>Set Range In</span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">]</kbd><span>Set Range Out</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">]</kbd><span>Set Preview End</span>
           </div>
         </details>
       </DialogContent>

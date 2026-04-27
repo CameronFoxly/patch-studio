@@ -14,9 +14,7 @@ export function TransportBar() {
   const isLooping = useStore((s) => s.isLooping);
   const setLooping = useStore((s) => s.setLooping);
   const currentTime = useStore((s) => s.currentTime);
-  const regionStart = useStore((s) => s.regionStart);
   const regionEnd = useStore((s) => s.regionEnd);
-  const setRegionStart = useStore((s) => s.setRegionStart);
   const setRegionEnd = useStore((s) => s.setRegionEnd);
   const quantizeEnabled = useStore((s) => s.quantizeEnabled);
   const setQuantizeEnabled = useStore((s) => s.setQuantizeEnabled);
@@ -27,16 +25,10 @@ export function TransportBar() {
   const { play, stop } = useAudioEngine();
   const layerCount = useStore((s) => s.layers.length);
 
-  const [startText, setStartText] = useState(regionStart.toFixed(2));
   const [endText, setEndText] = useState(regionEnd.toFixed(2));
-  const [startFocused, setStartFocused] = useState(false);
   const [endFocused, setEndFocused] = useState(false);
   const [bpmText, setBpmText] = useState(String(bpm));
   const [bpmFocused, setBpmFocused] = useState(false);
-
-  useEffect(() => {
-    if (!startFocused) setStartText(regionStart.toFixed(2));
-  }, [regionStart, startFocused]);
 
   useEffect(() => {
     if (!endFocused) setEndText(regionEnd.toFixed(2));
@@ -46,18 +38,10 @@ export function TransportBar() {
     if (!bpmFocused) setBpmText(String(bpm));
   }, [bpm, bpmFocused]);
 
-  function commitStart() {
-    const parsed = parseFloat(startText);
-    if (!isNaN(parsed) && parsed >= 0) {
-      setRegionStart(Math.min(parsed, regionEnd - 0.01));
-    }
-    setStartText(regionStart.toFixed(2));
-  }
-
   function commitEnd() {
     const parsed = parseFloat(endText);
     if (!isNaN(parsed) && parsed > 0) {
-      setRegionEnd(Math.max(parsed, regionStart + 0.01));
+      setRegionEnd(parsed);
     }
     setEndText(regionEnd.toFixed(2));
   }
@@ -122,26 +106,7 @@ export function TransportBar() {
 
         <Separator orientation="vertical" className="self-stretch -my-2" />
 
-        <span>Preview Range:</span>
-        <input
-          type="text"
-          inputMode="decimal"
-          value={startFocused ? startText : `${regionStart.toFixed(2)}s`}
-          onChange={(e) => setStartText(e.target.value)}
-          onFocus={() => {
-            setStartFocused(true);
-            setStartText(regionStart.toFixed(2));
-          }}
-          onBlur={() => {
-            setStartFocused(false);
-            commitStart();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") e.currentTarget.blur();
-          }}
-          className="h-5 w-12 rounded border border-input bg-background px-1 text-center text-xs tabular-nums outline-none focus:ring-1 focus:ring-ring"
-        />
-        <span>–</span>
+        <span>Preview End:</span>
         <input
           type="text"
           inputMode="decimal"

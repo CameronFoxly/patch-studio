@@ -22,9 +22,7 @@ export function Timeline() {
   const isPlaying = useStore((s) => s.isPlaying);
   const currentTime = useStore((s) => s.currentTime);
   const setCurrentTime = useStore((s) => s.setCurrentTime);
-  const regionStart = useStore((s) => s.regionStart);
   const regionEnd = useStore((s) => s.regionEnd);
-  const setRegionStart = useStore((s) => s.setRegionStart);
   const setRegionEnd = useStore((s) => s.setRegionEnd);
   const reorderLayers = useStore((s) => s.reorderLayers);
   const quantizeEnabled = useStore((s) => s.quantizeEnabled);
@@ -87,22 +85,18 @@ export function Timeline() {
     [zoom, setCurrentTime],
   );
 
-  // Region bracket dragging
+  // Region bracket dragging (end only — start is always 0)
   const handleBracketDrag = useCallback(
-    (which: "start" | "end", e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
       const startX = e.clientX;
-      const startVal = which === "start" ? regionStart : regionEnd;
+      const startVal = regionEnd;
 
       const handleMove = (moveE: MouseEvent) => {
         const dx = moveE.clientX - startX;
-        const newVal = Math.max(0, startVal + dx / zoom);
-        if (which === "start") {
-          setRegionStart(Math.min(newVal, regionEnd - 0.1));
-        } else {
-          setRegionEnd(Math.max(newVal, regionStart + 0.1));
-        }
+        const newVal = Math.max(0.1, startVal + dx / zoom);
+        setRegionEnd(newVal);
       };
 
       const handleUp = () => {
@@ -113,7 +107,7 @@ export function Timeline() {
       window.addEventListener("mousemove", handleMove);
       window.addEventListener("mouseup", handleUp);
     },
-    [zoom, regionStart, regionEnd, setRegionStart, setRegionEnd],
+    [zoom, regionEnd, setRegionEnd],
   );
 
   // Playhead position in pixels
@@ -188,26 +182,16 @@ export function Timeline() {
           <div
             className="absolute inset-y-0 bg-foreground/[0.06] dark:bg-foreground/[0.08]"
             style={{
-              left: `${regionStart * zoom}px`,
-              width: `${(regionEnd - regionStart) * zoom}px`,
+              left: 0,
+              width: `${regionEnd * zoom}px`,
             }}
           />
-
-          {/* Region start bracket */}
-          <div
-            className="absolute inset-y-0 w-2 cursor-col-resize z-10 group"
-            style={{ left: `${regionStart * zoom - 4}px` }}
-            onMouseDown={(e) => handleBracketDrag("start", e)}
-          >
-            <div className="absolute inset-y-0 left-1/2 w-0.5 bg-primary/60 group-hover:bg-primary" />
-            <div className="absolute top-0 left-0 w-2 h-3 bg-primary/60 group-hover:bg-primary rounded-b-sm" />
-          </div>
 
           {/* Region end bracket */}
           <div
             className="absolute inset-y-0 w-2 cursor-col-resize z-10 group"
             style={{ left: `${regionEnd * zoom - 4}px` }}
-            onMouseDown={(e) => handleBracketDrag("end", e)}
+            onMouseDown={handleBracketDrag}
           >
             <div className="absolute inset-y-0 left-1/2 w-0.5 bg-primary/60 group-hover:bg-primary" />
             <div className="absolute top-0 left-0 w-2 h-3 bg-primary/60 group-hover:bg-primary rounded-b-sm" />

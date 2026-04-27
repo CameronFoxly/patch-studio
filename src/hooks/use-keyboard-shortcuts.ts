@@ -97,16 +97,10 @@ export function useKeyboardShortcuts() {
         state.setSnapEnabled(!state.snapEnabled);
       }
 
-      // [ = set preview range start to current time
-      if (e.key === "[") {
-        e.preventDefault();
-        state.setRegionStart(Math.min(state.currentTime, state.regionEnd - 0.01));
-      }
-
-      // ] = set preview range end to current time
+      // ] = set preview end to current time
       if (e.key === "]") {
         e.preventDefault();
-        state.setRegionEnd(Math.max(state.currentTime, state.regionStart + 0.01));
+        state.setRegionEnd(Math.max(state.currentTime, 0.01));
       }
 
       // --- Layer shortcuts (require a selected layer) ---

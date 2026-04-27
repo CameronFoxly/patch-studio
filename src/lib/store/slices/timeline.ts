@@ -20,9 +20,7 @@ export interface TimelineSlice {
   setZoom: (zoom: number) => void;
   setScrollX: (scrollX: number) => void;
   setLooping: (looping: boolean) => void;
-  setRegionStart: (time: number) => void;
   setRegionEnd: (time: number) => void;
-  setRegion: (start: number, end: number) => void;
   setQuantizeEnabled: (enabled: boolean) => void;
   setBpm: (bpm: number) => void;
   setSnapEnabled: (enabled: boolean) => void;
@@ -52,9 +50,7 @@ export const createTimelineSlice: StateCreator<
   setZoom: (zoom) => set({ zoom }),
   setScrollX: (scrollX) => set({ scrollX }),
   setLooping: (looping) => set({ isLooping: looping }),
-  setRegionStart: (time) => set({ regionStart: Math.max(0, time) }),
-  setRegionEnd: (time) => set({ regionEnd: Math.max(0, time) }),
-  setRegion: (start, end) => set({ regionStart: Math.max(0, start), regionEnd: Math.max(0, end) }),
+  setRegionEnd: (time) => set({ regionEnd: Math.max(0.01, time) }),
   setQuantizeEnabled: (enabled) => set({ quantizeEnabled: enabled }),
   setBpm: (bpm) => set({ bpm: Math.max(20, Math.min(300, bpm)) }),
   setSnapEnabled: (enabled) => set({ snapEnabled: enabled }),
