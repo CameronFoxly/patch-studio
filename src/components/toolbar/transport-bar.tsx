@@ -166,7 +166,7 @@ export function TransportBar() {
           step={1}
           value={[bpm]}
           onValueChange={(v) => setBpm(Array.isArray(v) ? v[0] : (v as number))}
-          className="w-24"
+          className="w-[50px]"
         />
         <input
           type="text"
