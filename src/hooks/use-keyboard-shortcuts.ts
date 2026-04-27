@@ -55,22 +55,6 @@ export function useKeyboardShortcuts() {
         temporalStore.getState().redo();
       }
 
-      // --- Zoom shortcuts (⌘+/⌘=, ⌘-, ⌘0) ---
-      if (isCmd && (e.key === "=" || e.key === "+")) {
-        e.preventDefault();
-        const zoom = useStore.getState().zoom;
-        useStore.getState().setZoom(clampZoom(zoom * 1.25));
-      }
-      if (isCmd && e.key === "-") {
-        e.preventDefault();
-        const zoom = useStore.getState().zoom;
-        useStore.getState().setZoom(clampZoom(zoom * 0.8));
-      }
-      if (isCmd && e.key === "0") {
-        e.preventDefault();
-        useStore.getState().setZoom(DEFAULT_ZOOM);
-      }
-
       // All remaining shortcuts require no text input focus and no modifier keys
       if (typing || isCmd || e.altKey) return;
 
@@ -86,6 +70,25 @@ export function useKeyboardShortcuts() {
       if (e.key === "g") {
         e.preventDefault();
         state.setQuantizeEnabled(!state.quantizeEnabled);
+      }
+
+      // + / = = zoom in
+      if (e.key === "=" || e.key === "+") {
+        e.preventDefault();
+        state.setZoom(clampZoom(state.zoom * 1.25));
+      }
+
+      // - = zoom out
+      if (e.key === "-") {
+        e.preventDefault();
+        state.setZoom(clampZoom(state.zoom * 0.8));
+      }
+
+      // A = add layer
+      if (e.key === "a") {
+        e.preventDefault();
+        const newId = state.addLayer();
+        state.selectLayer(newId);
       }
 
       // N = toggle snap

@@ -270,7 +270,7 @@ export function Timeline() {
                 }
               />
               <TooltipContent side="bottom">
-                Zoom out <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">⌘−</kbd>
+                Zoom out <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">−</kbd>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -292,7 +292,7 @@ export function Timeline() {
                 }
               />
               <TooltipContent side="bottom">
-                Zoom in <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">⌘+</kbd>
+                Zoom in <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">+</kbd>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -371,15 +371,26 @@ export function Timeline() {
 
           {layers.length > 0 && (
             <div className="p-4 flex gap-2">
-              <Button
-                onClick={() => addLayer()}
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-muted-foreground"
-              >
-                <Plus className="h-4 w-4" />
-                Add Layer
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        onClick={() => addLayer()}
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-muted-foreground"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Layer
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="bottom">
+                    Add layer <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">A</kbd>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <PresetsMenu
                 mode="append"
                 trigger={
