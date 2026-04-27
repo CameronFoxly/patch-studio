@@ -1,6 +1,10 @@
-import type { Layer } from "@/lib/types";
+import type { Layer, Filter, LFO } from "@/lib/types";
 import type { Effect } from "@/lib/types";
 import type { SoundPatch, SoundDefinition } from "@/lib/types";
+
+function stripBypassed<T extends { bypassed?: boolean }>(items: T[]): T[] {
+  return items.map(({ bypassed: _, ...rest }) => rest as T);
+}
 
 // Export: Convert store layers to a patch JSON object
 export function exportPatch(
@@ -10,10 +14,6 @@ export function exportPatch(
 ): SoundPatch {
   const definition: SoundDefinition = {};
 
-  function stripEffectBypassed(effects: Effect[]): Effect[] {
-    return effects.map(({ bypassed: _, ...rest }) => rest as Effect);
-  }
-
   function cleanLayer(layer: Layer) {
     const {
       id,
@@ -21,13 +21,20 @@ export function exportPatch(
       muted,
       solo,
       showEnvelope,
-      filterBypassed,
-      lfoBypassed,
-      effectsBypassed,
       ...rest
     } = layer;
+    if (rest.filter) {
+      const filters = Array.isArray(rest.filter) ? rest.filter : [rest.filter];
+      const cleaned = stripBypassed(filters);
+      rest.filter = cleaned.length === 1 ? cleaned[0] : cleaned.length > 0 ? cleaned : undefined;
+    }
+    if (rest.lfo) {
+      const lfos = Array.isArray(rest.lfo) ? rest.lfo : [rest.lfo];
+      const cleaned = stripBypassed(lfos);
+      rest.lfo = cleaned.length === 1 ? cleaned[0] : cleaned.length > 0 ? cleaned : undefined;
+    }
     if (rest.effects) {
-      rest.effects = stripEffectBypassed(rest.effects);
+      rest.effects = stripBypassed(rest.effects);
     }
     return rest;
   }
@@ -41,7 +48,7 @@ export function exportPatch(
   }
 
   if (globalEffects && globalEffects.length > 0) {
-    definition.effects = stripEffectBypassed(globalEffects);
+    definition.effects = stripBypassed(globalEffects);
   }
 
   return {

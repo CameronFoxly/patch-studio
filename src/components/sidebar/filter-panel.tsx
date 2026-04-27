@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { FilterGraph } from "./filter-graph";
 import type { Layer, BiquadFilter, IIRFilter, Filter, BiquadFilterType } from "@/lib/types";
-import { PlusIcon, XIcon, PowerIcon } from "lucide-react";
+import { PlusIcon, XIcon, PowerIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
 const BIQUAD_TYPES: { value: BiquadFilterType; label: string }[] = [
   { value: "lowpass", label: "Low Pass" },
@@ -47,6 +47,11 @@ function defaultFilter(): BiquadFilter {
 
 function defaultIIRFilter(): IIRFilter {
   return { type: "iir", feedforward: [1, 0], feedback: [1, 0] };
+}
+
+function filterLabel(f: Filter): string {
+  if (f.type === "iir") return "IIR Filter";
+  return BIQUAD_TYPES.find((t) => t.value === f.type)?.label ?? f.type;
 }
 
 /* ── IIR Filter Coefficient Editor ── */
@@ -131,15 +136,146 @@ function IIRFilterControls({
   );
 }
 
+function BiquadFilterControls({
+  filter,
+  index,
+  onChange,
+}: {
+  filter: BiquadFilter;
+  index: number;
+  onChange: (index: number, updated: Filter) => void;
+}) {
+  return (
+    <>
+      <div className="space-y-2">
+        <Label className="text-xs">Type</Label>
+        <Select
+          value={filter.type}
+          onValueChange={(v) => {
+            if (v) onChange(index, { ...filter, type: v as BiquadFilterType });
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {BIQUAD_TYPES.map((t) => (
+              <SelectItem key={t.value} value={t.value}>
+                {t.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <KnobRow>
+        <RotaryKnob
+          label="Frequency"
+          unit="Hz"
+          min={20}
+          max={20000}
+          step={1}
+          value={filter.frequency}
+          onChange={(v) => onChange(index, { ...filter, frequency: v })}
+        />
+        <RotaryKnob
+          label="Q"
+          min={0.1}
+          max={30}
+          step={0.1}
+          value={filter.resonance ?? 1}
+          onChange={(v) => onChange(index, { ...filter, resonance: v })}
+        />
+        {GAIN_TYPES.includes(filter.type) && (
+          <RotaryKnob
+            label="Gain"
+            unit="dB"
+            min={-40}
+            max={40}
+            step={0.5}
+            value={filter.gain ?? 0}
+            onChange={(v) => onChange(index, { ...filter, gain: v })}
+          />
+        )}
+      </KnobRow>
+
+      <Separator className="-mx-3 data-horizontal:w-auto" />
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Filter Envelope</Label>
+          <Switch
+            checked={!!filter.envelope}
+            onCheckedChange={(checked) =>
+              onChange(index, {
+                ...filter,
+                envelope: checked
+                  ? { attack: 0.01, peak: 2000, decay: 0.3 }
+                  : undefined,
+              })
+            }
+            size="sm"
+          />
+        </div>
+        {filter.envelope && (
+          <div className="pl-2 border-l-2 border-muted">
+            <KnobRow>
+              <RotaryKnob
+                label="Attack"
+                unit="s"
+                min={0}
+                max={2}
+                step={0.01}
+                value={filter.envelope.attack}
+                onChange={(v) =>
+                  onChange(index, {
+                    ...filter,
+                    envelope: { ...filter.envelope!, attack: v },
+                  })
+                }
+              />
+              <RotaryKnob
+                label="Peak"
+                unit="Hz"
+                min={20}
+                max={20000}
+                step={1}
+                value={filter.envelope.peak}
+                onChange={(v) =>
+                  onChange(index, {
+                    ...filter,
+                    envelope: { ...filter.envelope!, peak: v },
+                  })
+                }
+              />
+              <RotaryKnob
+                label="Decay"
+                unit="s"
+                min={0}
+                max={5}
+                step={0.01}
+                value={filter.envelope.decay}
+                onChange={(v) =>
+                  onChange(index, {
+                    ...filter,
+                    envelope: { ...filter.envelope!, decay: v },
+                  })
+                }
+              />
+            </KnobRow>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
 export function FilterPanel({ layer }: { layer: Layer }) {
   const updateLayerFilter = useStore((s) => s.updateLayerFilter);
   const toggleLayerFilterBypass = useStore((s) => s.toggleLayerFilterBypass);
   const allFilters = getFilters(layer);
   const biquadFilters = getBiquadFilters(layer);
-  const isBypassed = layer.filterBypassed ?? false;
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(
-    allFilters.length > 0 ? 0 : null
-  );
+  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
 
   function setAllFilters(next: Filter[]) {
     if (next.length === 0) {
@@ -159,241 +295,112 @@ export function FilterPanel({ layer }: { layer: Layer }) {
 
   function removeFilter(index: number) {
     setAllFilters(allFilters.filter((_, i) => i !== index));
-    if (selectedIndex === index) {
-      setSelectedIndex(allFilters.length > 1 ? Math.max(0, index - 1) : null);
-    } else if (selectedIndex !== null && selectedIndex > index) {
-      setSelectedIndex(selectedIndex - 1);
-    }
+    setCollapsed((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
   }
 
   function addBiquadFilter() {
-    const newFilters = [...allFilters, defaultFilter()];
-    setAllFilters(newFilters);
-    setSelectedIndex(newFilters.length - 1);
+    setAllFilters([...allFilters, defaultFilter()]);
   }
 
   function addIIR() {
-    const newFilters = [...allFilters, defaultIIRFilter()];
-    setAllFilters(newFilters);
-    setSelectedIndex(newFilters.length - 1);
+    setAllFilters([...allFilters, defaultIIRFilter()]);
   }
 
-  const selected = selectedIndex !== null ? allFilters[selectedIndex] : null;
+  function toggleCollapsed(index: number) {
+    setCollapsed((prev) => ({ ...prev, [index]: !prev[index] }));
+  }
+
+  // Map a biquad-only index from the graph back to allFilters index
+  function biquadToAllIndex(biqIdx: number): number {
+    const biquad = biquadFilters[biqIdx];
+    return allFilters.indexOf(biquad);
+  }
 
   return (
     <div className="space-y-4">
-      {/* Section bypass toggle */}
-      {allFilters.length > 0 && (
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {isBypassed ? "Filters bypassed" : "Filters active"}
-          </span>
-          <Button
-            variant={isBypassed ? "outline" : "ghost"}
-            size="icon"
-            className={`h-6 w-6 ${isBypassed ? "text-muted-foreground" : "text-primary"}`}
-            onClick={() => toggleLayerFilterBypass(layer.id)}
-            title={isBypassed ? "Enable filters" : "Bypass filters"}
-          >
-            <PowerIcon className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
-
-      <div className={isBypassed ? "opacity-40 pointer-events-none" : ""}>
-      {/* EQ Graph — only shows biquad filters */}
+      {/* EQ Graph — only shows non-bypassed biquad filters */}
       <FilterGraph
-        filters={biquadFilters}
-        selectedIndex={
-          selectedIndex !== null && allFilters[selectedIndex]?.type !== "iir"
-            ? biquadFilters.indexOf(allFilters[selectedIndex] as BiquadFilter)
-            : null
-        }
+        filters={biquadFilters.filter((f) => !f.bypassed)}
+        selectedIndex={null}
         source={layer.source}
-        onSelectFilter={(biqIdx) => {
-          // Map biquad index back to allFilters index
-          if (biqIdx === null) { setSelectedIndex(null); return; }
-          const biquad = biquadFilters[biqIdx];
-          const allIdx = allFilters.indexOf(biquad);
-          setSelectedIndex(allIdx >= 0 ? allIdx : null);
-        }}
+        onSelectFilter={() => {}}
         onUpdateFilter={(biqIdx, updated) => {
-          const biquad = biquadFilters[biqIdx];
+          const activeBiquads = biquadFilters.filter((f) => !f.bypassed);
+          const biquad = activeBiquads[biqIdx];
           const allIdx = allFilters.indexOf(biquad);
           if (allIdx >= 0) updateFilter(allIdx, updated);
         }}
       />
 
-      {/* Selected filter controls */}
-      {selected && selectedIndex !== null && (
-        <div className="space-y-3 rounded-md border p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium">
-              {selected.type === "iir" ? "IIR Filter" : `Filter ${selectedIndex + 1}`}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => removeFilter(selectedIndex)}
-            >
-              <XIcon className="h-3 w-3" />
-            </Button>
+      {allFilters.length === 0 && (
+        <p className="text-xs text-muted-foreground">No filters in chain</p>
+      )}
+
+      {/* Filter list — collapsible cards like effects */}
+      {allFilters.map((filter, i) => (
+        <div key={i} className={`rounded-md border ${filter.bypassed ? "opacity-50" : ""}`}>
+          <div
+            className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted/50"
+            onClick={() => toggleCollapsed(i)}
+          >
+            <div className="flex items-center gap-1.5">
+              {collapsed[i] ? (
+                <ChevronRightIcon className="h-3 w-3" />
+              ) : (
+                <ChevronDownIcon className="h-3 w-3" />
+              )}
+              <span className="text-xs font-medium">
+                {filterLabel(filter)}
+              </span>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant={filter.bypassed ? "outline" : "ghost"}
+                size="icon"
+                className={`h-6 w-6 ${filter.bypassed ? "text-muted-foreground" : "text-primary"}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleLayerFilterBypass(layer.id, i);
+                }}
+                title={filter.bypassed ? "Enable filter" : "Bypass filter"}
+              >
+                <PowerIcon className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeFilter(i);
+                }}
+              >
+                <XIcon className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
-
-          {selected.type === "iir" ? (
-            <IIRFilterControls
-              filter={selected as IIRFilter}
-              onChange={(f) => updateFilter(selectedIndex, f)}
-            />
-          ) : (
-            <>
-              <div className="space-y-2">
-                <Label className="text-xs">Type</Label>
-                <Select
-                  value={selected.type}
-                  onValueChange={(v) => {
-                    if (v)
-                      updateFilter(selectedIndex, { ...(selected as BiquadFilter), type: v as BiquadFilterType });
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BIQUAD_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <KnobRow>
-                <RotaryKnob
-                  label="Frequency"
-                  unit="Hz"
-                  min={20}
-                  max={20000}
-                  step={1}
-                  value={(selected as BiquadFilter).frequency}
-                  onChange={(v) => updateFilter(selectedIndex, { ...(selected as BiquadFilter), frequency: v })}
+          {!collapsed[i] && (
+            <div className="px-3 pb-3 space-y-3">
+              {filter.type === "iir" ? (
+                <IIRFilterControls
+                  filter={filter as IIRFilter}
+                  onChange={(f) => updateFilter(i, f)}
                 />
-
-                <RotaryKnob
-                  label="Q"
-                  min={0.1}
-                  max={30}
-                  step={0.1}
-                  value={(selected as BiquadFilter).resonance ?? 1}
-                  onChange={(v) => updateFilter(selectedIndex, { ...(selected as BiquadFilter), resonance: v })}
+              ) : (
+                <BiquadFilterControls
+                  filter={filter as BiquadFilter}
+                  index={i}
+                  onChange={updateFilter}
                 />
-
-                {GAIN_TYPES.includes((selected as BiquadFilter).type) && (
-                  <RotaryKnob
-                    label="Gain"
-                    unit="dB"
-                    min={-40}
-                    max={40}
-                    step={0.5}
-                    value={(selected as BiquadFilter).gain ?? 0}
-                    onChange={(v) => updateFilter(selectedIndex, { ...(selected as BiquadFilter), gain: v })}
-                  />
-                )}
-              </KnobRow>
-
-              <Separator className="-mx-3 data-horizontal:w-auto" />
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs">Filter Envelope</Label>
-                  <Switch
-                    checked={!!(selected as BiquadFilter).envelope}
-                    onCheckedChange={(checked) =>
-                      updateFilter(selectedIndex, {
-                        ...(selected as BiquadFilter),
-                        envelope: checked
-                          ? { attack: 0.01, peak: 2000, decay: 0.3 }
-                          : undefined,
-                      })
-                    }
-                    size="sm"
-                  />
-                </div>
-                {(selected as BiquadFilter).envelope && (
-                  <div className="pl-2 border-l-2 border-muted">
-                    <KnobRow>
-                      <RotaryKnob
-                        label="Attack"
-                        unit="s"
-                        min={0}
-                        max={2}
-                        step={0.01}
-                        value={(selected as BiquadFilter).envelope!.attack}
-                        onChange={(v) =>
-                          updateFilter(selectedIndex, {
-                            ...(selected as BiquadFilter),
-                            envelope: { ...(selected as BiquadFilter).envelope!, attack: v },
-                          })
-                        }
-                      />
-                      <RotaryKnob
-                        label="Peak"
-                        unit="Hz"
-                        min={20}
-                        max={20000}
-                        step={1}
-                        value={(selected as BiquadFilter).envelope!.peak}
-                        onChange={(v) =>
-                          updateFilter(selectedIndex, {
-                            ...(selected as BiquadFilter),
-                            envelope: { ...(selected as BiquadFilter).envelope!, peak: v },
-                          })
-                        }
-                      />
-                      <RotaryKnob
-                        label="Decay"
-                        unit="s"
-                        min={0}
-                        max={5}
-                        step={0.01}
-                        value={(selected as BiquadFilter).envelope!.decay}
-                        onChange={(v) =>
-                          updateFilter(selectedIndex, {
-                            ...(selected as BiquadFilter),
-                            envelope: { ...(selected as BiquadFilter).envelope!, decay: v },
-                          })
-                        }
-                      />
-                    </KnobRow>
-                  </div>
-                )}
-              </div>
-            </>
+              )}
+            </div>
           )}
         </div>
-      )}
-
-      {/* Filter list (chips for multi-filter) */}
-      {allFilters.length > 1 && (
-        <div className="flex flex-wrap gap-1.5">
-          {allFilters.map((f, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setSelectedIndex(i)}
-              className={`text-[10px] px-2 py-1 rounded-full border transition-colors cursor-pointer ${
-                selectedIndex === i
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {i + 1}: {f.type === "iir" ? "IIR" : (BIQUAD_TYPES.find((t) => t.value === f.type)?.label ?? f.type)}
-            </button>
-          ))}
-        </div>
-      )}
+      ))}
 
       <div className="flex gap-2">
         <Button
@@ -414,7 +421,6 @@ export function FilterPanel({ layer }: { layer: Layer }) {
           <PlusIcon className="h-3 w-3 mr-1" />
           IIR
         </Button>
-      </div>
       </div>
     </div>
   );

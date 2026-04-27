@@ -35,8 +35,8 @@ export interface LayersSlice {
   toggleLayerMute: (id: string) => void;
   toggleLayerSolo: (id: string) => void;
   toggleLayerEnvelopeOverlay: (id: string) => void;
-  toggleLayerFilterBypass: (id: string) => void;
-  toggleLayerLFOBypass: (id: string) => void;
+  toggleLayerFilterBypass: (id: string, index: number) => void;
+  toggleLayerLFOBypass: (id: string, index: number) => void;
   toggleLayerEffectBypass: (id: string, index: number) => void;
 
   setLayers: (layers: Layer[]) => void;
@@ -187,21 +187,29 @@ export const createLayersSlice: StateCreator<
     });
   },
 
-  toggleLayerFilterBypass: (id) => {
+  toggleLayerFilterBypass: (id, index) => {
     set({
-      layers: updateLayer(get().layers, id, (l) => ({
-        ...l,
-        filterBypassed: !l.filterBypassed,
-      })),
+      layers: updateLayer(get().layers, id, (l) => {
+        if (!l.filter) return l;
+        const filters = Array.isArray(l.filter) ? l.filter : [l.filter];
+        const updated = filters.map((f, i) =>
+          i === index ? { ...f, bypassed: !f.bypassed } : f,
+        );
+        return { ...l, filter: updated.length === 1 ? updated[0] : updated };
+      }),
     });
   },
 
-  toggleLayerLFOBypass: (id) => {
+  toggleLayerLFOBypass: (id, index) => {
     set({
-      layers: updateLayer(get().layers, id, (l) => ({
-        ...l,
-        lfoBypassed: !l.lfoBypassed,
-      })),
+      layers: updateLayer(get().layers, id, (l) => {
+        if (!l.lfo) return l;
+        const lfos = Array.isArray(l.lfo) ? l.lfo : [l.lfo];
+        const updated = lfos.map((lfo, i) =>
+          i === index ? { ...lfo, bypassed: !lfo.bypassed } : lfo,
+        );
+        return { ...l, lfo: updated.length === 1 ? updated[0] : updated };
+      }),
     });
   },
 

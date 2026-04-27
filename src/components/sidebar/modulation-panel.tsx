@@ -1,12 +1,12 @@
 "use client";
 
 import { useStore } from "@/lib/store";
+import { useState, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RotaryKnob } from "@/components/ui/rotary-knob";
 import { KnobRow } from "@/components/ui/knob-row";
 import { ToggleGroup } from "@/components/ui/toggle-group";
-import { useCallback } from "react";
 import {
   Select,
   SelectContent,
@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Layer, LFO, OscillatorType, LFOTarget } from "@/lib/types";
-import { PlusIcon, XIcon, PowerIcon } from "lucide-react";
+import { PlusIcon, XIcon, PowerIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
 /* ── SVG wave shape icons for LFO waveforms ── */
 
@@ -62,12 +62,17 @@ function defaultLFO(): LFO {
   return { type: "sine", frequency: 4, depth: 50, target: "frequency" };
 }
 
+function lfoLabel(lfo: LFO): string {
+  const target = LFO_TARGETS.find((t) => t.value === lfo.target)?.label ?? lfo.target;
+  return `${lfo.type.charAt(0).toUpperCase() + lfo.type.slice(1)} → ${target}`;
+}
+
 export function ModulationPanel({ layer }: { layer: Layer }) {
   const updateLayerLFO = useStore((s) => s.updateLayerLFO);
   const toggleLayerLFOBypass = useStore((s) => s.toggleLayerLFOBypass);
   const setLfoInteractionLayerId = useStore((s) => s.setLfoInteractionLayerId);
   const lfos = getLFOs(layer);
-  const isBypassed = layer.lfoBypassed ?? false;
+  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
 
   const handleLfoDragStart = useCallback(() => {
     setLfoInteractionLayerId(layer.id);
@@ -95,102 +100,124 @@ export function ModulationPanel({ layer }: { layer: Layer }) {
 
   function removeLFO(index: number) {
     setLFOs(lfos.filter((_, i) => i !== index));
+    setCollapsed((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
   }
 
   function addLFO() {
     setLFOs([...lfos, defaultLFO()]);
   }
 
-  return (
-    <div className="space-y-4">
-      {/* Section bypass toggle */}
-      {lfos.length > 0 && (
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {isBypassed ? "LFOs bypassed" : "LFOs active"}
-          </span>
-          <Button
-            variant={isBypassed ? "outline" : "ghost"}
-            size="icon"
-            className={`h-6 w-6 ${isBypassed ? "text-muted-foreground" : "text-primary"}`}
-            onClick={() => toggleLayerLFOBypass(layer.id)}
-            title={isBypassed ? "Enable LFOs" : "Bypass LFOs"}
-          >
-            <PowerIcon className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
+  function toggleCollapsed(index: number) {
+    setCollapsed((prev) => ({ ...prev, [index]: !prev[index] }));
+  }
 
-      <div className={isBypassed ? "opacity-40 pointer-events-none" : ""}>
+  return (
+    <div className="space-y-3">
       {lfos.length === 0 && (
         <p className="text-xs text-muted-foreground">No LFOs configured</p>
       )}
 
       {lfos.map((lfo, i) => (
-        <div key={i} className="space-y-3 rounded-md border p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium">LFO {i + 1}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => removeLFO(i)}
-            >
-              <XIcon className="h-3 w-3" />
-            </Button>
+        <div key={i} className={`rounded-md border ${lfo.bypassed ? "opacity-50" : ""}`}>
+          <div
+            className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted/50"
+            onClick={() => toggleCollapsed(i)}
+          >
+            <div className="flex items-center gap-1.5">
+              {collapsed[i] ? (
+                <ChevronRightIcon className="h-3 w-3" />
+              ) : (
+                <ChevronDownIcon className="h-3 w-3" />
+              )}
+              <span className="text-xs font-medium">
+                {lfoLabel(lfo)}
+              </span>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant={lfo.bypassed ? "outline" : "ghost"}
+                size="icon"
+                className={`h-6 w-6 ${lfo.bypassed ? "text-muted-foreground" : "text-primary"}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleLayerLFOBypass(layer.id, i);
+                }}
+                title={lfo.bypassed ? "Enable LFO" : "Bypass LFO"}
+              >
+                <PowerIcon className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeLFO(i);
+                }}
+              >
+                <XIcon className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
+          {!collapsed[i] && (
+            <div className="px-3 pb-3 space-y-3">
+              <ToggleGroup
+                label="Waveform"
+                options={LFO_WAVEFORM_OPTIONS}
+                value={lfo.type}
+                onChange={(v) => updateLFO(i, { ...lfo, type: v })}
+              />
 
-          <ToggleGroup
-            label="Waveform"
-            options={LFO_WAVEFORM_OPTIONS}
-            value={lfo.type}
-            onChange={(v) => updateLFO(i, { ...lfo, type: v })}
-          />
+              <div className="space-y-2">
+                <Label className="text-xs">Target</Label>
+                <Select
+                  value={lfo.target}
+                  onValueChange={(v) => {
+                    if (v) updateLFO(i, { ...lfo, target: v as LFOTarget });
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LFO_TARGETS.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs">Target</Label>
-            <Select
-              value={lfo.target}
-              onValueChange={(v) => {
-                if (v) updateLFO(i, { ...lfo, target: v as LFOTarget });
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LFO_TARGETS.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <KnobRow>
-            <RotaryKnob
-              label="Frequency"
-              unit="Hz"
-              min={0.01}
-              max={40}
-              step={0.01}
-              value={lfo.frequency}
-              onChange={(v) => updateLFO(i, { ...lfo, frequency: v })}
-              onDragStart={handleLfoDragStart}
-              onDragEnd={handleLfoDragEnd}
-            />
-            <RotaryKnob
-              label="Depth"
-              min={0}
-              max={1000}
-              step={1}
-              value={lfo.depth}
-              onChange={(v) => updateLFO(i, { ...lfo, depth: v })}
-              onDragStart={handleLfoDragStart}
-              onDragEnd={handleLfoDragEnd}
-            />
-          </KnobRow>
+              <KnobRow>
+                <RotaryKnob
+                  label="Frequency"
+                  unit="Hz"
+                  min={0.01}
+                  max={40}
+                  step={0.01}
+                  value={lfo.frequency}
+                  onChange={(v) => updateLFO(i, { ...lfo, frequency: v })}
+                  onDragStart={handleLfoDragStart}
+                  onDragEnd={handleLfoDragEnd}
+                />
+                <RotaryKnob
+                  label="Depth"
+                  min={0}
+                  max={1000}
+                  step={1}
+                  value={lfo.depth}
+                  onChange={(v) => updateLFO(i, { ...lfo, depth: v })}
+                  onDragStart={handleLfoDragStart}
+                  onDragEnd={handleLfoDragEnd}
+                />
+              </KnobRow>
+            </div>
+          )}
         </div>
       ))}
 
@@ -198,7 +225,6 @@ export function ModulationPanel({ layer }: { layer: Layer }) {
         <PlusIcon className="h-3 w-3 mr-1" />
         Add LFO
       </Button>
-      </div>
     </div>
   );
 }

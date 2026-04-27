@@ -1,14 +1,34 @@
 import { defineSound, ensureReady } from "@web-kits/audio";
-import type { Layer } from "@/lib/types";
+import type { Layer, Filter, LFO } from "@/lib/types";
 import type { Effect } from "@/lib/types";
 
-function stripBypassed(effects: Effect[]): Effect[] {
+function stripBypassedEffects(effects: Effect[]): Effect[] {
   return effects
     .filter((e) => !e.bypassed)
     .map(({ bypassed: _, ...rest }) => rest as Effect);
 }
 
-// Convert a Layer to the @web-kits/audio format (strip internal fields like id, name, muted, solo)
+function stripBypassedFilters(filter: Filter | Filter[] | undefined): Filter | Filter[] | undefined {
+  if (!filter) return undefined;
+  const filters = Array.isArray(filter) ? filter : [filter];
+  const active = filters
+    .filter((f) => !f.bypassed)
+    .map(({ bypassed: _, ...rest }) => rest as Filter);
+  if (active.length === 0) return undefined;
+  return active.length === 1 ? active[0] : active;
+}
+
+function stripBypassedLFOs(lfo: LFO | LFO[] | undefined): LFO | LFO[] | undefined {
+  if (!lfo) return undefined;
+  const lfos = Array.isArray(lfo) ? lfo : [lfo];
+  const active = lfos
+    .filter((l) => !l.bypassed)
+    .map(({ bypassed: _, ...rest }) => rest as LFO);
+  if (active.length === 0) return undefined;
+  return active.length === 1 ? active[0] : active;
+}
+
+// Convert a Layer to the @web-kits/audio format (strip internal fields and bypassed modules)
 export function layerToSoundDef(layer: Layer) {
   const {
     id,
@@ -16,23 +36,21 @@ export function layerToSoundDef(layer: Layer) {
     muted,
     solo,
     showEnvelope,
-    filterBypassed,
-    lfoBypassed,
-    effectsBypassed,
     ...def
   } = layer;
 
   const result: Record<string, unknown> = { ...def };
 
-  if (filterBypassed) {
-    delete result.filter;
-  }
-  if (lfoBypassed) {
-    delete result.lfo;
-  }
+  result.filter = stripBypassedFilters(def.filter);
+  if (!result.filter) delete result.filter;
+
+  result.lfo = stripBypassedLFOs(def.lfo);
+  if (!result.lfo) delete result.lfo;
+
   if (result.effects) {
-    result.effects = stripBypassed(result.effects as Effect[]);
-    if ((result.effects as Effect[]).length === 0) delete result.effects;
+    const active = stripBypassedEffects(result.effects as Effect[]);
+    result.effects = active.length > 0 ? active : undefined;
+    if (!result.effects) delete result.effects;
   }
 
   return result;
@@ -52,7 +70,7 @@ export function layersToSoundDefinition(
   if (activeLayers.length === 0) return null;
 
   const activeGlobalEffects = globalEffects
-    ? stripBypassed(globalEffects)
+    ? stripBypassedEffects(globalEffects)
     : undefined;
 
   if (activeLayers.length === 1) {
