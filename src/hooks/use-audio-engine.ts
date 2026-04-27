@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef } from "react";
 import { playSound } from "@/lib/audio/engine";
 import { useStore } from "@/lib/store";
 
@@ -8,11 +8,8 @@ export function useAudioEngine() {
   const voiceRef = useRef<any>(null);
   const rafRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
-  const retriggerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPlayingRef = useRef(false);
 
-  const layers = useStore((s) => s.layers);
-  const globalEffects = useStore((s) => s.globalEffects);
   const setPlaying = useStore((s) => s.setPlaying);
   const setCurrentTime = useStore((s) => s.setCurrentTime);
 
@@ -93,47 +90,12 @@ export function useAudioEngine() {
     stopPlayhead();
     isPlayingRef.current = false;
     setPlaying(false);
-    if (retriggerTimerRef.current) {
-      clearTimeout(retriggerTimerRef.current);
-      retriggerTimerRef.current = null;
-    }
   }, [setPlaying, stopVoice, stopPlayhead]);
 
-  // Live retrigger: throttle — fire immediately on first change, then cooldown
-  const lastRetriggerRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (!isPlayingRef.current) return;
-
-    const now = Date.now();
-    const elapsed = now - lastRetriggerRef.current;
-    const COOLDOWN = 80; // ms between retriggers
-
-    if (elapsed >= COOLDOWN) {
-      // Fire immediately
-      lastRetriggerRef.current = now;
-      triggerSound();
-    } else {
-      // Schedule for end of cooldown
-      if (retriggerTimerRef.current) {
-        clearTimeout(retriggerTimerRef.current);
-      }
-      retriggerTimerRef.current = setTimeout(() => {
-        if (isPlayingRef.current) {
-          lastRetriggerRef.current = Date.now();
-          triggerSound();
-        }
-        retriggerTimerRef.current = null;
-      }, COOLDOWN - elapsed);
-    }
-
-    return () => {
-      if (retriggerTimerRef.current) {
-        clearTimeout(retriggerTimerRef.current);
-        retriggerTimerRef.current = null;
-      }
-    };
-  }, [layers, globalEffects, triggerSound]);
+  // Parameter changes during playback are NOT retriggered mid-loop.
+  // The loop boundary (in the animate callback) already calls triggerSound()
+  // which reads fresh state from the store, so changes apply on the next cycle.
+  // This avoids the machine-gun retrigger stutter when dragging sliders.
 
   return { play, stop };
 }
