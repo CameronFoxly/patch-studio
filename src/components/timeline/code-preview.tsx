@@ -10,6 +10,7 @@ import type { Highlighter } from "shiki";
 export function CodePreview() {
   const layers = useStore((s) => s.layers);
   const globalEffects = useStore((s) => s.globalEffects);
+  const patchName = useStore((s) => s.patchName);
 
   const [copied, setCopied] = useState(false);
   const [highlighter, setHighlighter] = useState<Highlighter | null>(null);
@@ -20,12 +21,12 @@ export function CodePreview() {
   const patchJson = useMemo(() => {
     if (layers.length === 0) return "";
     const patch = exportPatch(
-      "patch",
+      patchName,
       layers,
       globalEffects.length > 0 ? globalEffects : undefined,
     );
     return JSON.stringify(patch, null, 2);
-  }, [layers, globalEffects]);
+  }, [layers, globalEffects, patchName]);
 
   // Lazy-init the shiki highlighter
   useEffect(() => {
@@ -73,12 +74,12 @@ export function CodePreview() {
   const handleExport = useCallback(() => {
     if (layers.length === 0) return;
     const patch = exportPatch(
-      "patch",
+      patchName,
       layers,
       globalEffects.length > 0 ? globalEffects : undefined,
     );
     downloadPatch(patch);
-  }, [layers, globalEffects]);
+  }, [layers, globalEffects, patchName]);
 
   return (
     <div className="h-full flex flex-col bg-background">
