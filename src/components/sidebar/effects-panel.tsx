@@ -20,6 +20,8 @@ export function EffectsPanel({ layer }: { layer: Layer }) {
   const effects = layer.effects ?? [];
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
 
+  const [addKey, setAddKey] = useState(0);
+
   function setEffects(next: Effect[]) {
     updateLayerEffects(layer.id, next);
   }
@@ -41,6 +43,7 @@ export function EffectsPanel({ layer }: { layer: Layer }) {
 
   function addEffect(type: EffectType) {
     setEffects([...effects, defaultEffect(type)]);
+    setAddKey((k) => k + 1);
   }
 
   function toggleCollapsed(index: number) {
@@ -107,12 +110,13 @@ export function EffectsPanel({ layer }: { layer: Layer }) {
       ))}
 
       <Select
+        key={addKey}
         onValueChange={(v) => {
           if (v) addEffect(v as EffectType);
         }}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Add effect..." />
+          <SelectValue placeholder="+ Add effect..." />
         </SelectTrigger>
         <SelectContent>
           {EFFECT_TYPES.map((t) => (

@@ -21,6 +21,7 @@ export function GlobalEffectsPanel() {
   const removeGlobalEffect = useStore((s) => s.removeGlobalEffect);
   const toggleGlobalEffectBypass = useStore((s) => s.toggleGlobalEffectBypass);
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
+  const [addKey, setAddKey] = useState(0);
 
   function toggleCollapsed(index: number) {
     setCollapsed((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -97,12 +98,16 @@ export function GlobalEffectsPanel() {
       ))}
 
       <Select
+        key={addKey}
         onValueChange={(v) => {
-          if (v) addGlobalEffect(defaultEffect(v as EffectType));
+          if (v) {
+            addGlobalEffect(defaultEffect(v as EffectType));
+            setAddKey((k) => k + 1);
+          }
         }}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Add master effect..." />
+          <SelectValue placeholder="+ Add master effect..." />
         </SelectTrigger>
         <SelectContent>
           {EFFECT_TYPES.map((t) => (

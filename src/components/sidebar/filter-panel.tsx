@@ -37,10 +37,6 @@ function getFilters(layer: Layer): Filter[] {
   return Array.isArray(layer.filter) ? layer.filter : [layer.filter];
 }
 
-function getBiquadFilters(layer: Layer): BiquadFilter[] {
-  return getFilters(layer).filter((f): f is BiquadFilter => f.type !== "iir");
-}
-
 function defaultFilter(): BiquadFilter {
   return { type: "lowpass", frequency: 1000, resonance: 1 };
 }
@@ -274,7 +270,6 @@ export function FilterPanel({ layer }: { layer: Layer }) {
   const updateLayerFilter = useStore((s) => s.updateLayerFilter);
   const toggleLayerFilterBypass = useStore((s) => s.toggleLayerFilterBypass);
   const allFilters = getFilters(layer);
-  const biquadFilters = getBiquadFilters(layer);
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
 
   function setAllFilters(next: Filter[]) {
@@ -314,33 +309,13 @@ export function FilterPanel({ layer }: { layer: Layer }) {
     setCollapsed((prev) => ({ ...prev, [index]: !prev[index] }));
   }
 
-  // Map a biquad-only index from the graph back to allFilters index
-  function biquadToAllIndex(biqIdx: number): number {
-    const biquad = biquadFilters[biqIdx];
-    return allFilters.indexOf(biquad);
-  }
-
   return (
     <div className="space-y-4">
-      {/* EQ Graph — only shows non-bypassed biquad filters */}
-      <FilterGraph
-        filters={biquadFilters.filter((f) => !f.bypassed)}
-        selectedIndex={null}
-        source={layer.source}
-        onSelectFilter={() => {}}
-        onUpdateFilter={(biqIdx, updated) => {
-          const activeBiquads = biquadFilters.filter((f) => !f.bypassed);
-          const biquad = activeBiquads[biqIdx];
-          const allIdx = allFilters.indexOf(biquad);
-          if (allIdx >= 0) updateFilter(allIdx, updated);
-        }}
-      />
-
       {allFilters.length === 0 && (
         <p className="text-xs text-muted-foreground">No filters in chain</p>
       )}
 
-      {/* Filter list — collapsible cards like effects */}
+      {/* Filter list — collapsible cards with individual graphs */}
       {allFilters.map((filter, i) => (
         <div key={i} className={`rounded-md border ${filter.bypassed ? "opacity-50" : ""}`}>
           <div
@@ -391,11 +366,20 @@ export function FilterPanel({ layer }: { layer: Layer }) {
                   onChange={(f) => updateFilter(i, f)}
                 />
               ) : (
-                <BiquadFilterControls
-                  filter={filter as BiquadFilter}
-                  index={i}
-                  onChange={updateFilter}
-                />
+                <>
+                  <FilterGraph
+                    filters={[filter as BiquadFilter]}
+                    selectedIndex={0}
+                    source={layer.source}
+                    onSelectFilter={() => {}}
+                    onUpdateFilter={(_biqIdx, updated) => updateFilter(i, updated)}
+                  />
+                  <BiquadFilterControls
+                    filter={filter as BiquadFilter}
+                    index={i}
+                    onChange={updateFilter}
+                  />
+                </>
               )}
             </div>
           )}
