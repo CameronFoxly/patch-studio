@@ -1,7 +1,13 @@
 {
-  "name": "audio-gui",
+  "name": "patch-studio",
   "version": "0.1.0",
-  "private": true,
+  "description": "Web-based GUI for building synthesized sounds with @web-kits/audio",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CameronFoxly/patch-studio.git"
+  },
+  "homepage": "https://cameronfoxly.github.io/patch-studio/",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AudioWaveform, ExternalLink } from "lucide-react";
+import { AudioWaveform, ExternalLink, Heart } from "lucide-react";
 
 interface HelpDialogProps {
   open: boolean;
@@ -59,6 +59,26 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
               Patch Studio on GitHub
             </a>
           </div>
+        </div>
+
+        <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+          <p className="flex items-center gap-1.5 font-medium text-foreground">
+            <Heart className="h-3.5 w-3.5" />
+            Open Source
+          </p>
+          <p className="mt-1">
+            Patch Studio is MIT-licensed and open source. Bug reports, feature
+            suggestions, and pull requests are welcome!
+          </p>
+          <a
+            href="https://github.com/CameronFoxly/patch-studio/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Open an Issue or Contribute
+          </a>
         </div>
 
         <div className="pt-2 text-[10px] text-muted-foreground/60">

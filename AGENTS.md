@@ -4,8 +4,8 @@
 
 Patch Studio is a visual sound design GUI for the `@web-kits/audio` library. It provides a DAW-style timeline with layered waveform visualization, a parameter sidebar with interactive EQ and envelope graphs, real-time playback with live parameter tweaking, and patch import/export. The app deploys as a static site to GitHub Pages.
 
-**Repo**: `CameronFoxly/patch-studio` (private)
-**Live**: GitHub Pages at `/patch-studio/`
+**Repo**: `CameronFoxly/patch-studio`
+**Live**: https://cameronfoxly.github.io/patch-studio/
 
 ## Tech Stack
 
