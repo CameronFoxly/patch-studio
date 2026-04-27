@@ -103,7 +103,7 @@ export function Toolbar() {
         </span>
       </div>
 
-      <Separator orientation="vertical" className="self-stretch" />
+      <Separator orientation="vertical" className="self-stretch -my-2" />
 
       {/* New + Presets */}
       <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleNew}>
@@ -130,7 +130,7 @@ export function Toolbar() {
         Export
       </Button>
 
-      <Separator orientation="vertical" className="self-stretch" />
+      <Separator orientation="vertical" className="self-stretch -my-2" />
       <ThemeToggle />
       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowHelp(true)}>
         <CircleHelp className="h-4 w-4" />

@@ -94,12 +94,12 @@ export function TransportBar() {
         Loop
       </Button>
 
-      <Separator orientation="vertical" className="self-stretch" />
+      <Separator orientation="vertical" className="self-stretch -my-2" />
 
       <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
         <span>{currentTime.toFixed(2)}s</span>
 
-        <Separator orientation="vertical" className="self-stretch" />
+        <Separator orientation="vertical" className="self-stretch -my-2" />
 
         <span>Preview Range:</span>
         <input
@@ -141,7 +141,7 @@ export function TransportBar() {
         />
       </div>
 
-      <Separator orientation="vertical" className="self-stretch" />
+      <Separator orientation="vertical" className="self-stretch -my-2" />
 
       {/* Quantize / Snap / BPM controls */}
       <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
@@ -166,7 +166,7 @@ export function TransportBar() {
           Snap
         </Button>
 
-        <Separator orientation="vertical" className="self-stretch" />
+        <Separator orientation="vertical" className="self-stretch -my-2" />
 
         <span className="text-muted-foreground">BPM</span>
         <Slider
