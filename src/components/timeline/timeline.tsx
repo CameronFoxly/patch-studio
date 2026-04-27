@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, ZoomIn, ZoomOut, Library } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PresetsMenu } from "@/components/toolbar/presets-menu";
+import { CodePreview } from "./code-preview";
 
 const DEFAULT_CONTROLS_WIDTH = 220;
 const MIN_CONTROLS_WIDTH = 140;
@@ -369,6 +370,9 @@ export function Timeline() {
           )}
         </div>
       </ScrollArea>
+
+      {/* Code preview panel */}
+      <CodePreview />
     </div>
   );
 }
