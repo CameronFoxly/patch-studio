@@ -69,11 +69,11 @@ export function Sidebar() {
             <TabsTrigger value="source" className="text-xs px-2 py-1">
               Source
             </TabsTrigger>
-            <TabsTrigger value="filter" className="text-xs px-2 py-1">
-              Filter
-            </TabsTrigger>
             <TabsTrigger value="envelope" className="text-xs px-2 py-1">
               Envelope
+            </TabsTrigger>
+            <TabsTrigger value="filter" className="text-xs px-2 py-1">
+              Filter
             </TabsTrigger>
             <TabsTrigger value="effects" className="text-xs px-2 py-1">
               Effects
@@ -94,11 +94,11 @@ export function Sidebar() {
             <TabsContent value="source" className="mt-0">
               <SourcePanel layer={layer} />
             </TabsContent>
-            <TabsContent value="filter" className="mt-0">
-              <FilterPanel layer={layer} />
-            </TabsContent>
             <TabsContent value="envelope" className="mt-0">
               <EnvelopePanel layer={layer} />
+            </TabsContent>
+            <TabsContent value="filter" className="mt-0">
+              <FilterPanel layer={layer} />
             </TabsContent>
             <TabsContent value="effects" className="mt-0">
               <EffectsPanel layer={layer} />
