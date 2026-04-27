@@ -134,7 +134,7 @@ export function TransportBar() {
         />
       </div>
 
-      {/* Quantize / BPM / Snap controls */}
+      {/* Quantize / Snap / BPM controls */}
       <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground ml-2">
         <span className="text-border">|</span>
         <Button
@@ -147,7 +147,27 @@ export function TransportBar() {
           <Grid3x3 className={`h-3 w-3 ${quantizeEnabled ? "text-primary" : "text-muted-foreground"}`} />
           Grid
         </Button>
+        <Button
+          size="sm"
+          variant={snapEnabled ? "secondary" : "ghost"}
+          className="h-6 px-2 text-xs gap-1"
+          onClick={() => setSnapEnabled(!snapEnabled)}
+          title="Snap layers to grid"
+        >
+          <Magnet className={`h-3 w-3 ${snapEnabled ? "text-primary" : "text-muted-foreground"}`} />
+          Snap
+        </Button>
+        <span className="text-border">|</span>
         <span className="text-muted-foreground">BPM</span>
+        <input
+          type="range"
+          min={20}
+          max={300}
+          step={1}
+          value={bpm}
+          onChange={(e) => setBpm(Number(e.target.value))}
+          className="h-1 w-20 accent-primary cursor-pointer"
+        />
         <input
           type="text"
           inputMode="numeric"
@@ -166,16 +186,6 @@ export function TransportBar() {
           }}
           className="h-5 w-10 rounded border border-input bg-background px-1 text-center text-xs tabular-nums outline-none focus:ring-1 focus:ring-ring"
         />
-        <Button
-          size="sm"
-          variant={snapEnabled ? "secondary" : "ghost"}
-          className="h-6 px-2 text-xs gap-1"
-          onClick={() => setSnapEnabled(!snapEnabled)}
-          title="Snap layers to grid"
-        >
-          <Magnet className={`h-3 w-3 ${snapEnabled ? "text-primary" : "text-muted-foreground"}`} />
-          Snap
-        </Button>
       </div>
     </div>
   );
