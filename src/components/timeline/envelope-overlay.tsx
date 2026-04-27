@@ -106,8 +106,8 @@ export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope, onUpdateG
 
   const controlPoints: { id: DragPoint; cx: number; cy: number; label: string }[] = [
     { id: "attack", cx: xA, cy: yA, label: "A" },
-    { id: "decay", cx: xD, cy: yD, label: "D/S" },
     { id: "release", cx: xR, cy: yR, label: "R" },
+    { id: "decay", cx: xD, cy: yD, label: "D/S" },
   ];
 
   return (
