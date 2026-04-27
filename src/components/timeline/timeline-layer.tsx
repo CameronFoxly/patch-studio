@@ -5,6 +5,7 @@ import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { WaveformCanvas } from "./waveform-canvas";
 import { EnvelopeOverlay } from "./envelope-overlay";
+import { LfoOverlay } from "./lfo-overlay";
 import type { Layer } from "@/lib/types";
 import { Volume2, VolumeX, Trash2, Copy, Star, GripVertical, Activity } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
@@ -304,6 +305,8 @@ export function TimelineLayer({
           onMouseDown={handleBlockMouseDown}
         >
           <WaveformCanvas layer={layer} />
+          {/* LFO overlay — shown while adjusting LFO knobs */}
+          <LfoOverlay layer={layer} blockWidth={blockWidth} />
           {/* Envelope overlay */}
           {layer.showEnvelope && layer.envelope && (
             <EnvelopeOverlay
