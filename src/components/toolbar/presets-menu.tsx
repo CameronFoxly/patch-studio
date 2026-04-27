@@ -35,6 +35,14 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const pendingPresetRef = useRef<{ collectionId: string; soundKey: string } | null>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  // Compute fixed position from trigger button
+  const menuStyle = (() => {
+    if (!triggerRef.current) return { top: 0, left: 0 };
+    const rect = triggerRef.current.getBoundingClientRect();
+    return { top: rect.bottom + 4, left: rect.left };
+  })();
 
   // Fetch all collections on first open
   useEffect(() => {
@@ -104,8 +112,8 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
   const activeKeys = selectedCollection ? soundsMap[selectedCollection] : null;
 
   return (
-    <div className="relative z-[100]">
-      <div onClick={() => setOpen(!open)}>
+    <div className="relative">
+      <div ref={triggerRef} onClick={() => setOpen(!open)}>
         {trigger ?? (
           <Button
             variant="outline"
@@ -120,10 +128,13 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
       {open && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-[100]" onClick={() => setOpen(false)} />
 
-          {/* Panel */}
-          <div className="absolute top-full left-0 mt-1 z-50 flex bg-popover border border-border rounded-md shadow-xl overflow-hidden">
+          {/* Panel — fixed positioning to escape parent overflow/stacking */}
+          <div
+            className="fixed z-[101] flex bg-popover border border-border rounded-md shadow-xl overflow-hidden"
+            style={menuStyle}
+          >
             {/* Collection list */}
             <div className="w-52 border-r border-border flex-shrink-0">
               <div className="px-3 py-2 border-b border-border">
