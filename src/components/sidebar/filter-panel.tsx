@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FilterGraph } from "./filter-graph";
+import { FilterGraph, IIRFilterGraph } from "./filter-graph";
 import type { Layer, BiquadFilter, IIRFilter, Filter, BiquadFilterType } from "@/lib/types";
 import { PlusIcon, XIcon, PowerIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
@@ -115,6 +115,7 @@ function IIRFilterControls({
 }) {
   return (
     <div className="space-y-3">
+      <IIRFilterGraph filter={filter} />
       <IIRCoefficientEditor
         label="Feedforward (b)"
         coefficients={filter.feedforward}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import type { BiquadFilter, BiquadFilterType, Source } from "@/lib/types";
+import type { BiquadFilter, BiquadFilterType, IIRFilter, Source } from "@/lib/types";
 
 const SAMPLE_RATE = 48000;
 const GRAPH_W = 600;
@@ -500,6 +500,109 @@ export function FilterGraph({ filters, selectedIndex, source, onSelectFilter, on
           </g>
         );
       })}
+    </svg>
+  );
+}
+
+/* ── IIR Filter Frequency Response Graph ── */
+
+// Evaluate H(e^{jω}) = B(e^{jω}) / A(e^{jω}) magnitude in dB
+function iirMagnitudeAt(feedforward: number[], feedback: number[], f: number): number {
+  const w = (2 * Math.PI * f) / SAMPLE_RATE;
+
+  let numReal = 0, numImag = 0;
+  for (let k = 0; k < feedforward.length; k++) {
+    numReal += feedforward[k] * Math.cos(k * w);
+    numImag -= feedforward[k] * Math.sin(k * w);
+  }
+
+  let denReal = 0, denImag = 0;
+  for (let k = 0; k < feedback.length; k++) {
+    denReal += feedback[k] * Math.cos(k * w);
+    denImag -= feedback[k] * Math.sin(k * w);
+  }
+
+  const numMag = Math.sqrt(numReal * numReal + numImag * numImag);
+  const denMag = Math.sqrt(denReal * denReal + denImag * denImag);
+
+  if (denMag === 0) return 0;
+  return 20 * Math.log10(numMag / denMag);
+}
+
+function iirResponsePath(filter: IIRFilter): string {
+  const points = FREQS.map((f) => {
+    const db = iirMagnitudeAt(filter.feedforward, filter.feedback, f);
+    return `${freqToX(f)},${dbToY(Math.max(DB_MIN, Math.min(DB_MAX, db)))}`;
+  });
+  return `M ${points.join(" L ")}`;
+}
+
+function iirFillPath(filter: IIRFilter): string {
+  const line = iirResponsePath(filter);
+  if (!line) return "";
+  const zeroY = dbToY(0);
+  return `M ${PAD.left},${zeroY} L ${line.slice(2)} L ${PAD.left + PLOT_W},${zeroY} Z`;
+}
+
+interface IIRFilterGraphProps {
+  filter: IIRFilter;
+}
+
+export function IIRFilterGraph({ filter }: IIRFilterGraphProps) {
+  const formatFreq = (f: number) => (f >= 1000 ? `${f / 1000}k` : `${f}`);
+
+  return (
+    <svg
+      viewBox={`0 0 ${GRAPH_W} ${GRAPH_H}`}
+      className="w-full rounded-md border bg-muted/20 select-none"
+    >
+      {/* Grid lines */}
+      {FREQ_GRID.map((f) => (
+        <g key={`fg-${f}`}>
+          <line
+            x1={freqToX(f)} y1={PAD.top} x2={freqToX(f)} y2={PAD.top + PLOT_H}
+            className="stroke-muted-foreground/10" strokeWidth={0.5}
+          />
+          <text
+            x={freqToX(f)} y={GRAPH_H - 4}
+            className="fill-muted-foreground" fontSize={8} textAnchor="middle"
+          >
+            {formatFreq(f)}
+          </text>
+        </g>
+      ))}
+      {DB_GRID.map((db) => (
+        <g key={`db-${db}`}>
+          <line
+            x1={PAD.left} y1={dbToY(db)} x2={PAD.left + PLOT_W} y2={dbToY(db)}
+            className={db === 0 ? "stroke-muted-foreground/30" : "stroke-muted-foreground/10"}
+            strokeWidth={db === 0 ? 1 : 0.5}
+          />
+          <text
+            x={PAD.left - 4} y={dbToY(db) + 3}
+            className="fill-muted-foreground" fontSize={8} textAnchor="end"
+          >
+            {db > 0 ? `+${db}` : db}
+          </text>
+        </g>
+      ))}
+
+      <defs>
+        <clipPath id="iir-plot-clip">
+          <rect x={PAD.left} y={PAD.top} width={PLOT_W} height={PLOT_H} />
+        </clipPath>
+      </defs>
+
+      <g clipPath="url(#iir-plot-clip)">
+        <path d={iirFillPath(filter)} className="fill-primary/10" />
+        <path
+          d={iirResponsePath(filter)}
+          fill="none"
+          className="stroke-primary"
+          strokeWidth={2}
+          opacity={0.8}
+        />
+      </g>
     </svg>
   );
 }
