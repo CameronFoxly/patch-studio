@@ -88,8 +88,8 @@ export function RotaryKnob({
   const trackRadius = svgSize / 2 - 4;
   const indicatorRadius = trackRadius - 6;
 
-  // Pointer on the knob
-  const pointer = polarToCartesian(cx, cy, indicatorRadius, currentAngle);
+  // Pointer on the knob (inset from edge)
+  const pointer = polarToCartesian(cx, cy, indicatorRadius - 5, currentAngle);
   const pointerInner = polarToCartesian(cx, cy, indicatorRadius * 0.45, currentAngle);
 
   const handlePointerDown = useCallback(
@@ -164,15 +164,12 @@ export function RotaryKnob({
         {/* Knob body */}
         <circle cx={cx} cy={cy} r={indicatorRadius} className="fill-muted stroke-border pointer-events-none" strokeWidth={1} />
 
-        {/* Indicator line */}
-        <line
-          x1={pointerInner.x}
-          y1={pointerInner.y}
-          x2={pointer.x}
-          y2={pointer.y}
-          className="stroke-emerald-500 pointer-events-none"
-          strokeWidth={2}
-          strokeLinecap="round"
+        {/* Indicator dot */}
+        <circle
+          cx={pointer.x}
+          cy={pointer.y}
+          r={3}
+          className="fill-emerald-500 pointer-events-none"
         />
 
         {/* Invisible hit area on top to prevent cursor flicker */}
