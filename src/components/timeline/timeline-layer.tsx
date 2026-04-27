@@ -3,12 +3,17 @@
 import { useCallback, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { WaveformCanvas } from "./waveform-canvas";
 import { EnvelopeOverlay } from "./envelope-overlay";
 import { LfoOverlay } from "./lfo-overlay";
 import type { Layer } from "@/lib/types";
 import { Volume2, VolumeX, Trash2, Copy, Star, GripVertical, Activity } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+
+function first(v: number | readonly number[]): number {
+  return Array.isArray(v) ? v[0] : (v as number);
+}
 
 interface Props {
   layer: Layer;
@@ -17,6 +22,7 @@ interface Props {
   isDragOver: boolean;
   isFaded: boolean;
   controlsWidth: number;
+  onControlsResize: (e: React.MouseEvent) => void;
   onDragStart: () => void;
   onDragOver: () => void;
   onDragEnd: () => void;
@@ -29,6 +35,7 @@ export function TimelineLayer({
   isDragOver,
   isFaded,
   controlsWidth,
+  onControlsResize,
   onDragStart,
   onDragOver,
   onDragEnd,
@@ -43,6 +50,7 @@ export function TimelineLayer({
   const updateLayerName = useStore((s) => s.updateLayerName);
   const updateLayerEnvelope = useStore((s) => s.updateLayerEnvelope);
   const updateLayerGain = useStore((s) => s.updateLayerGain);
+  const updateLayerPan = useStore((s) => s.updateLayerPan);
   const zoom = useStore((s) => s.zoom);
   const snapEnabled = useStore((s) => s.snapEnabled);
   const bpm = useStore((s) => s.bpm);
@@ -143,6 +151,12 @@ export function TimelineLayer({
     return `${layer.source.type} · ${freqStr}`;
   })();
 
+  const gain = layer.gain ?? 0.8;
+  const pan = layer.pan ?? 0;
+
+  const formatPan = (v: number) =>
+    v < 0 ? `L${Math.round(Math.abs(v) * 100)}` : v > 0 ? `R${Math.round(v * 100)}` : "C";
+
   return (
     <div
       onClick={handleClick}
@@ -160,146 +174,193 @@ export function TimelineLayer({
         onDragEnd();
       }}
       onDragEnd={onDragEnd}
-      className={`flex items-stretch h-20 cursor-pointer transition-colors ${
+      className={`flex items-stretch cursor-pointer transition-colors ${
         isSelected ? "bg-accent" : "hover:bg-muted/50"
       } ${layer.muted || isFaded ? "opacity-50" : ""} ${
         isDragOver ? "border-t-2 border-primary" : ""
       }`}
     >
       {/* Layer controls */}
-      <div className="flex-shrink-0 flex items-center gap-1 px-2 border-r bg-card" style={{ width: controlsWidth }}>
+      <div className="flex-shrink-0 flex border-r bg-card relative" style={{ width: controlsWidth }}>
         {/* Drag handle */}
-        <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground flex-shrink-0">
-          <GripVertical className="h-4 w-4" />
+        <div className="flex items-center flex-shrink-0 pl-1.5">
+          <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
+            <GripVertical className="h-4 w-4" />
+          </div>
         </div>
 
-        <div className="flex-1 min-w-0">
-          {isEditing ? (
-            <input
-              ref={inputRef}
-              className="text-sm font-medium bg-transparent border-b border-primary outline-none w-full"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              onBlur={commitName}
-              onKeyDown={handleNameKeyDown}
-              onClick={(e) => e.stopPropagation()}
-              autoFocus
+        {/* Content column */}
+        <div className="flex-1 min-w-0 py-1.5 px-1.5 flex flex-col gap-1">
+          {/* Top row: name + buttons */}
+          <div className="flex items-center gap-1">
+            <div className="flex-1 min-w-0">
+              {isEditing ? (
+                <input
+                  ref={inputRef}
+                  className="text-sm font-medium bg-transparent border-b border-primary outline-none w-full"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onBlur={commitName}
+                  onKeyDown={handleNameKeyDown}
+                  onClick={(e) => e.stopPropagation()}
+                  autoFocus
+                />
+              ) : (
+                <p
+                  className="text-sm font-medium truncate cursor-text hover:text-primary transition-colors"
+                  onClick={handleNameClick}
+                  title="Click to rename"
+                >
+                  {layer.name}
+                </p>
+              )}
+              <p className="text-[10px] text-muted-foreground capitalize">
+                {sourceLabel}
+              </p>
+            </div>
+            <div className="flex gap-0.5 flex-shrink-0">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLayerEnvelopeOverlay(layer.id);
+                        }}
+                      >
+                        <Activity
+                          className={`h-3 w-3 ${layer.showEnvelope ? "text-primary" : ""}`}
+                        />
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="bottom">Envelope overlay</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLayerMute(layer.id);
+                        }}
+                      >
+                        {layer.muted ? (
+                          <VolumeX className="h-3 w-3" />
+                        ) : (
+                          <Volume2 className="h-3 w-3" />
+                        )}
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="bottom">{layer.muted ? "Unmute" : "Mute"}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLayerSolo(layer.id);
+                        }}
+                      >
+                        <Star
+                          className={`h-3 w-3 ${layer.solo ? "fill-yellow-500 text-yellow-500" : ""}`}
+                        />
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="bottom">Solo</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          duplicateLayer(layer.id);
+                        }}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="bottom">Duplicate</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeLayer(layer.id);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="bottom">Delete</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+
+          {/* Gain slider */}
+          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+            <span className="text-[10px] text-muted-foreground w-6 flex-shrink-0">Gain</span>
+            <Slider
+              min={0}
+              max={1}
+              step={0.01}
+              value={[gain]}
+              onValueChange={(v) => updateLayerGain(layer.id, first(v))}
             />
-          ) : (
-            <p
-              className="text-sm font-medium truncate cursor-text hover:text-primary transition-colors"
-              onClick={handleNameClick}
-              title="Click to rename"
-            >
-              {layer.name}
-            </p>
-          )}
-          <p className="text-[10px] text-muted-foreground capitalize">
-            {sourceLabel}
-          </p>
+            <span className="text-[10px] font-mono text-muted-foreground w-7 text-right flex-shrink-0">
+              {Math.round(gain * 100)}%
+            </span>
+          </div>
+
+          {/* Pan slider */}
+          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+            <span className="text-[10px] text-muted-foreground w-6 flex-shrink-0">Pan</span>
+            <Slider
+              min={-1}
+              max={1}
+              step={0.01}
+              value={[pan]}
+              onValueChange={(v) => updateLayerPan(layer.id, first(v))}
+            />
+            <span className="text-[10px] font-mono text-muted-foreground w-7 text-right flex-shrink-0">
+              {formatPan(pan)}
+            </span>
+          </div>
         </div>
-        <div className="flex gap-0.5 flex-shrink-0">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLayerEnvelopeOverlay(layer.id);
-                    }}
-                  >
-                    <Activity
-                      className={`h-3 w-3 ${layer.showEnvelope ? "text-primary" : ""}`}
-                    />
-                  </Button>
-                }
-              />
-              <TooltipContent side="bottom">Envelope overlay</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLayerMute(layer.id);
-                    }}
-                  >
-                    {layer.muted ? (
-                      <VolumeX className="h-3 w-3" />
-                    ) : (
-                      <Volume2 className="h-3 w-3" />
-                    )}
-                  </Button>
-                }
-              />
-              <TooltipContent side="bottom">{layer.muted ? "Unmute" : "Mute"}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLayerSolo(layer.id);
-                    }}
-                  >
-                    <Star
-                      className={`h-3 w-3 ${layer.solo ? "fill-yellow-500 text-yellow-500" : ""}`}
-                    />
-                  </Button>
-                }
-              />
-              <TooltipContent side="bottom">Solo</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      duplicateLayer(layer.id);
-                    }}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                }
-              />
-              <TooltipContent side="bottom">Duplicate</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeLayer(layer.id);
-                    }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                }
-              />
-              <TooltipContent side="bottom">Delete</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+
+        {/* Resize handle */}
+        <div
+          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/40 active:bg-primary/60 z-10"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onControlsResize(e);
+          }}
+        />
       </div>
 
       {/* Waveform area */}
