@@ -238,7 +238,7 @@ export function TimelineLayer({
                       </Button>
                     }
                   />
-                  <TooltipContent side="bottom">Envelope overlay</TooltipContent>
+                  <TooltipContent side="bottom">Envelope overlay <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">E</kbd></TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger
@@ -260,7 +260,7 @@ export function TimelineLayer({
                       </Button>
                     }
                   />
-                  <TooltipContent side="bottom">{layer.muted ? "Unmute" : "Mute"}</TooltipContent>
+                  <TooltipContent side="bottom">{layer.muted ? "Unmute" : "Mute"} <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">M</kbd></TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger
@@ -280,7 +280,7 @@ export function TimelineLayer({
                       </Button>
                     }
                   />
-                  <TooltipContent side="bottom">Solo</TooltipContent>
+                  <TooltipContent side="bottom">Solo <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">S</kbd></TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger
@@ -298,7 +298,7 @@ export function TimelineLayer({
                       </Button>
                     }
                   />
-                  <TooltipContent side="bottom">Duplicate</TooltipContent>
+                  <TooltipContent side="bottom">Duplicate <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">D</kbd></TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger
@@ -316,7 +316,7 @@ export function TimelineLayer({
                       </Button>
                     }
                   />
-                  <TooltipContent side="bottom">Delete</TooltipContent>
+                  <TooltipContent side="bottom">Delete <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">⌫</kbd></TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>

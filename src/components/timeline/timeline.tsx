@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, ZoomIn, ZoomOut, Library } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PresetsMenu } from "@/components/toolbar/presets-menu";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 const DEFAULT_CONTROLS_WIDTH = 220;
 const MIN_CONTROLS_WIDTH = 140;
@@ -21,9 +22,7 @@ export function Timeline() {
   const isPlaying = useStore((s) => s.isPlaying);
   const currentTime = useStore((s) => s.currentTime);
   const setCurrentTime = useStore((s) => s.setCurrentTime);
-  const regionStart = useStore((s) => s.regionStart);
   const regionEnd = useStore((s) => s.regionEnd);
-  const setRegionStart = useStore((s) => s.setRegionStart);
   const setRegionEnd = useStore((s) => s.setRegionEnd);
   const reorderLayers = useStore((s) => s.reorderLayers);
   const quantizeEnabled = useStore((s) => s.quantizeEnabled);
@@ -86,22 +85,18 @@ export function Timeline() {
     [zoom, setCurrentTime],
   );
 
-  // Region bracket dragging
+  // Region bracket dragging (end only — start is always 0)
   const handleBracketDrag = useCallback(
-    (which: "start" | "end", e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
       const startX = e.clientX;
-      const startVal = which === "start" ? regionStart : regionEnd;
+      const startVal = regionEnd;
 
       const handleMove = (moveE: MouseEvent) => {
         const dx = moveE.clientX - startX;
-        const newVal = Math.max(0, startVal + dx / zoom);
-        if (which === "start") {
-          setRegionStart(Math.min(newVal, regionEnd - 0.1));
-        } else {
-          setRegionEnd(Math.max(newVal, regionStart + 0.1));
-        }
+        const newVal = Math.max(0.1, startVal + dx / zoom);
+        setRegionEnd(newVal);
       };
 
       const handleUp = () => {
@@ -112,7 +107,7 @@ export function Timeline() {
       window.addEventListener("mousemove", handleMove);
       window.addEventListener("mouseup", handleUp);
     },
-    [zoom, regionStart, regionEnd, setRegionStart, setRegionEnd],
+    [zoom, regionEnd, setRegionEnd],
   );
 
   // Playhead position in pixels
@@ -187,26 +182,16 @@ export function Timeline() {
           <div
             className="absolute inset-y-0 bg-foreground/[0.06] dark:bg-foreground/[0.08]"
             style={{
-              left: `${regionStart * zoom}px`,
-              width: `${(regionEnd - regionStart) * zoom}px`,
+              left: 0,
+              width: `${regionEnd * zoom}px`,
             }}
           />
-
-          {/* Region start bracket */}
-          <div
-            className="absolute inset-y-0 w-2 cursor-col-resize z-10 group"
-            style={{ left: `${regionStart * zoom - 4}px` }}
-            onMouseDown={(e) => handleBracketDrag("start", e)}
-          >
-            <div className="absolute inset-y-0 left-1/2 w-0.5 bg-primary/60 group-hover:bg-primary" />
-            <div className="absolute top-0 left-0 w-2 h-3 bg-primary/60 group-hover:bg-primary rounded-b-sm" />
-          </div>
 
           {/* Region end bracket */}
           <div
             className="absolute inset-y-0 w-2 cursor-col-resize z-10 group"
             style={{ left: `${regionEnd * zoom - 4}px` }}
-            onMouseDown={(e) => handleBracketDrag("end", e)}
+            onMouseDown={handleBracketDrag}
           >
             <div className="absolute inset-y-0 left-1/2 w-0.5 bg-primary/60 group-hover:bg-primary" />
             <div className="absolute top-0 left-0 w-2 h-3 bg-primary/60 group-hover:bg-primary rounded-b-sm" />
@@ -254,25 +239,47 @@ export function Timeline() {
 
         {/* Zoom controls */}
         <div className="flex items-center gap-1 mx-2 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => setZoom(clampZoom(zoom * 0.8))}
-          >
-            <ZoomOut className="h-3.5 w-3.5" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setZoom(clampZoom(zoom * 0.8))}
+                  >
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">
+                Zoom out <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">−</kbd>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <span className="text-[10px] text-muted-foreground font-mono w-10 text-center">
             {Math.round(zoom)}%
           </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => setZoom(clampZoom(zoom * 1.25))}
-          >
-            <ZoomIn className="h-3.5 w-3.5" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setZoom(clampZoom(zoom * 1.25))}
+                  >
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">
+                Zoom in <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">+</kbd>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -348,15 +355,26 @@ export function Timeline() {
 
           {layers.length > 0 && (
             <div className="p-4 flex gap-2">
-              <Button
-                onClick={() => addLayer()}
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-muted-foreground"
-              >
-                <Plus className="h-4 w-4" />
-                Add Layer
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        onClick={() => addLayer()}
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-muted-foreground"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Layer
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="bottom">
+                    Add layer <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">A</kbd>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <PresetsMenu
                 mode="append"
                 trigger={

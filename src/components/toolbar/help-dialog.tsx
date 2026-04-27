@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AudioWaveform, ExternalLink, Heart } from "lucide-react";
+import { AudioWaveform, ExternalLink, Heart, ChevronDown, Keyboard } from "lucide-react";
 
 interface HelpDialogProps {
   open: boolean;
@@ -81,9 +81,30 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
           </a>
         </div>
 
-        <div className="pt-2 text-[10px] text-muted-foreground/60">
-          <p><strong>Shortcuts:</strong> Space = Play/Stop · ⌘Z = Undo · ⌘⇧Z = Redo</p>
-        </div>
+        <details className="group rounded-md border p-0 text-[10px] text-muted-foreground/60">
+          <summary className="flex cursor-pointer items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground select-none list-none [&::-webkit-details-marker]:hidden">
+            <Keyboard className="h-3.5 w-3.5" />
+            Keyboard Shortcuts
+            <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="grid grid-cols-[auto_1fr_auto_1fr] gap-x-3 gap-y-1 border-t px-3 py-2 max-h-32 overflow-y-auto">
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">Space</kbd><span>Play / Stop</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">M</kbd><span>Mute Layer</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">L</kbd><span>Toggle Loop</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">S</kbd><span>Solo Layer</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">G</kbd><span>Toggle Grid</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">D</kbd><span>Duplicate</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">E</kbd><span>Envelope Overlay</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">N</kbd><span>Toggle Snap</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">⌫</kbd><span>Delete Layer</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">A</kbd><span>Add Layer</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">⌘ Z</kbd><span>Undo</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">+</kbd><span>Zoom In</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">⌘ ⇧ Z</kbd><span>Redo</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">−</kbd><span>Zoom Out</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">]</kbd><span>Set Preview End</span>
+          </div>
+        </details>
       </DialogContent>
     </Dialog>
   );

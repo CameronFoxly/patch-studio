@@ -7,15 +7,14 @@ import { Slider } from "@/components/ui/slider";
 import { useStore } from "@/lib/store";
 import { useAudioEngine } from "@/hooks/use-audio-engine";
 import { Play, Square, Repeat, Grid3x3, Magnet } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 export function TransportBar() {
   const isPlaying = useStore((s) => s.isPlaying);
   const isLooping = useStore((s) => s.isLooping);
   const setLooping = useStore((s) => s.setLooping);
   const currentTime = useStore((s) => s.currentTime);
-  const regionStart = useStore((s) => s.regionStart);
   const regionEnd = useStore((s) => s.regionEnd);
-  const setRegionStart = useStore((s) => s.setRegionStart);
   const setRegionEnd = useStore((s) => s.setRegionEnd);
   const quantizeEnabled = useStore((s) => s.quantizeEnabled);
   const setQuantizeEnabled = useStore((s) => s.setQuantizeEnabled);
@@ -26,16 +25,10 @@ export function TransportBar() {
   const { play, stop } = useAudioEngine();
   const layerCount = useStore((s) => s.layers.length);
 
-  const [startText, setStartText] = useState(regionStart.toFixed(2));
   const [endText, setEndText] = useState(regionEnd.toFixed(2));
-  const [startFocused, setStartFocused] = useState(false);
   const [endFocused, setEndFocused] = useState(false);
   const [bpmText, setBpmText] = useState(String(bpm));
   const [bpmFocused, setBpmFocused] = useState(false);
-
-  useEffect(() => {
-    if (!startFocused) setStartText(regionStart.toFixed(2));
-  }, [regionStart, startFocused]);
 
   useEffect(() => {
     if (!endFocused) setEndText(regionEnd.toFixed(2));
@@ -45,18 +38,10 @@ export function TransportBar() {
     if (!bpmFocused) setBpmText(String(bpm));
   }, [bpm, bpmFocused]);
 
-  function commitStart() {
-    const parsed = parseFloat(startText);
-    if (!isNaN(parsed) && parsed >= 0) {
-      setRegionStart(Math.min(parsed, regionEnd - 0.01));
-    }
-    setStartText(regionStart.toFixed(2));
-  }
-
   function commitEnd() {
     const parsed = parseFloat(endText);
     if (!isNaN(parsed) && parsed > 0) {
-      setRegionEnd(Math.max(parsed, regionStart + 0.01));
+      setRegionEnd(parsed);
     }
     setEndText(regionEnd.toFixed(2));
   }
@@ -71,29 +56,48 @@ export function TransportBar() {
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 border-b bg-card">
-      <Button
-        size="sm"
-        variant={isPlaying ? "destructive" : "default"}
-        className={isPlaying ? "" : "bg-emerald-600 text-white hover:bg-emerald-700"}
-        onClick={isPlaying ? stop : play}
-        disabled={layerCount === 0}
-      >
-        {isPlaying ? (
-          <Square className="h-4 w-4" />
-        ) : (
-          <Play className="h-4 w-4" />
-        )}
-        {isPlaying ? "Stop" : "Play"}
-      </Button>
-      <Button
-        size="sm"
-        variant={isLooping ? "secondary" : "ghost"}
-        onClick={() => setLooping(!isLooping)}
-        title="Toggle loop"
-      >
-        <Repeat className={`h-4 w-4 ${isLooping ? "text-primary" : "text-muted-foreground"}`} />
-        Loop
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                size="sm"
+                variant={isPlaying ? "destructive" : "default"}
+                className={isPlaying ? "" : "bg-emerald-600 text-white hover:bg-emerald-700"}
+                onClick={isPlaying ? stop : play}
+                disabled={layerCount === 0}
+              >
+                {isPlaying ? (
+                  <Square className="h-4 w-4" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+                {isPlaying ? "Stop" : "Play"}
+              </Button>
+            }
+          />
+          <TooltipContent side="bottom">
+            {isPlaying ? "Stop" : "Play"} <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">Space</kbd>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                size="sm"
+                variant={isLooping ? "secondary" : "ghost"}
+                onClick={() => setLooping(!isLooping)}
+              >
+                <Repeat className={`h-4 w-4 ${isLooping ? "text-primary" : "text-muted-foreground"}`} />
+                Loop
+              </Button>
+            }
+          />
+          <TooltipContent side="bottom">
+            Toggle loop <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">L</kbd>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <Separator orientation="vertical" className="self-stretch -my-2" />
 
@@ -103,25 +107,6 @@ export function TransportBar() {
         <Separator orientation="vertical" className="self-stretch -my-2" />
 
         <span>Preview Range:</span>
-        <input
-          type="text"
-          inputMode="decimal"
-          value={startFocused ? startText : `${regionStart.toFixed(2)}s`}
-          onChange={(e) => setStartText(e.target.value)}
-          onFocus={() => {
-            setStartFocused(true);
-            setStartText(regionStart.toFixed(2));
-          }}
-          onBlur={() => {
-            setStartFocused(false);
-            commitStart();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") e.currentTarget.blur();
-          }}
-          className="h-5 w-12 rounded border border-input bg-background px-1 text-center text-xs tabular-nums outline-none focus:ring-1 focus:ring-ring"
-        />
-        <span>–</span>
         <input
           type="text"
           inputMode="decimal"
@@ -146,26 +131,44 @@ export function TransportBar() {
 
       {/* Quantize / Snap / BPM controls */}
       <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
-        <Button
-          size="sm"
-          variant={quantizeEnabled ? "secondary" : "ghost"}
-          className="h-6 px-2 text-xs gap-1"
-          onClick={() => setQuantizeEnabled(!quantizeEnabled)}
-          title="Show quantize grid"
-        >
-          <Grid3x3 className={`h-3 w-3 ${quantizeEnabled ? "text-primary" : "text-muted-foreground"}`} />
-          Grid
-        </Button>
-        <Button
-          size="sm"
-          variant={snapEnabled ? "secondary" : "ghost"}
-          className="h-6 px-2 text-xs gap-1"
-          onClick={() => setSnapEnabled(!snapEnabled)}
-          title="Snap layers to grid"
-        >
-          <Magnet className={`h-3 w-3 ${snapEnabled ? "text-primary" : "text-muted-foreground"}`} />
-          Snap
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="sm"
+                  variant={quantizeEnabled ? "secondary" : "ghost"}
+                  className="h-6 px-2 text-xs gap-1"
+                  onClick={() => setQuantizeEnabled(!quantizeEnabled)}
+                >
+                  <Grid3x3 className={`h-3 w-3 ${quantizeEnabled ? "text-primary" : "text-muted-foreground"}`} />
+                  Grid
+                </Button>
+              }
+            />
+            <TooltipContent side="bottom">
+              Toggle grid <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">G</kbd>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="sm"
+                  variant={snapEnabled ? "secondary" : "ghost"}
+                  className="h-6 px-2 text-xs gap-1"
+                  onClick={() => setSnapEnabled(!snapEnabled)}
+                >
+                  <Magnet className={`h-3 w-3 ${snapEnabled ? "text-primary" : "text-muted-foreground"}`} />
+                  Snap
+                </Button>
+              }
+            />
+            <TooltipContent side="bottom">
+              Snap to grid <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">N</kbd>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
         <Separator orientation="vertical" className="self-stretch -my-2" />
 
