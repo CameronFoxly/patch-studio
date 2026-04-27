@@ -1,6 +1,5 @@
-# Patch Studio
+# Patch Studio for @web-kit/audio
 
-[![Deploy to GitHub Pages](https://github.com/CameronFoxly/patch-studio/actions/workflows/deploy.yml/badge.svg)](https://github.com/CameronFoxly/patch-studio/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ![Patch Studio screenshot](public/screenshot.png)
