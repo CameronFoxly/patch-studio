@@ -10,17 +10,38 @@ export function exportPatch(
 ): SoundPatch {
   const definition: SoundDefinition = {};
 
+  function stripEffectBypassed(effects: Effect[]): Effect[] {
+    return effects.map(({ bypassed: _, ...rest }) => rest as Effect);
+  }
+
+  function cleanLayer(layer: Layer) {
+    const {
+      id,
+      name: _layerName,
+      muted,
+      solo,
+      showEnvelope,
+      filterBypassed,
+      lfoBypassed,
+      effectsBypassed,
+      ...rest
+    } = layer;
+    if (rest.effects) {
+      rest.effects = stripEffectBypassed(rest.effects);
+    }
+    return rest;
+  }
+
   if (layers.length === 1) {
-    const { id, name: _layerName, muted, solo, ...rest } = layers[0];
-    Object.assign(definition, rest);
+    Object.assign(definition, cleanLayer(layers[0]));
   } else if (layers.length > 1) {
     definition.layers = layers.map(
-      ({ id, name: _layerName, muted, solo, ...rest }) => rest as Layer,
+      (l) => cleanLayer(l) as Layer,
     );
   }
 
   if (globalEffects && globalEffects.length > 0) {
-    definition.effects = globalEffects;
+    definition.effects = stripEffectBypassed(globalEffects);
   }
 
   return {

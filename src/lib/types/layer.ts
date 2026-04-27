@@ -131,4 +131,7 @@ export interface Layer {
   muted?: boolean;
   solo?: boolean;
   showEnvelope?: boolean;
+  filterBypassed?: boolean;
+  lfoBypassed?: boolean;
+  effectsBypassed?: boolean;
 }

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { FilterGraph } from "./filter-graph";
 import type { Layer, BiquadFilter, IIRFilter, Filter, BiquadFilterType } from "@/lib/types";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XIcon, PowerIcon } from "lucide-react";
 
 const BIQUAD_TYPES: { value: BiquadFilterType; label: string }[] = [
   { value: "lowpass", label: "Low Pass" },
@@ -133,8 +133,10 @@ function IIRFilterControls({
 
 export function FilterPanel({ layer }: { layer: Layer }) {
   const updateLayerFilter = useStore((s) => s.updateLayerFilter);
+  const toggleLayerFilterBypass = useStore((s) => s.toggleLayerFilterBypass);
   const allFilters = getFilters(layer);
   const biquadFilters = getBiquadFilters(layer);
+  const isBypassed = layer.filterBypassed ?? false;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(
     allFilters.length > 0 ? 0 : null
   );
@@ -180,6 +182,25 @@ export function FilterPanel({ layer }: { layer: Layer }) {
 
   return (
     <div className="space-y-4">
+      {/* Section bypass toggle */}
+      {allFilters.length > 0 && (
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            {isBypassed ? "Filters bypassed" : "Filters active"}
+          </span>
+          <Button
+            variant={isBypassed ? "outline" : "ghost"}
+            size="icon"
+            className={`h-6 w-6 ${isBypassed ? "text-muted-foreground" : "text-primary"}`}
+            onClick={() => toggleLayerFilterBypass(layer.id)}
+            title={isBypassed ? "Enable filters" : "Bypass filters"}
+          >
+            <PowerIcon className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
+      <div className={isBypassed ? "opacity-40 pointer-events-none" : ""}>
       {/* EQ Graph — only shows biquad filters */}
       <FilterGraph
         filters={biquadFilters}
@@ -393,6 +414,7 @@ export function FilterPanel({ layer }: { layer: Layer }) {
           <PlusIcon className="h-3 w-3 mr-1" />
           IIR
         </Button>
+      </div>
       </div>
     </div>
   );

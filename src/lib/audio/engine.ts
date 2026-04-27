@@ -2,10 +2,40 @@ import { defineSound, ensureReady } from "@web-kits/audio";
 import type { Layer } from "@/lib/types";
 import type { Effect } from "@/lib/types";
 
+function stripBypassed(effects: Effect[]): Effect[] {
+  return effects
+    .filter((e) => !e.bypassed)
+    .map(({ bypassed: _, ...rest }) => rest as Effect);
+}
+
 // Convert a Layer to the @web-kits/audio format (strip internal fields like id, name, muted, solo)
 export function layerToSoundDef(layer: Layer) {
-  const { id, name, muted, solo, ...def } = layer;
-  return def;
+  const {
+    id,
+    name,
+    muted,
+    solo,
+    showEnvelope,
+    filterBypassed,
+    lfoBypassed,
+    effectsBypassed,
+    ...def
+  } = layer;
+
+  const result: Record<string, unknown> = { ...def };
+
+  if (filterBypassed) {
+    delete result.filter;
+  }
+  if (lfoBypassed) {
+    delete result.lfo;
+  }
+  if (result.effects) {
+    result.effects = stripBypassed(result.effects as Effect[]);
+    if ((result.effects as Effect[]).length === 0) delete result.effects;
+  }
+
+  return result;
 }
 
 // Convert layers array to a multi-layer sound definition
@@ -21,17 +51,21 @@ export function layersToSoundDefinition(
   });
   if (activeLayers.length === 0) return null;
 
+  const activeGlobalEffects = globalEffects
+    ? stripBypassed(globalEffects)
+    : undefined;
+
   if (activeLayers.length === 1) {
     const def = layerToSoundDef(activeLayers[0]);
-    return globalEffects
-      ? { ...def, effects: [...(def.effects || []), ...globalEffects] }
+    return activeGlobalEffects && activeGlobalEffects.length > 0
+      ? { ...def, effects: [...((def.effects as Effect[]) || []), ...activeGlobalEffects] }
       : def;
   }
 
   return {
     layers: activeLayers.map(layerToSoundDef),
-    ...(globalEffects && globalEffects.length > 0
-      ? { effects: globalEffects }
+    ...(activeGlobalEffects && activeGlobalEffects.length > 0
+      ? { effects: activeGlobalEffects }
       : {}),
   };
 }

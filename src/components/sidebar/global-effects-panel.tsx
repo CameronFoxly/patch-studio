@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Effect, EffectType } from "@/lib/types";
-import { PlusIcon, XIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { PlusIcon, XIcon, ChevronDownIcon, ChevronRightIcon, PowerIcon } from "lucide-react";
 import { EFFECT_TYPES, EFFECT_LABEL_MAP, defaultEffect, EffectParams } from "./effect-controls";
 
 export function GlobalEffectsPanel() {
@@ -19,6 +19,7 @@ export function GlobalEffectsPanel() {
   const addGlobalEffect = useStore((s) => s.addGlobalEffect);
   const updateGlobalEffect = useStore((s) => s.updateGlobalEffect);
   const removeGlobalEffect = useStore((s) => s.removeGlobalEffect);
+  const toggleGlobalEffectBypass = useStore((s) => s.toggleGlobalEffectBypass);
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
 
   function toggleCollapsed(index: number) {
@@ -38,7 +39,7 @@ export function GlobalEffectsPanel() {
       )}
 
       {globalEffects.map((effect, i) => (
-        <div key={i} className="rounded-md border">
+        <div key={i} className={`rounded-md border ${effect.bypassed ? "opacity-50" : ""}`}>
           <div
             className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted/50"
             onClick={() => toggleCollapsed(i)}
@@ -53,22 +54,36 @@ export function GlobalEffectsPanel() {
                 {EFFECT_LABEL_MAP[effect.type] ?? effect.type}
               </span>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={(e) => {
-                e.stopPropagation();
-                removeGlobalEffect(i);
-                setCollapsed((prev) => {
-                  const next = { ...prev };
-                  delete next[i];
-                  return next;
-                });
-              }}
-            >
-              <XIcon className="h-3 w-3" />
-            </Button>
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant={effect.bypassed ? "outline" : "ghost"}
+                size="icon"
+                className={`h-6 w-6 ${effect.bypassed ? "text-muted-foreground" : "text-primary"}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleGlobalEffectBypass(i);
+                }}
+                title={effect.bypassed ? "Enable effect" : "Bypass effect"}
+              >
+                <PowerIcon className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeGlobalEffect(i);
+                  setCollapsed((prev) => {
+                    const next = { ...prev };
+                    delete next[i];
+                    return next;
+                  });
+                }}
+              >
+                <XIcon className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
           {!collapsed[i] && (
             <div className="px-3 pb-3">

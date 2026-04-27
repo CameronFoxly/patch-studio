@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Layer, LFO, OscillatorType, LFOTarget } from "@/lib/types";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XIcon, PowerIcon } from "lucide-react";
 
 /* ── SVG wave shape icons for LFO waveforms ── */
 
@@ -64,8 +64,10 @@ function defaultLFO(): LFO {
 
 export function ModulationPanel({ layer }: { layer: Layer }) {
   const updateLayerLFO = useStore((s) => s.updateLayerLFO);
+  const toggleLayerLFOBypass = useStore((s) => s.toggleLayerLFOBypass);
   const setLfoInteractionLayerId = useStore((s) => s.setLfoInteractionLayerId);
   const lfos = getLFOs(layer);
+  const isBypassed = layer.lfoBypassed ?? false;
 
   const handleLfoDragStart = useCallback(() => {
     setLfoInteractionLayerId(layer.id);
@@ -101,6 +103,25 @@ export function ModulationPanel({ layer }: { layer: Layer }) {
 
   return (
     <div className="space-y-4">
+      {/* Section bypass toggle */}
+      {lfos.length > 0 && (
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            {isBypassed ? "LFOs bypassed" : "LFOs active"}
+          </span>
+          <Button
+            variant={isBypassed ? "outline" : "ghost"}
+            size="icon"
+            className={`h-6 w-6 ${isBypassed ? "text-muted-foreground" : "text-primary"}`}
+            onClick={() => toggleLayerLFOBypass(layer.id)}
+            title={isBypassed ? "Enable LFOs" : "Bypass LFOs"}
+          >
+            <PowerIcon className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
+      <div className={isBypassed ? "opacity-40 pointer-events-none" : ""}>
       {lfos.length === 0 && (
         <p className="text-xs text-muted-foreground">No LFOs configured</p>
       )}
@@ -177,6 +198,7 @@ export function ModulationPanel({ layer }: { layer: Layer }) {
         <PlusIcon className="h-3 w-3 mr-1" />
         Add LFO
       </Button>
+      </div>
     </div>
   );
 }

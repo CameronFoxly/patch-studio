@@ -35,6 +35,9 @@ export interface LayersSlice {
   toggleLayerMute: (id: string) => void;
   toggleLayerSolo: (id: string) => void;
   toggleLayerEnvelopeOverlay: (id: string) => void;
+  toggleLayerFilterBypass: (id: string) => void;
+  toggleLayerLFOBypass: (id: string) => void;
+  toggleLayerEffectBypass: (id: string, index: number) => void;
 
   setLayers: (layers: Layer[]) => void;
   appendLayers: (layers: Layer[]) => void;
@@ -44,6 +47,7 @@ export interface LayersSlice {
   addGlobalEffect: (effect: Effect) => void;
   updateGlobalEffect: (index: number, effect: Effect) => void;
   removeGlobalEffect: (index: number) => void;
+  toggleGlobalEffectBypass: (index: number) => void;
 }
 
 const DEFAULT_SOURCE: Source = {
@@ -183,6 +187,36 @@ export const createLayersSlice: StateCreator<
     });
   },
 
+  toggleLayerFilterBypass: (id) => {
+    set({
+      layers: updateLayer(get().layers, id, (l) => ({
+        ...l,
+        filterBypassed: !l.filterBypassed,
+      })),
+    });
+  },
+
+  toggleLayerLFOBypass: (id) => {
+    set({
+      layers: updateLayer(get().layers, id, (l) => ({
+        ...l,
+        lfoBypassed: !l.lfoBypassed,
+      })),
+    });
+  },
+
+  toggleLayerEffectBypass: (id, index) => {
+    set({
+      layers: updateLayer(get().layers, id, (l) => {
+        if (!l.effects) return l;
+        const effects = l.effects.map((e, i) =>
+          i === index ? { ...e, bypassed: !e.bypassed } : e,
+        );
+        return { ...l, effects };
+      }),
+    });
+  },
+
   setLayers: (layers) => set({ layers }),
   appendLayers: (layers) => set({ layers: [...get().layers, ...layers] }),
   clearLayers: () => set({ layers: [] }),
@@ -197,4 +231,10 @@ export const createLayersSlice: StateCreator<
   },
   removeGlobalEffect: (index) =>
     set({ globalEffects: get().globalEffects.filter((_, i) => i !== index) }),
+
+  toggleGlobalEffectBypass: (index) => {
+    const next = [...get().globalEffects];
+    next[index] = { ...next[index], bypassed: !next[index].bypassed };
+    set({ globalEffects: next });
+  },
 });
