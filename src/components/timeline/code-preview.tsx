@@ -4,17 +4,22 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useStore } from "@/lib/store";
 import { exportPatch, downloadPatch } from "@/lib/audio/patch-converter";
 import { Button } from "@/components/ui/button";
-import { Code, Copy, Download, Check, ChevronDown, ChevronRight } from "lucide-react";
+import { Code, Copy, Download, Check, ChevronDown, ChevronRight, GripHorizontal } from "lucide-react";
 import type { Highlighter } from "shiki";
+
+const DEFAULT_CODE_HEIGHT = 256;
+const MIN_CODE_HEIGHT = 80;
+const MAX_CODE_HEIGHT = 600;
 
 export function CodePreview() {
   const layers = useStore((s) => s.layers);
   const globalEffects = useStore((s) => s.globalEffects);
 
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [copied, setCopied] = useState(false);
   const [highlighter, setHighlighter] = useState<Highlighter | null>(null);
   const [highlightedHtml, setHighlightedHtml] = useState("");
+  const [codeHeight, setCodeHeight] = useState(DEFAULT_CODE_HEIGHT);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Build the patch JSON
@@ -80,8 +85,40 @@ export function CodePreview() {
     downloadPatch(patch);
   }, [layers, globalEffects]);
 
+  const handleResizeDrag = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const startY = e.clientY;
+      const startHeight = codeHeight;
+
+      const onMove = (moveE: MouseEvent) => {
+        const dy = startY - moveE.clientY;
+        setCodeHeight(Math.min(MAX_CODE_HEIGHT, Math.max(MIN_CODE_HEIGHT, startHeight + dy)));
+      };
+
+      const onUp = () => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    },
+    [codeHeight],
+  );
+
   return (
     <div className="border-t bg-background">
+      {/* Resize handle (visible when expanded) */}
+      {expanded && (
+        <div
+          className="h-1.5 cursor-row-resize hover:bg-primary/20 active:bg-primary/40 transition-colors flex items-center justify-center group"
+          onMouseDown={handleResizeDrag}
+        >
+          <GripHorizontal className="h-3 w-3 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors" />
+        </div>
+      )}
+
       {/* Toggle bar */}
       <button
         onClick={() => setExpanded((v) => !v)}
@@ -128,7 +165,7 @@ export function CodePreview() {
           </div>
 
           {/* Code block */}
-          <div className="max-h-64 overflow-auto">
+          <div className="overflow-auto" style={{ maxHeight: `${codeHeight}px` }}>
             {!patchJson ? (
               <div className="px-4 py-6 text-xs text-muted-foreground text-center">
                 Add a layer to see patch output
