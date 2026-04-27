@@ -104,7 +104,7 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
   const activeKeys = selectedCollection ? soundsMap[selectedCollection] : null;
 
   return (
-    <div className="relative">
+    <div className="relative z-[100]">
       <div onClick={() => setOpen(!open)}>
         {trigger ?? (
           <Button
