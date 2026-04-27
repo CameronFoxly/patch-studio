@@ -8,7 +8,7 @@ import { WaveformCanvas } from "./waveform-canvas";
 import { EnvelopeOverlay } from "./envelope-overlay";
 import { LfoOverlay } from "./lfo-overlay";
 import type { Layer } from "@/lib/types";
-import { Volume2, VolumeX, Trash2, Copy, Star, GripVertical, Activity } from "lucide-react";
+import { ENVELOPE_TAIL } from "@/lib/audio/constants";import { Volume2, VolumeX, Trash2, Copy, Star, GripVertical, Activity } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 function first(v: number | readonly number[]): number {
@@ -134,7 +134,7 @@ export function TimelineLayer({
   const delayOffset = (layer.delay || 0) * zoom;
   const env = layer.envelope;
   const soundDuration = env
-    ? (env.attack || 0) + env.decay + (env.release || 0) + 0.5
+    ? (env.attack || 0) + env.decay + (env.release || 0) + ENVELOPE_TAIL
     : 2;
   const blockWidth = Math.max(soundDuration * zoom, 40);
 

@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import type { Layer, Envelope } from "@/lib/types";
+import { ENVELOPE_TAIL } from "@/lib/audio/constants";
 
 interface Props {
   layer: Layer;
@@ -11,7 +12,7 @@ interface Props {
 // Virtual sample rate for waveform generation
 const VIRTUAL_SR = 8000;
 
-function getEnvelopeAmplitude(envelope: Envelope | undefined, t: number, totalDuration: number): number {
+function getEnvelopeAmplitude(envelope: Envelope | undefined, t: number): number {
   if (!envelope) return 1;
   const { attack = 0, decay, sustain = 0, release = 0 } = envelope;
 
@@ -25,13 +26,10 @@ function getEnvelopeAmplitude(envelope: Envelope | undefined, t: number, totalDu
     return 1 - (1 - sustain) * decayProgress;
   }
 
-  const sustainEnd = totalDuration - release;
-  if (t < sustainEnd) {
-    return sustain;
-  }
-
-  if (release > 0) {
-    const releaseProgress = (t - sustainEnd) / release;
+  // Release starts immediately after decay (matches @web-kits/audio behavior)
+  const releaseStart = attack + decay;
+  if (release > 0 && t < releaseStart + release) {
+    const releaseProgress = (t - releaseStart) / release;
     return sustain * (1 - Math.min(releaseProgress, 1));
   }
 
@@ -84,7 +82,7 @@ function generateBuffer(layer: Layer, totalDuration: number): Float32Array {
   for (let i = 0; i < numSamples; i++) {
     const t = i / VIRTUAL_SR;
     const tNorm = t / totalDuration;
-    const envAmp = getEnvelopeAmplitude(layer.envelope, t, totalDuration);
+    const envAmp = getEnvelopeAmplitude(layer.envelope, t);
     const phase = tNorm * freq * totalDuration * 2 * Math.PI;
 
     let sample = getSourceSample(layer.source, phase, rng);
@@ -127,7 +125,7 @@ function drawWaveform(canvas: HTMLCanvasElement, layer: Layer, color?: string) {
 
   const env = layer.envelope;
   const totalDuration = env
-    ? (env.attack || 0) + env.decay + (env.release || 0) + 0.5
+    ? (env.attack || 0) + env.decay + (env.release || 0) + ENVELOPE_TAIL
     : 2;
 
   const buffer = generateBuffer(layer, totalDuration);

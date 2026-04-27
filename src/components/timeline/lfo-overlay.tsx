@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import type { Layer, LFO, OscillatorType } from "@/lib/types";
+import { ENVELOPE_TAIL } from "@/lib/audio/constants";
 
 interface Props {
   layer: Layer;
@@ -98,7 +99,7 @@ export function LfoOverlay({ layer, blockWidth }: Props) {
 
   const env = layer.envelope;
   const totalDuration = env
-    ? (env.attack || 0) + env.decay + (env.release || 0) + 0.5
+    ? (env.attack || 0) + env.decay + (env.release || 0) + ENVELOPE_TAIL
     : 2;
 
   const svgHeight = 100;
