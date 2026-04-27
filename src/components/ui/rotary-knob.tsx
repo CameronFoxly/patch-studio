@@ -162,7 +162,7 @@ export function RotaryKnob({
         )}
 
         {/* Knob body */}
-        <circle cx={cx} cy={cy} r={indicatorRadius} className="fill-muted stroke-border pointer-events-none" strokeWidth={1} />
+        <circle cx={cx} cy={cy} r={indicatorRadius} className="fill-accent stroke-border pointer-events-none" strokeWidth={1.5} />
 
         {/* Indicator dot */}
         <circle
