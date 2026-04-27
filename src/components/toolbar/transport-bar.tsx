@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { useStore } from "@/lib/store";
 import { useAudioEngine } from "@/hooks/use-audio-engine";
 import { Play, Square, Repeat, Grid3x3, Magnet } from "lucide-react";
@@ -159,14 +160,13 @@ export function TransportBar() {
         </Button>
         <span className="text-border">|</span>
         <span className="text-muted-foreground">BPM</span>
-        <input
-          type="range"
+        <Slider
           min={20}
           max={300}
           step={1}
-          value={bpm}
-          onChange={(e) => setBpm(Number(e.target.value))}
-          className="h-1 w-20 accent-primary cursor-pointer"
+          value={[bpm]}
+          onValueChange={(v) => setBpm(Array.isArray(v) ? v[0] : (v as number))}
+          className="w-24"
         />
         <input
           type="text"
