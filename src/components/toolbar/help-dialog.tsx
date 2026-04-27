@@ -24,7 +24,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
             Patch Studio
           </DialogTitle>
           <DialogDescription>
-            A visual tool for creating sound effect patches for the @web-kits/audio library.
+            A visual tool for creating synthesized sounds as patches for the @web-kits/audio library.
           </DialogDescription>
         </DialogHeader>
 
