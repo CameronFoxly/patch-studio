@@ -34,7 +34,7 @@ export function CodePreview() {
 
     import("shiki").then(({ createHighlighter }) =>
       createHighlighter({
-        themes: ["github-dark-default", "github-light-default"],
+        themes: ["github-dark", "github-light"],
         langs: ["json"],
       }),
     ).then((hl) => {
@@ -54,8 +54,8 @@ export function CodePreview() {
     const html = highlighter.codeToHtml(patchJson, {
       lang: "json",
       themes: {
-        dark: "github-dark-default",
-        light: "github-light-default",
+        dark: "github-dark",
+        light: "github-light",
       },
       defaultColor: false,
     });
