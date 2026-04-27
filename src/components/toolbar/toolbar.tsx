@@ -41,6 +41,7 @@ export function Toolbar() {
 
   const handleExport = (name: string) => {
     if (layers.length === 0) return;
+    setPatchName(name);
     const patch = exportPatch(name, layers, globalEffects.length > 0 ? globalEffects : undefined);
     downloadPatch(patch);
   };
