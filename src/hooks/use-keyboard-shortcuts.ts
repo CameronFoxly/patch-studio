@@ -97,6 +97,18 @@ export function useKeyboardShortcuts() {
         state.setSnapEnabled(!state.snapEnabled);
       }
 
+      // [ = set preview range start to current time
+      if (e.key === "[") {
+        e.preventDefault();
+        state.setRegionStart(Math.min(state.currentTime, state.regionEnd - 0.01));
+      }
+
+      // ] = set preview range end to current time
+      if (e.key === "]") {
+        e.preventDefault();
+        state.setRegionEnd(Math.max(state.currentTime, state.regionStart + 0.01));
+      }
+
       // --- Layer shortcuts (require a selected layer) ---
       const layerId = state.selectedLayerId;
       if (!layerId) return;
@@ -117,6 +129,12 @@ export function useKeyboardShortcuts() {
       if (e.key === "d") {
         e.preventDefault();
         state.duplicateLayer(layerId);
+      }
+
+      // E = toggle envelope overlay
+      if (e.key === "e") {
+        e.preventDefault();
+        state.toggleLayerEnvelopeOverlay(layerId);
       }
 
       // Delete / Backspace = delete selected layer

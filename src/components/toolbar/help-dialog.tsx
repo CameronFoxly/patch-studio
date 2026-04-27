@@ -87,20 +87,23 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
             Keyboard Shortcuts
             <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform group-open:rotate-180" />
           </summary>
-          <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 border-t px-3 py-2">
+          <div className="grid grid-cols-[auto_1fr_auto_1fr] gap-x-3 gap-y-1 border-t px-3 py-2 max-h-32 overflow-y-auto">
             <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">Space</kbd><span>Play / Stop</span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">L</kbd><span>Toggle Loop</span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">G</kbd><span>Toggle Grid</span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">N</kbd><span>Toggle Snap</span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">A</kbd><span>Add Layer</span>
             <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">M</kbd><span>Mute Layer</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">L</kbd><span>Toggle Loop</span>
             <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">S</kbd><span>Solo Layer</span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">D</kbd><span>Duplicate Layer</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">G</kbd><span>Toggle Grid</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">D</kbd><span>Duplicate</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">E</kbd><span>Envelope Overlay</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">N</kbd><span>Toggle Snap</span>
             <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">⌫</kbd><span>Delete Layer</span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">+</kbd><span>Zoom In</span>
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">−</kbd><span>Zoom Out</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">A</kbd><span>Add Layer</span>
             <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">⌘ Z</kbd><span>Undo</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">+</kbd><span>Zoom In</span>
             <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">⌘ ⇧ Z</kbd><span>Redo</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">−</kbd><span>Zoom Out</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">[</kbd><span>Set Range In</span>
+            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-center">]</kbd><span>Set Range Out</span>
           </div>
         </details>
       </DialogContent>

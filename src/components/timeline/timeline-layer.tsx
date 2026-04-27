@@ -238,7 +238,7 @@ export function TimelineLayer({
                       </Button>
                     }
                   />
-                  <TooltipContent side="bottom">Envelope overlay</TooltipContent>
+                  <TooltipContent side="bottom">Envelope overlay <kbd className="ml-1 rounded border border-background/20 bg-background/10 px-1 py-0.5 font-mono text-[10px]">E</kbd></TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger
