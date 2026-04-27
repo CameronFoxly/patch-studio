@@ -319,6 +319,7 @@ export function Timeline() {
                     isDragOver={dragOverIndex === index}
                     isFaded={anySolo && !layer.solo}
                     controlsWidth={controlsWidth}
+                    onControlsResize={handleControlsResize}
                     onDragStart={() => handleDragStart(index)}
                     onDragOver={() => handleDragOver(index)}
                     onDragEnd={handleDragEnd}

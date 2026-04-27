@@ -9,7 +9,6 @@ import { EnvelopePanel } from "./envelope-panel";
 import { EffectsPanel } from "./effects-panel";
 import { ModulationPanel } from "./modulation-panel";
 import { SpatialPanel } from "./spatial-panel";
-import { GainPanPanel } from "./gain-pan-panel";
 import { GlobalEffectsPanel } from "./global-effects-panel";
 
 export function Sidebar() {
@@ -114,7 +113,6 @@ export function Sidebar() {
             </TabsContent>
           </div>
         </ScrollArea>
-        <GainPanPanel layer={layer} />
       </Tabs>
     </div>
   );
