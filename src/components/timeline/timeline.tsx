@@ -185,7 +185,7 @@ export function Timeline() {
         >
           {/* Region highlight */}
           <div
-            className="absolute inset-y-0 bg-primary/10"
+            className="absolute inset-y-0 bg-foreground/[0.06] dark:bg-foreground/[0.08]"
             style={{
               left: `${regionStart * zoom}px`,
               width: `${(regionEnd - regionStart) * zoom}px`,
