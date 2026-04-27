@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { Layer, Envelope } from "@/lib/types";
+import { ENVELOPE_TAIL } from "@/lib/audio/constants";
 
 interface Props {
   layer: Layer;
@@ -28,7 +29,7 @@ export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope, onUpdateG
   const decay = env.decay;
   const sustain = env.sustain ?? 0;
   const release = env.release || 0;
-  const totalDuration = attack + decay + release + 0.5;
+  const totalDuration = attack + decay + release + ENVELOPE_TAIL;
 
   const timeToX = (t: number) => (t / totalDuration) * blockWidth;
   const heightPct = (amp: number) => (1 - amp) * 100;
@@ -39,9 +40,7 @@ export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope, onUpdateG
   const yA = heightPct(gain);
   const xD = timeToX(attack + decay);
   const yD = heightPct(sustain * gain);
-  const xS = timeToX(totalDuration - release);
-  const yS = yD;
-  const xR = timeToX(totalDuration);
+  const xR = timeToX(attack + decay + release);
   const yR = 100;
 
   const handlePointMouseDown = useCallback(
@@ -107,8 +106,8 @@ export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope, onUpdateG
 
   const controlPoints: { id: DragPoint; cx: number; cy: number; label: string }[] = [
     { id: "attack", cx: xA, cy: yA, label: "A" },
-    { id: "decay", cx: xD, cy: yD, label: "D/S" },
     { id: "release", cx: xR, cy: yR, label: "R" },
+    { id: "decay", cx: xD, cy: yD, label: "D/S" },
   ];
 
   return (
@@ -120,12 +119,12 @@ export function EnvelopeOverlay({ layer, blockWidth, onUpdateEnvelope, onUpdateG
         preserveAspectRatio="none"
       >
         <path
-          d={`M ${x0} ${y0} L ${xA} ${yA} L ${xD} ${yD} L ${xS} ${yS} L ${xR} ${yR} Z`}
+          d={`M ${x0} ${y0} L ${xA} ${yA} L ${xD} ${yD} L ${xR} ${yR} Z`}
           fill={POINT_COLOR}
           opacity={0.1}
         />
         <path
-          d={`M ${x0} ${y0} L ${xA} ${yA} L ${xD} ${yD} L ${xS} ${yS} L ${xR} ${yR}`}
+          d={`M ${x0} ${y0} L ${xA} ${yA} L ${xD} ${yD} L ${xR} ${yR}`}
           fill="none"
           stroke={POINT_COLOR}
           strokeWidth="2"
