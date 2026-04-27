@@ -86,9 +86,9 @@ export function Toolbar() {
   }, [processImport]);
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 border-b bg-card">
+    <div className="flex items-center gap-3 px-4 py-2 border-b bg-card">
       {/* Logo / title */}
-      <div className="flex items-center gap-2 mr-2">
+      <div className="flex items-center gap-2">
         <AudioWaveform className="h-5 w-5 text-primary" />
         <span className="text-sm font-semibold tracking-tight">
           Patch Studio for{" "}
@@ -103,7 +103,7 @@ export function Toolbar() {
         </span>
       </div>
 
-      <Separator orientation="vertical" className="h-6" />
+      <Separator orientation="vertical" className="self-stretch" />
 
       {/* New + Presets */}
       <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleNew}>
@@ -130,7 +130,7 @@ export function Toolbar() {
         Export
       </Button>
 
-      <Separator orientation="vertical" className="h-6" />
+      <Separator orientation="vertical" className="self-stretch" />
       <ThemeToggle />
       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowHelp(true)}>
         <CircleHelp className="h-4 w-4" />
