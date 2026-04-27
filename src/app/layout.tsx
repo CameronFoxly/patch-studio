@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Patch Studio for @web-kits/audio",
   description: "Visual patch design studio for the @web-kits/audio library. Build multi-layer synthesized sounds with a DAW-style interface.",
+  icons: {
+    icon: [
+      { url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/favicon.svg`, type: "image/svg+xml" },
+    ],
+  },
 };
 
 export default function RootLayout({
