@@ -28,7 +28,7 @@ export interface UISlice {
 
 // Sanitize patch name for safe use as JSON key / filename
 export function sanitizePatchName(raw: string): string {
-  return raw.replace(/[^\w\s\-().]/g, "").trim();
+  return raw.replace(/[^\w\s\-().]/g, "");
 }
 
 export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (
