@@ -57,6 +57,7 @@ export function CodePreview() {
         dark: "github-dark-default",
         light: "github-light-default",
       },
+      defaultColor: false,
     });
     setHighlightedHtml(html);
   }, [highlighter, patchJson]);
