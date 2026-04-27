@@ -110,6 +110,7 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
         loadPreset(collectionId, soundKey);
       } else if (layers.length > 0) {
         pendingPresetRef.current = { collectionId, soundKey };
+        setOpen(false);
         setShowConfirm(true);
       } else {
         loadPreset(collectionId, soundKey);
