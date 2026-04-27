@@ -83,6 +83,7 @@ function defaultLayer(layerNumber: number): Layer {
     envelope: { decay: 0.3 },
     gain: 0.8,
     pan: 0,
+    showEnvelope: true,
   };
 }
 
