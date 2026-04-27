@@ -350,6 +350,15 @@ export function TimelineLayer({
             <span className="text-[10px] font-mono text-muted-foreground w-7 text-right flex-shrink-0">
               {formatPan(pan)}
             </span>
+            {pan !== 0 && (
+              <button
+                className="text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 cursor-pointer"
+                title="Reset to center"
+                onClick={() => updateLayerPan(layer.id, 0)}
+              >
+                ↺
+              </button>
+            )}
           </div>
         </div>
 
