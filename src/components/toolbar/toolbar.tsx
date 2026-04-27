@@ -29,11 +29,14 @@ export function Toolbar() {
   const setLayers = useStore((s) => s.setLayers);
   const setGlobalEffects = useStore((s) => s.setGlobalEffects);
   const selectLayer = useStore((s) => s.selectLayer);
+  const patchName = useStore((s) => s.patchName);
+  const setPatchName = useStore((s) => s.setPatchName);
 
   const handleNew = () => {
     clearLayers();
     setGlobalEffects([]);
     selectLayer(null);
+    setPatchName("Untitled");
   };
 
   const handleExport = (name: string) => {
@@ -69,13 +72,14 @@ export function Toolbar() {
       const { layers: imported, globalEffects: importedGlobal } = importPatch(json);
       setLayers(imported);
       setGlobalEffects(importedGlobal);
+      if (json.name) setPatchName(json.name);
       if (imported.length > 0) {
         selectLayer(imported[0].id);
       }
     } catch (err) {
       console.error("Failed to import patch:", err);
     }
-  }, [setLayers, setGlobalEffects, selectLayer]);
+  }, [setLayers, setGlobalEffects, selectLayer, setPatchName]);
 
   const handleImportConfirm = useCallback(() => {
     const file = pendingFileRef.current;
@@ -84,6 +88,19 @@ export function Toolbar() {
       pendingFileRef.current = null;
     }
   }, [processImport]);
+
+  const handleTitleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const val = e.target.value.trim();
+    setPatchName(val || "Untitled");
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.currentTarget.blur();
+    }
+    // Prevent spacebar from triggering playback while editing title
+    e.stopPropagation();
+  };
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 border-b bg-card">
@@ -112,7 +129,18 @@ export function Toolbar() {
       </Button>
       <PresetsMenu />
 
-      <div className="flex-1" />
+      {/* Editable project title — centered */}
+      <div className="flex-1 flex justify-center">
+        <input
+          type="text"
+          value={patchName}
+          onChange={(e) => setPatchName(e.target.value)}
+          onBlur={handleTitleBlur}
+          onKeyDown={handleTitleKeyDown}
+          spellCheck={false}
+          className="text-sm font-medium text-center bg-transparent border-none outline-none w-48 px-2 py-1 rounded hover:bg-muted focus:bg-muted focus:ring-1 focus:ring-ring transition-colors"
+        />
+      </div>
 
       {/* Import / Export */}
       <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleImportClick}>
@@ -150,6 +178,7 @@ export function Toolbar() {
         open={showExport}
         onOpenChange={setShowExport}
         onExport={handleExport}
+        defaultName={patchName}
       />
 
       {/* Import confirmation dialog */}

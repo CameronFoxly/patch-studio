@@ -27,6 +27,7 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
   const appendLayers = useStore((s) => s.appendLayers);
   const setGlobalEffects = useStore((s) => s.setGlobalEffects);
   const selectLayer = useStore((s) => s.selectLayer);
+  const setPatchName = useStore((s) => s.setPatchName);
   const layers = useStore((s) => s.layers);
   const [open, setOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
@@ -69,10 +70,11 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
         setLayers(loadedLayers);
         setGlobalEffects([]);
         selectLayer(loadedLayers[0].id);
+        setPatchName(soundKey);
       }
       setOpen(false);
     },
-    [mode, setLayers, appendLayers, setGlobalEffects, selectLayer],
+    [mode, setLayers, appendLayers, setGlobalEffects, selectLayer, setPatchName],
   );
 
   const handleSelect = useCallback(
