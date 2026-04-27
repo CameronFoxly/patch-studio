@@ -5,6 +5,7 @@ import type { Layer, Envelope } from "@/lib/types";
 
 interface Props {
   layer: Layer;
+  color?: string;
 }
 
 // Virtual sample rate for waveform generation
@@ -107,7 +108,7 @@ function generateBuffer(layer: Layer, totalDuration: number): Float32Array {
 
 const CORNER_RADIUS = 4;
 
-function drawWaveform(canvas: HTMLCanvasElement, layer: Layer) {
+function drawWaveform(canvas: HTMLCanvasElement, layer: Layer, color?: string) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
@@ -139,7 +140,7 @@ function drawWaveform(canvas: HTMLCanvasElement, layer: Layer) {
   ctx.roundRect(0, 0, w, h, CORNER_RADIUS);
   ctx.clip();
 
-  const computedColor = getComputedStyle(canvas).color;
+  const drawColor = color || getComputedStyle(canvas).color;
 
   // Min/max decimation: for each pixel column, find the min and max sample
   const minArr = new Float32Array(Math.ceil(w));
@@ -163,7 +164,7 @@ function drawWaveform(canvas: HTMLCanvasElement, layer: Layer) {
 
   // Draw filled area (min to max envelope)
   ctx.globalAlpha = 0.15;
-  ctx.fillStyle = computedColor;
+  ctx.fillStyle = drawColor;
   ctx.beginPath();
   ctx.moveTo(0, mid - maxArr[0] * baseAmp);
   for (let px = 1; px < w; px++) {
@@ -177,7 +178,7 @@ function drawWaveform(canvas: HTMLCanvasElement, layer: Layer) {
 
   // Draw waveform outline (top edge = max, bottom edge = min)
   ctx.globalAlpha = 0.7;
-  ctx.strokeStyle = computedColor;
+  ctx.strokeStyle = drawColor;
   ctx.lineWidth = 1;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
@@ -201,23 +202,23 @@ function drawWaveform(canvas: HTMLCanvasElement, layer: Layer) {
   ctx.globalAlpha = 1;
 }
 
-export function WaveformCanvas({ layer }: Props) {
+export function WaveformCanvas({ layer, color }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    drawWaveform(canvas, layer);
+    drawWaveform(canvas, layer, color);
 
     const resizeObserver = new ResizeObserver(() => {
-      drawWaveform(canvas, layer);
+      drawWaveform(canvas, layer, color);
     });
     resizeObserver.observe(canvas);
 
     // Redraw when theme changes (dark class toggled on <html>)
     const themeObserver = new MutationObserver(() => {
-      drawWaveform(canvas, layer);
+      drawWaveform(canvas, layer, color);
     });
     themeObserver.observe(document.documentElement, {
       attributes: true,
@@ -228,7 +229,7 @@ export function WaveformCanvas({ layer }: Props) {
       resizeObserver.disconnect();
       themeObserver.disconnect();
     };
-  }, [layer]);
+  }, [layer, color]);
 
   return (
     <canvas

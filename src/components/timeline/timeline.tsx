@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Plus, ZoomIn, ZoomOut, Library } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PresetsMenu } from "@/components/toolbar/presets-menu";
-import { CodePreview } from "./code-preview";
 
 const DEFAULT_CONTROLS_WIDTH = 220;
 const MIN_CONTROLS_WIDTH = 140;
@@ -186,7 +185,7 @@ export function Timeline() {
         >
           {/* Region highlight */}
           <div
-            className="absolute inset-y-0 bg-primary/10"
+            className="absolute inset-y-0 bg-foreground/[0.06] dark:bg-foreground/[0.08]"
             style={{
               left: `${regionStart * zoom}px`,
               width: `${(regionEnd - regionStart) * zoom}px`,
@@ -371,9 +370,6 @@ export function Timeline() {
           )}
         </div>
       </ScrollArea>
-
-      {/* Code preview panel */}
-      <CodePreview />
     </div>
   );
 }

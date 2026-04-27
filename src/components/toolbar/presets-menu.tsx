@@ -27,6 +27,7 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
   const appendLayers = useStore((s) => s.appendLayers);
   const setGlobalEffects = useStore((s) => s.setGlobalEffects);
   const selectLayer = useStore((s) => s.selectLayer);
+  const setPatchName = useStore((s) => s.setPatchName);
   const layers = useStore((s) => s.layers);
   const [open, setOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
@@ -34,6 +35,32 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const pendingPresetRef = useRef<{ collectionId: string; soundKey: string } | null>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  // Compute fixed position and max height from trigger button
+  const menuPos = (() => {
+    if (!triggerRef.current) return { top: 0, left: 0, maxHeight: 400, openUp: false };
+    const rect = triggerRef.current.getBoundingClientRect();
+    const midpoint = window.innerHeight / 2;
+    const openUp = rect.bottom > midpoint;
+
+    if (openUp) {
+      return {
+        top: undefined as number | undefined,
+        bottom: window.innerHeight - rect.top + 4,
+        left: rect.left,
+        maxHeight: rect.top - 20,
+        openUp,
+      };
+    }
+    return {
+      top: rect.bottom + 4,
+      bottom: undefined as number | undefined,
+      left: rect.left,
+      maxHeight: window.innerHeight - rect.bottom - 20,
+      openUp,
+    };
+  })();
 
   // Fetch all collections on first open
   useEffect(() => {
@@ -69,10 +96,11 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
         setLayers(loadedLayers);
         setGlobalEffects([]);
         selectLayer(loadedLayers[0].id);
+        setPatchName(soundKey);
       }
       setOpen(false);
     },
-    [mode, setLayers, appendLayers, setGlobalEffects, selectLayer],
+    [mode, setLayers, appendLayers, setGlobalEffects, selectLayer, setPatchName],
   );
 
   const handleSelect = useCallback(
@@ -103,7 +131,7 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
 
   return (
     <div className="relative">
-      <div onClick={() => setOpen(!open)}>
+      <div ref={triggerRef} onClick={() => setOpen(!open)}>
         {trigger ?? (
           <Button
             variant="outline"
@@ -118,18 +146,21 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
       {open && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-[100]" onClick={() => setOpen(false)} />
 
-          {/* Panel */}
-          <div className="absolute top-full left-0 mt-1 z-50 flex bg-popover border border-border rounded-md shadow-xl overflow-hidden">
+          {/* Panel — fixed positioning to escape parent overflow/stacking */}
+          <div
+            className="fixed z-[101] flex bg-popover border border-border rounded-md shadow-xl overflow-hidden"
+            style={{ top: menuPos.top, bottom: menuPos.bottom, left: menuPos.left, maxHeight: menuPos.maxHeight }}
+          >
             {/* Collection list */}
-            <div className="w-52 border-r border-border flex-shrink-0">
-              <div className="px-3 py-2 border-b border-border">
+            <div className="w-52 border-r border-border flex-shrink-0 flex flex-col">
+              <div className="px-3 py-2 border-b border-border flex-shrink-0">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Collections
                 </p>
               </div>
-              <div className="py-1">
+              <div className="py-1 overflow-y-auto flex-1 min-h-0">
                 {presetCollections.map((collection) => (
                   <button
                     key={collection.id}
@@ -153,9 +184,9 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
             </div>
 
             {/* Sound grid */}
-            <div className="w-80 flex-shrink-0">
+            <div className="w-80 flex-shrink-0 flex flex-col">
               {activeCollection && (
-                <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+                <div className="px-3 py-2 border-b border-border flex items-center justify-between flex-shrink-0">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {activeCollection.name}
                   </p>
@@ -166,7 +197,7 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
                   )}
                 </div>
               )}
-              <div className="p-2">
+              <div className="p-2 overflow-y-auto flex-1 min-h-0">
                 {loading || !activeKeys ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />

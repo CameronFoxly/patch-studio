@@ -394,13 +394,30 @@ export function TimelineLayer({
           });
         })()}
         <div
-          className={`absolute inset-y-1 rounded-sm bg-primary/10 border border-primary/20 ${
-            isDragging ? "cursor-grabbing ring-2 ring-primary/40" : "cursor-grab hover:border-primary/40"
+          className={`absolute inset-y-1 rounded-sm ${
+            isDragging ? "cursor-grabbing ring-2 ring-primary/40" : "cursor-grab"
           }`}
-          style={{ left: `${delayOffset}px`, width: `${blockWidth}px` }}
+          style={{
+            left: `${delayOffset}px`,
+            width: `${blockWidth}px`,
+            backgroundColor: layer.color ? `color-mix(in srgb, ${layer.color} 12%, transparent)` : undefined,
+            borderWidth: 1,
+            borderStyle: "solid",
+            borderColor: layer.color ? `color-mix(in srgb, ${layer.color} 30%, transparent)` : undefined,
+          }}
           onMouseDown={handleBlockMouseDown}
+          onMouseEnter={(e) => {
+            if (!isDragging && layer.color) {
+              e.currentTarget.style.borderColor = `color-mix(in srgb, ${layer.color} 55%, transparent)`;
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isDragging && layer.color) {
+              e.currentTarget.style.borderColor = `color-mix(in srgb, ${layer.color} 30%, transparent)`;
+            }
+          }}
         >
-          <WaveformCanvas layer={layer} />
+          <WaveformCanvas layer={layer} color={layer.color} />
           {/* LFO overlay — shown while adjusting LFO knobs */}
           <LfoOverlay layer={layer} blockWidth={blockWidth} />
           {/* Envelope overlay */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,10 +17,19 @@ interface ExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onExport: (name: string) => void;
+  defaultName?: string;
 }
 
-export function ExportDialog({ open, onOpenChange, onExport }: ExportDialogProps) {
-  const [name, setName] = useState("my-sound");
+export function ExportDialog({ open, onOpenChange, onExport, defaultName = "my-sound" }: ExportDialogProps) {
+  const [name, setName] = useState(defaultName);
+
+  // Sync local state when dialog opens with a new default
+  const prevOpen = useRef(false);
+  if (open && !prevOpen.current) {
+    prevOpen.current = true;
+    if (defaultName !== name) setName(defaultName);
+  }
+  if (!open) prevOpen.current = false;
 
   const handleExport = () => {
     const trimmed = name.trim() || "my-sound";

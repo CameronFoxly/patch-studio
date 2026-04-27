@@ -122,6 +122,7 @@ export interface Panner3D {
 export interface Layer {
   id: string;
   name: string;
+  color?: string;
   source: Source;
   filter?: Filter | Filter[];
   envelope?: Envelope;

@@ -55,10 +55,30 @@ const DEFAULT_SOURCE: Source = {
   frequency: 440,
 };
 
+// Soft palette that works in both light and dark themes
+const LAYER_COLORS = [
+  "hsl(210, 70%, 60%)",  // blue
+  "hsl(170, 60%, 50%)",  // teal
+  "hsl(270, 60%, 60%)",  // purple
+  "hsl(35, 80%, 55%)",   // amber
+  "hsl(140, 55%, 50%)",  // green
+  "hsl(240, 60%, 65%)",  // indigo
+  "hsl(20, 75%, 55%)",   // orange
+];
+
+let layerColorIndex = 0;
+
+function nextLayerColor(): string {
+  const color = LAYER_COLORS[layerColorIndex % LAYER_COLORS.length];
+  layerColorIndex++;
+  return color;
+}
+
 function defaultLayer(layerNumber: number): Layer {
   return {
     id: crypto.randomUUID(),
     name: `Layer ${layerNumber}`,
+    color: nextLayerColor(),
     source: { ...DEFAULT_SOURCE },
     envelope: { decay: 0.3 },
     gain: 0.8,
@@ -225,8 +245,8 @@ export const createLayersSlice: StateCreator<
     });
   },
 
-  setLayers: (layers) => set({ layers }),
-  appendLayers: (layers) => set({ layers: [...get().layers, ...layers] }),
+  setLayers: (layers) => set({ layers: layers.map((l) => l.color ? l : { ...l, color: nextLayerColor() }) }),
+  appendLayers: (layers) => set({ layers: [...get().layers, ...layers.map((l) => l.color ? l : { ...l, color: nextLayerColor() })] }),
   clearLayers: () => set({ layers: [] }),
 
   setGlobalEffects: (effects) => set({ globalEffects: effects }),

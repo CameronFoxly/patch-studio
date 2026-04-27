@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { useStore } from "@/lib/store";
 import { useAudioEngine } from "@/hooks/use-audio-engine";
@@ -73,6 +74,7 @@ export function TransportBar() {
       <Button
         size="sm"
         variant={isPlaying ? "destructive" : "default"}
+        className={isPlaying ? "" : "bg-emerald-600 text-white hover:bg-emerald-700"}
         onClick={isPlaying ? stop : play}
         disabled={layerCount === 0}
       >
@@ -92,9 +94,14 @@ export function TransportBar() {
         <Repeat className={`h-4 w-4 ${isLooping ? "text-primary" : "text-muted-foreground"}`} />
         Loop
       </Button>
-      <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground ml-2">
+
+      <Separator orientation="vertical" className="self-stretch -my-2" />
+
+      <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
         <span>{currentTime.toFixed(2)}s</span>
-        <span className="text-border">|</span>
+
+        <Separator orientation="vertical" className="self-stretch -my-2" />
+
         <span>Preview Range:</span>
         <input
           type="text"
@@ -135,9 +142,10 @@ export function TransportBar() {
         />
       </div>
 
+      <Separator orientation="vertical" className="self-stretch -my-2" />
+
       {/* Quantize / Snap / BPM controls */}
-      <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground ml-2">
-        <span className="text-border">|</span>
+      <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
         <Button
           size="sm"
           variant={quantizeEnabled ? "secondary" : "ghost"}
@@ -158,7 +166,9 @@ export function TransportBar() {
           <Magnet className={`h-3 w-3 ${snapEnabled ? "text-primary" : "text-muted-foreground"}`} />
           Snap
         </Button>
-        <span className="text-border">|</span>
+
+        <Separator orientation="vertical" className="self-stretch -my-2" />
+
         <span className="text-muted-foreground">BPM</span>
         <Slider
           min={20}
