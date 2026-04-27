@@ -4,6 +4,7 @@ import { Panel, Group, Separator } from "react-resizable-panels";
 import { Toolbar } from "@/components/toolbar/toolbar";
 import { TransportBar } from "@/components/toolbar/transport-bar";
 import { Timeline } from "@/components/timeline/timeline";
+import { CodePreview } from "@/components/timeline/code-preview";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { SequenceEditor } from "@/components/sequence/sequence-editor";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -19,7 +20,15 @@ export default function Home() {
         <Panel defaultSize={80} minSize={20}>
           <Group orientation="horizontal" className="h-full">
             <Panel minSize={10}>
-              <Timeline />
+              <Group orientation="vertical" className="h-full">
+                <Panel defaultSize={65} minSize={20}>
+                  <Timeline />
+                </Panel>
+                <Separator className="h-1.5 bg-border hover:bg-primary/20 transition-colors cursor-row-resize data-[resize-handle-active]:bg-primary/40" />
+                <Panel defaultSize={35} minSize={5}>
+                  <CodePreview />
+                </Panel>
+              </Group>
             </Panel>
             <Separator className="w-1.5 bg-border hover:bg-primary/20 transition-colors cursor-col-resize data-[resize-handle-active]:bg-primary/40" />
             <Panel defaultSize={250} minSize={180}>

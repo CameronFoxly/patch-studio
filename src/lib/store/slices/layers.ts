@@ -58,7 +58,6 @@ const DEFAULT_SOURCE: Source = {
 // Soft palette that works in both light and dark themes
 const LAYER_COLORS = [
   "hsl(210, 70%, 60%)",  // blue
-  "hsl(350, 65%, 60%)",  // rose
   "hsl(170, 60%, 50%)",  // teal
   "hsl(270, 60%, 60%)",  // purple
   "hsl(35, 80%, 55%)",   // amber
