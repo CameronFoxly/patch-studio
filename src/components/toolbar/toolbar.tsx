@@ -103,21 +103,22 @@ export function Toolbar() {
 
       <Separator orientation="vertical" className="h-6" />
 
+      {/* New + Presets */}
+      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleNew}>
+        <FilePlus className="h-4 w-4" />
+        New
+      </Button>
       <PresetsMenu />
 
       <div className="flex-1" />
 
-      {/* File operations with text labels */}
-      <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleNew}>
-        <FilePlus className="h-4 w-4" />
-        New
-      </Button>
-      <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleImportClick}>
+      {/* Import / Export */}
+      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleImportClick}>
         <Upload className="h-4 w-4" />
         Import
       </Button>
       <Button
-        variant="ghost"
+        variant="outline"
         size="sm"
         className="h-8 gap-1.5 text-xs"
         onClick={() => layers.length > 0 && setShowExport(true)}
