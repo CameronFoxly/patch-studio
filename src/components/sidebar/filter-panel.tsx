@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
 import { RotaryKnob } from "@/components/ui/rotary-knob";
+import { SliderInput } from "@/components/ui/slider-input";
 import { KnobRow } from "@/components/ui/knob-row";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -62,7 +63,7 @@ function IIRCoefficientEditor({
   onChange: (coeffs: number[]) => void;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <Label className="text-xs">{label}</Label>
         <div className="flex gap-1">
@@ -85,23 +86,21 @@ function IIRCoefficientEditor({
           </Button>
         </div>
       </div>
-      <div className="flex flex-wrap gap-1">
-        {coefficients.map((coeff, i) => (
-          <input
-            key={i}
-            type="number"
-            value={coeff}
-            step={0.01}
-            onChange={(e) => {
-              const next = [...coefficients];
-              next[i] = parseFloat(e.target.value) || 0;
-              onChange(next);
-            }}
-            className="w-16 h-6 text-[10px] rounded border bg-background px-1.5 text-center tabular-nums"
-            title={`Coefficient ${i}`}
-          />
-        ))}
-      </div>
+      {coefficients.map((coeff, i) => (
+        <SliderInput
+          key={i}
+          label={`${label.charAt(0).toLowerCase()}${i}`}
+          value={coeff}
+          min={-2}
+          max={2}
+          step={0.01}
+          onChange={(v) => {
+            const next = [...coefficients];
+            next[i] = v;
+            onChange(next);
+          }}
+        />
+      ))}
     </div>
   );
 }
