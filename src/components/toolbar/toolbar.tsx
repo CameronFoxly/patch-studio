@@ -10,6 +10,7 @@ import {
   importPatch,
 } from "@/lib/audio/patch-converter";
 import { Download, Upload, FilePlus, AudioWaveform, CircleHelp } from "lucide-react";
+import { GitHubIcon } from "@/components/shared/github-icon";
 import { PresetsMenu } from "./presets-menu";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { ExportDialog } from "./export-dialog";
@@ -161,6 +162,14 @@ export function Toolbar() {
 
       <Separator orientation="vertical" className="self-stretch -my-2" />
       <ThemeToggle />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        render={<a href="https://github.com/CameronFoxly/patch-studio" target="_blank" rel="noopener noreferrer" />}
+      >
+        <GitHubIcon className="h-4 w-4" />
+      </Button>
       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowHelp(true)}>
         <CircleHelp className="h-4 w-4" />
       </Button>
