@@ -160,11 +160,6 @@ export function TimelineLayer({
   return (
     <div
       onClick={handleClick}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = "move";
-        onDragStart();
-      }}
       onDragOver={(e) => {
         e.preventDefault();
         onDragOver();
@@ -182,11 +177,16 @@ export function TimelineLayer({
     >
       {/* Layer controls */}
       <div className="flex-shrink-0 flex border-r bg-card relative" style={{ width: controlsWidth }}>
-        {/* Drag handle */}
-        <div className="flex items-center flex-shrink-0 pl-1.5">
-          <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
-            <GripVertical className="h-4 w-4" />
-          </div>
+        {/* Drag handle — only this element initiates reorder */}
+        <div
+          className="flex items-center flex-shrink-0 pl-1.5 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.effectAllowed = "move";
+            onDragStart();
+          }}
+        >
+          <GripVertical className="h-4 w-4" />
         </div>
 
         {/* Content column */}
