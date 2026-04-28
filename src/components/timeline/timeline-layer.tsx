@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useStore } from "@/lib/store";
+import { useStore, temporalStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { WaveformCanvas } from "./waveform-canvas";
@@ -71,7 +71,7 @@ export function TimelineLayer({
     selectLayer(layer.id);
   }, [selectLayer, layer.id]);
 
-  // Drag-to-reposition: update onset delay
+  // Drag-to-reposition: update onset delay (batched as single undo entry)
   const handleBlockMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -82,6 +82,11 @@ export function TimelineLayer({
         mouseX: e.clientX,
         startDelay: layer.delay || 0,
       };
+
+      // Snapshot pre-drag state and pause undo tracking so intermediate
+      // moves don't flood the history — we record a single entry on release.
+      const preDragState = useStore.getState();
+      temporalStore.getState().pause();
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
         if (!dragStartRef.current) return;
@@ -98,6 +103,18 @@ export function TimelineLayer({
       const handleMouseUp = () => {
         setIsDragging(false);
         dragStartRef.current = null;
+
+        // Resume tracking and record the entire drag as one undo step
+        const temporal = temporalStore.getState();
+        temporal.resume();
+        const currentDelay = useStore.getState().layers.find(l => l.id === layer.id)?.delay ?? 0;
+        if (currentDelay !== (preDragState.layers.find(l => l.id === layer.id)?.delay ?? 0)) {
+          temporalStore.setState({
+            pastStates: [...temporal.pastStates, preDragState],
+            futureStates: [],
+          });
+        }
+
         window.removeEventListener("mousemove", handleMouseMove);
         window.removeEventListener("mouseup", handleMouseUp);
       };
