@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { PresetsMenu } from "@/components/toolbar/presets-menu";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
-const DEFAULT_CONTROLS_WIDTH = 220;
+const DEFAULT_CONTROLS_WIDTH = 264;
 const MIN_CONTROLS_WIDTH = 140;
 const MAX_CONTROLS_WIDTH = 400;
 

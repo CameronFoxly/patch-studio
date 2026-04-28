@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useStore, temporalStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -8,8 +9,9 @@ import { WaveformCanvas } from "./waveform-canvas";
 import { EnvelopeOverlay } from "./envelope-overlay";
 import { LfoOverlay } from "./lfo-overlay";
 import type { Layer } from "@/lib/types";
-import { ENVELOPE_TAIL } from "@/lib/audio/constants";import { Volume2, VolumeX, Trash2, Copy, Star, GripVertical, Activity } from "lucide-react";
+import { ENVELOPE_TAIL } from "@/lib/audio/constants";import { Volume2, VolumeX, Trash2, Copy, Star, GripVertical, Activity, Check } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { LAYER_COLORS } from "@/lib/store/slices/layers";
 
 function first(v: number | readonly number[]): number {
   return Array.isArray(v) ? v[0] : (v as number);
@@ -51,6 +53,7 @@ export function TimelineLayer({
   const updateLayerEnvelope = useStore((s) => s.updateLayerEnvelope);
   const updateLayerGain = useStore((s) => s.updateLayerGain);
   const updateLayerPan = useStore((s) => s.updateLayerPan);
+  const updateLayerColor = useStore((s) => s.updateLayerColor);
   const zoom = useStore((s) => s.zoom);
   const snapEnabled = useStore((s) => s.snapEnabled);
   const bpm = useStore((s) => s.bpm);
@@ -59,6 +62,8 @@ export function TimelineLayer({
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(layer.name);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef<{ mouseX: number; startDelay: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -147,6 +152,38 @@ export function TimelineLayer({
     [commitName],
   );
 
+  // Context menu for color picker
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      selectLayer(layer.id);
+      setContextMenu({ x: e.clientX, y: e.clientY });
+    },
+    [selectLayer, layer.id],
+  );
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  // Close context menu on click outside or Escape
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+        closeContextMenu();
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeContextMenu();
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [contextMenu, closeContextMenu]);
+
   // Calculate visual offset and width based on zoom (pixels per second)
   const delayOffset = (layer.delay || 0) * zoom;
   const env = layer.envelope;
@@ -177,11 +214,6 @@ export function TimelineLayer({
   return (
     <div
       onClick={handleClick}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = "move";
-        onDragStart();
-      }}
       onDragOver={(e) => {
         e.preventDefault();
         onDragOver();
@@ -199,11 +231,16 @@ export function TimelineLayer({
     >
       {/* Layer controls */}
       <div className="flex-shrink-0 flex border-r bg-card relative" style={{ width: controlsWidth }}>
-        {/* Drag handle */}
-        <div className="flex items-center flex-shrink-0 pl-1.5">
-          <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
-            <GripVertical className="h-4 w-4" />
-          </div>
+        {/* Drag handle — only this element initiates reorder */}
+        <div
+          className="flex items-center flex-shrink-0 pl-1.5 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.effectAllowed = "move";
+            onDragStart();
+          }}
+        >
+          <GripVertical className="h-4 w-4" />
         </div>
 
         {/* Content column */}
@@ -423,6 +460,7 @@ export function TimelineLayer({
             borderColor: layer.color ? `color-mix(in srgb, ${layer.color} 30%, transparent)` : undefined,
           }}
           onMouseDown={handleBlockMouseDown}
+          onContextMenu={handleContextMenu}
           onMouseEnter={(e) => {
             if (!isDragging && layer.color) {
               e.currentTarget.style.borderColor = `color-mix(in srgb, ${layer.color} 55%, transparent)`;
@@ -454,6 +492,38 @@ export function TimelineLayer({
           )}
         </div>
       </div>
+
+      {/* Color context menu */}
+      {contextMenu &&
+        createPortal(
+          <div
+            ref={contextMenuRef}
+            className="fixed z-50 min-w-36 rounded-md bg-popover p-1 shadow-md ring-1 ring-foreground/10 animate-in fade-in-0 zoom-in-95"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <p className="px-1.5 py-1 text-xs font-medium text-muted-foreground">
+              Region Color
+            </p>
+            <div className="grid grid-cols-7 gap-1 px-1.5 py-1">
+              {LAYER_COLORS.map((color) => (
+                <button
+                  key={color}
+                  className="h-5 w-5 rounded-full cursor-pointer ring-offset-background transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 flex items-center justify-center"
+                  style={{ backgroundColor: color }}
+                  onClick={() => {
+                    updateLayerColor(layer.id, color);
+                    closeContextMenu();
+                  }}
+                >
+                  {layer.color === color && (
+                    <Check className="h-3 w-3 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

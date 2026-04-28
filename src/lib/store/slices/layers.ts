@@ -38,6 +38,7 @@ export interface LayersSlice {
   toggleLayerFilterBypass: (id: string, index: number) => void;
   toggleLayerLFOBypass: (id: string, index: number) => void;
   toggleLayerEffectBypass: (id: string, index: number) => void;
+  updateLayerColor: (id: string, color: string) => void;
 
   setLayers: (layers: Layer[]) => void;
   appendLayers: (layers: Layer[]) => void;
@@ -56,7 +57,7 @@ const DEFAULT_SOURCE: Source = {
 };
 
 // Soft palette that works in both light and dark themes
-const LAYER_COLORS = [
+export const LAYER_COLORS = [
   "hsl(210, 70%, 60%)",  // blue
   "hsl(170, 60%, 50%)",  // teal
   "hsl(270, 60%, 60%)",  // purple
@@ -244,6 +245,10 @@ export const createLayersSlice: StateCreator<
         return { ...l, effects };
       }),
     });
+  },
+
+  updateLayerColor: (id, color) => {
+    set({ layers: updateLayer(get().layers, id, (l) => ({ ...l, color })) });
   },
 
   setLayers: (layers) => set({ layers: layers.map((l) => l.color ? l : { ...l, color: nextLayerColor() }) }),
