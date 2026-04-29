@@ -31,11 +31,16 @@ export function Timeline() {
   const containerRef = useRef<HTMLDivElement>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
 
-  // Resizable controls width — narrower default on mobile
-  const [controlsWidth, setControlsWidth] = useState(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) return MOBILE_CONTROLS_WIDTH;
-    return DEFAULT_CONTROLS_WIDTH;
-  });
+  // Resizable controls width — sync to narrower default on mobile after mount
+  const [controlsWidth, setControlsWidth] = useState(DEFAULT_CONTROLS_WIDTH);
+  const initializedMobileWidth = useRef(false);
+
+  useEffect(() => {
+    if (!initializedMobileWidth.current && window.innerWidth < 768) {
+      initializedMobileWidth.current = true;
+      setControlsWidth(MOBILE_CONTROLS_WIDTH);
+    }
+  }, []);
 
   // Drag reorder state
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
