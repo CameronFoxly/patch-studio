@@ -22,6 +22,7 @@
     "@web-kits/audio": "^0.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "lamejs": "^1.2.1",
     "lucide-react": "^1.11.0",
     "next": "16.2.4",
     "react": "19.2.4",

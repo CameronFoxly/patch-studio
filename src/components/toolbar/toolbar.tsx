@@ -9,11 +9,16 @@ import {
   downloadPatch,
   importPatch,
 } from "@/lib/audio/patch-converter";
+import {
+  renderToWavBlob,
+  renderToMp3Blob,
+  downloadBlob,
+} from "@/lib/audio/renderer";
 import { Download, Upload, FilePlus, AudioWaveform, CircleHelp } from "lucide-react";
 import { GitHubIcon } from "@/components/shared/github-icon";
 import { PresetsMenu } from "./presets-menu";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { ExportDialog } from "./export-dialog";
+import { ExportDialog, type ExportOptions } from "./export-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
 import { HelpDialog } from "./help-dialog";
 
@@ -32,6 +37,8 @@ export function Toolbar() {
   const selectLayer = useStore((s) => s.selectLayer);
   const patchName = useStore((s) => s.patchName);
   const setPatchName = useStore((s) => s.setPatchName);
+  const regionEnd = useStore((s) => s.regionEnd);
+  const regionStart = useStore((s) => s.regionStart);
 
   const handleNew = () => {
     clearLayers();
@@ -40,11 +47,28 @@ export function Toolbar() {
     setPatchName("Untitled");
   };
 
-  const handleExport = (name: string) => {
+  const handleExport = async (options: ExportOptions) => {
     if (layers.length === 0) return;
-    setPatchName(name);
-    const patch = exportPatch(name, layers, globalEffects.length > 0 ? globalEffects : undefined);
-    downloadPatch(patch);
+    setPatchName(options.name);
+    const effects = globalEffects.length > 0 ? globalEffects : undefined;
+
+    if (options.format === "json") {
+      const patch = exportPatch(options.name, layers, effects);
+      downloadPatch(patch);
+    } else if (options.format === "wav") {
+      const blob = await renderToWavBlob(layers, effects, {
+        duration: options.duration ?? 2,
+        sampleRate: options.sampleRate ?? 44100,
+      });
+      downloadBlob(blob, `${options.name}.wav`);
+    } else if (options.format === "mp3") {
+      const blob = await renderToMp3Blob(layers, effects, {
+        duration: options.duration ?? 2,
+        sampleRate: options.sampleRate ?? 44100,
+        bitrate: options.bitrate ?? 192,
+      });
+      downloadBlob(blob, `${options.name}.mp3`);
+    }
   };
 
   const handleImportClick = () => {
@@ -189,6 +213,7 @@ export function Toolbar() {
         onOpenChange={setShowExport}
         onExport={handleExport}
         defaultName={patchName}
+        defaultDuration={Math.max(0.1, regionEnd - regionStart)}
       />
 
       {/* Import confirmation dialog */}
