@@ -21,7 +21,7 @@ export function Sidebar() {
   // When no layer is selected, only show the Master panel
   if (!layer) {
     return (
-      <div className="h-full border-l bg-card flex flex-col">
+      <div className="h-full md:border-l bg-card flex flex-col">
         <div className="px-4 py-3 border-b">
           <h2 className="font-semibold text-sm">Master</h2>
         </div>
@@ -52,7 +52,7 @@ export function Sidebar() {
   }
 
   return (
-    <div className="h-full border-l bg-card flex flex-col">
+    <div className="h-full md:border-l bg-card flex flex-col">
       <div className="px-4 py-3 border-b">
         <h2 className="font-semibold text-sm truncate">{layer.name}</h2>
       </div>

@@ -10,6 +10,7 @@ import { PresetsMenu } from "@/components/toolbar/presets-menu";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 const DEFAULT_CONTROLS_WIDTH = 264;
+const MOBILE_CONTROLS_WIDTH = 140;
 const MIN_CONTROLS_WIDTH = 140;
 const MAX_CONTROLS_WIDTH = 400;
 
@@ -30,8 +31,16 @@ export function Timeline() {
   const containerRef = useRef<HTMLDivElement>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
 
-  // Resizable controls width
+  // Resizable controls width — sync to narrower default on mobile after mount
   const [controlsWidth, setControlsWidth] = useState(DEFAULT_CONTROLS_WIDTH);
+  const initializedMobileWidth = useRef(false);
+
+  useEffect(() => {
+    if (!initializedMobileWidth.current && window.innerWidth < 768) {
+      initializedMobileWidth.current = true;
+      setControlsWidth(MOBILE_CONTROLS_WIDTH);
+    }
+  }, []);
 
   // Drag reorder state
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);

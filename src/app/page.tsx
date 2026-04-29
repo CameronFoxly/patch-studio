@@ -9,6 +9,9 @@ import { CodePreview } from "@/components/timeline/code-preview";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { SequenceEditor } from "@/components/sequence/sequence-editor";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useIsMobile } from "@/hooks/use-is-mobile";
+import { CollapsibleSection } from "@/components/shared/collapsible-section";
+import { Layers, SlidersHorizontal, Code } from "lucide-react";
 
 const SIDEBAR_DEFAULT = 280;
 const SIDEBAR_MIN = 220;
@@ -16,6 +19,7 @@ const SIDEBAR_MIN = 220;
 export default function Home() {
   useKeyboardShortcuts();
 
+  const isMobile = useIsMobile();
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT);
   const dragging = useRef(false);
 
@@ -40,6 +44,44 @@ export default function Home() {
     },
     [sidebarWidth],
   );
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-screen">
+        <Toolbar />
+        <TransportBar />
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <CollapsibleSection
+            title="Timeline"
+            icon={<Layers className="h-4 w-4" />}
+          >
+            <div className="h-[50vh] min-h-[300px]">
+              <Timeline />
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Parameters"
+            icon={<SlidersHorizontal className="h-4 w-4" />}
+          >
+            <div className="h-[50vh] min-h-[300px]">
+              <Sidebar />
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Code"
+            icon={<Code className="h-4 w-4" />}
+            defaultOpen={false}
+          >
+            <div className="h-[40vh] min-h-[200px]">
+              <CodePreview />
+            </div>
+          </CollapsibleSection>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen">
