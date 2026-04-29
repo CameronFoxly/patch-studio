@@ -1,5 +1,5 @@
 import { renderToBuffer, renderToWav } from "@web-kits/audio";
-import { Mp3Encoder } from "lamejs";
+import { Mp3Encoder } from "@breezystack/lamejs";
 import { layersToSoundDefinition } from "./engine";
 import type { Layer } from "@/lib/types";
 import type { Effect } from "@/lib/types";
@@ -56,27 +56,19 @@ function encodeBufferToMp3(buffer: AudioBuffer, kbps: number): Blob {
     : left;
 
   const blockSize = 1152;
-  const parts: ArrayBuffer[] = [];
+  const parts: Uint8Array[] = [];
 
   for (let i = 0; i < left.length; i += blockSize) {
     const leftChunk = left.subarray(i, i + blockSize);
     const rightChunk = right.subarray(i, i + blockSize);
     const encoded = encoder.encodeBuffer(leftChunk, rightChunk);
-    if (encoded.length > 0) {
-      const copy = new ArrayBuffer(encoded.byteLength);
-      new Uint8Array(copy).set(new Uint8Array(encoded.buffer, encoded.byteOffset, encoded.byteLength));
-      parts.push(copy);
-    }
+    if (encoded.length > 0) parts.push(encoded);
   }
 
   const flushed = encoder.flush();
-  if (flushed.length > 0) {
-    const copy = new ArrayBuffer(flushed.byteLength);
-    new Uint8Array(copy).set(new Uint8Array(flushed.buffer, flushed.byteOffset, flushed.byteLength));
-    parts.push(copy);
-  }
+  if (flushed.length > 0) parts.push(flushed);
 
-  return new Blob(parts, { type: "audio/mpeg" });
+  return new Blob(parts as BlobPart[], { type: "audio/mpeg" });
 }
 
 function floatTo16Bit(float32: Float32Array): Int16Array {
