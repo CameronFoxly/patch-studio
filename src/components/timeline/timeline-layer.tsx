@@ -246,8 +246,8 @@ export function TimelineLayer({
         {/* Content column */}
         <div className="flex-1 min-w-0 py-1.5 px-1.5 flex flex-col gap-1">
           {/* Top row: name + buttons */}
-          <div className="flex items-center gap-1">
-            <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-1">
+            <div className="min-w-0">
               {isEditing ? (
                 <input
                   ref={inputRef}
@@ -261,7 +261,7 @@ export function TimelineLayer({
                 />
               ) : (
                 <p
-                  className="text-sm font-medium truncate cursor-text hover:text-primary transition-colors"
+                  className="text-sm font-medium cursor-text hover:text-primary transition-colors"
                   onClick={handleNameClick}
                   title="Click to rename"
                 >
@@ -272,7 +272,7 @@ export function TimelineLayer({
                 {sourceLabel}
               </p>
             </div>
-            <div className="flex gap-0.5 flex-shrink-0">
+            <div className="flex flex-wrap gap-0.5">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger
