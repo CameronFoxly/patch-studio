@@ -166,6 +166,7 @@ export function Toolbar() {
         variant="ghost"
         size="icon"
         className="h-8 w-8"
+        nativeButton={false}
         render={<a href="https://github.com/CameronFoxly/patch-studio" target="_blank" rel="noopener noreferrer" />}
       >
         <GitHubIcon className="h-4 w-4" />
