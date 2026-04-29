@@ -141,13 +141,18 @@ export function Toolbar() {
     </>
   );
 
-  const actionButtons = (
+  const newPresetButtons = (
     <>
       <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleNew}>
         <FilePlus className="h-4 w-4" />
         New
       </Button>
       <PresetsMenu />
+    </>
+  );
+
+  const importExportButtons = (
+    <>
       <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleImportClick}>
         <Upload className="h-4 w-4" />
         Import
@@ -214,7 +219,8 @@ export function Toolbar() {
           {utilityButtons}
         </div>
         <div className="flex items-center gap-2">
-          {actionButtons}
+          {newPresetButtons}
+          {importExportButtons}
         </div>
         <div className="w-full flex justify-center">
           {projectName}
@@ -228,10 +234,11 @@ export function Toolbar() {
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 border-b bg-card">
       {appTitle}
       <Separator orientation="vertical" className="self-stretch -my-2" />
-      {actionButtons}
+      {newPresetButtons}
       <div className="flex-1 flex justify-center">
         {projectName}
       </div>
+      {importExportButtons}
       <Separator orientation="vertical" className="self-stretch -my-2" />
       {utilityButtons}
       {dialogs}
