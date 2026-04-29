@@ -55,7 +55,7 @@ export function TransportBar() {
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 border-b bg-card">
+    <div className="flex items-center gap-3 px-4 py-2 border-b bg-card overflow-x-auto">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger

@@ -59,7 +59,7 @@ export default function RootLayout({
           } catch(e) {}
         ` }} />
       </head>
-      <body className="min-h-full flex flex-col md:overflow-hidden">{children}</body>
+      <body className="min-h-full flex flex-col overflow-x-hidden md:overflow-hidden">{children}</body>
     </html>
   );
 }
