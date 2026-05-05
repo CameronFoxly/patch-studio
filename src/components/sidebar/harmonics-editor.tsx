@@ -95,9 +95,9 @@ export function HarmonicsEditor({ harmonics, onChange }: HarmonicsEditorProps) {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="space-y-1.5">
         <Label className="text-xs">Harmonics ({harmonics.length})</Label>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           {Object.entries(HARMONIC_PRESETS).map(([name, values]) => (
             <Button
               key={name}
