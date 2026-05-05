@@ -119,7 +119,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans select-none;
   }
   html {
     @apply font-sans;
@@ -128,6 +128,16 @@
   html.dark {
     color-scheme: dark;
   }
+}
+
+/* Re-enable text selection for interactive text elements */
+input,
+textarea,
+[contenteditable="true"],
+pre,
+code,
+.shiki {
+  user-select: text;
 }
 
 /* Scrollbar styling — outside @layer for higher specificity */
