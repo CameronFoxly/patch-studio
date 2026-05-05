@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown, X } from "lucide-react";
+import { useSidebarContainer } from "@/components/sidebar/sidebar-context";
 
 const NOTE_NAMES = [
   "C",
@@ -63,51 +64,7 @@ export function PianoKeyboardDialog({
     return Math.max(0, Math.min(8, Math.floor(midi / 12) - 1));
   });
 
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const hasPositioned = useRef(false);
-  const dragRef = useRef<{
-    startX: number;
-    startY: number;
-    origX: number;
-    origY: number;
-  } | null>(null);
-
-  // Center dialog on first open
-  useEffect(() => {
-    if (open && !hasPositioned.current) {
-      setPosition({
-        x: Math.max(16, (window.innerWidth - 304) / 2),
-        y: Math.max(16, (window.innerHeight - 260) / 2),
-      });
-      hasPositioned.current = true;
-    }
-  }, [open]);
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if (e.target !== e.currentTarget) return;
-      dragRef.current = {
-        startX: e.clientX,
-        startY: e.clientY,
-        origX: position.x,
-        origY: position.y,
-      };
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    },
-    [position]
-  );
-
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragRef.current) return;
-    setPosition({
-      x: dragRef.current.origX + (e.clientX - dragRef.current.startX),
-      y: dragRef.current.origY + (e.clientY - dragRef.current.startY),
-    });
-  }, []);
-
-  const handlePointerUp = useCallback(() => {
-    dragRef.current = null;
-  }, []);
+  const sidebarRef = useSidebarContainer();
 
   const handleKeyClick = useCallback(
     (noteIndex: number) => {
@@ -123,18 +80,12 @@ export function PianoKeyboardDialog({
 
   if (!open || typeof document === "undefined") return null;
 
+  const container = sidebarRef?.current ?? document.body;
+
   return createPortal(
-    <div
-      className="fixed z-50 w-[304px] rounded-md bg-popover p-3 text-popover-foreground ring-1 ring-foreground/10 shadow-lg"
-      style={{ left: position.x, top: position.y }}
-    >
-      {/* Draggable title bar */}
-      <div
-        className="flex items-center justify-between mb-2 cursor-grab active:cursor-grabbing select-none"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-      >
+    <div className="absolute bottom-0 inset-x-0 z-50 rounded-t-md bg-popover p-3 text-popover-foreground border-t ring-1 ring-foreground/10 shadow-lg animate-slide-up">
+      {/* Title bar */}
+      <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium">Note Picker</span>
         <Button variant="ghost" size="icon-xs" onClick={onClose}>
           <X className="size-3" />
@@ -229,6 +180,6 @@ export function PianoKeyboardDialog({
         <span>{currentFrequency} Hz</span>
       </div>
     </div>,
-    document.body
+    container
   );
 }
