@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown, X } from "lucide-react";
@@ -67,7 +67,13 @@ export function PianoKeyboardDialog({
   });
 
   const sidebarRef = useSidebarContainer();
-  const [anchorRight, setAnchorRight] = useState(0);
+  const [anchorRight, setAnchorRight] = useState(() => {
+    if (sidebarRef?.current) {
+      const r = sidebarRef.current.getBoundingClientRect();
+      return window.innerWidth - r.left;
+    }
+    return 0;
+  });
   const [phase, setPhase] = useState<"closed" | "entering" | "open" | "exiting">(
     open ? "open" : "closed"
   );
@@ -89,7 +95,7 @@ export function PianoKeyboardDialog({
   }, [phase]);
 
   // Track sidebar position so the picker stays anchored on resize
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (phase === "closed" || !sidebarRef?.current) return;
 
     const update = () => {
