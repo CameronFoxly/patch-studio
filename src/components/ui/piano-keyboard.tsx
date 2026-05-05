@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown, X } from "lucide-react";
@@ -68,22 +68,24 @@ export function PianoKeyboardDialog({
 
   const sidebarRef = useSidebarContainer();
   const [anchorRight, setAnchorRight] = useState(0);
-  const [phase, setPhase] = useState<"closed" | "entering" | "exiting">("closed");
+  const [phase, setPhase] = useState<"closed" | "entering" | "open" | "exiting">(
+    open ? "open" : "closed"
+  );
+  const prevOpenRef = useRef(open);
 
-  // Drive enter/exit phase from the open prop
+  // Only animate on actual open/close transitions, not on remount
   useEffect(() => {
-    if (open) {
+    if (open && !prevOpenRef.current) {
       setPhase("entering");
-    } else if (phase !== "closed") {
+    } else if (!open && prevOpenRef.current) {
       setPhase("exiting");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    prevOpenRef.current = open;
   }, [open]);
 
   const handleAnimationEnd = useCallback(() => {
-    if (phase === "exiting") {
-      setPhase("closed");
-    }
+    if (phase === "entering") setPhase("open");
+    if (phase === "exiting") setPhase("closed");
   }, [phase]);
 
   // Track sidebar position so the picker stays anchored on resize
@@ -125,7 +127,7 @@ export function PianoKeyboardDialog({
 
   if (phase === "closed" || typeof document === "undefined") return null;
 
-  const animClass = phase === "entering" ? "animate-slide-left" : "animate-slide-right";
+  const animClass = phase === "entering" ? "animate-slide-left" : phase === "exiting" ? "animate-slide-right" : "";
 
   return createPortal(
     <div
