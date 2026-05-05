@@ -92,6 +92,7 @@ function getSourceMode(source: Source): string {
 
 export function SourcePanel({ layer }: { layer: Layer }) {
   const updateLayerSource = useStore((s) => s.updateLayerSource);
+  const [pianoOpen, setPianoOpen] = useState(false);
   const source = layer.source;
   const mode = getSourceMode(source);
 
@@ -117,13 +118,13 @@ export function SourcePanel({ layer }: { layer: Layer }) {
       <Separator className="-mx-4 data-horizontal:w-auto" />
 
       {mode === "oscillator" && (
-        <OscillatorControls source={source as OscillatorSource} onChange={setSource} layer={layer} />
+        <OscillatorControls source={source as OscillatorSource} onChange={setSource} layer={layer} pianoOpen={pianoOpen} setPianoOpen={setPianoOpen} />
       )}
       {mode === "noise" && (
         <NoiseControls source={source as NoiseSource} onChange={setSource} />
       )}
       {mode === "wavetable" && (
-        <WavetableControls source={source as WavetableSource} onChange={setSource} layer={layer} />
+        <WavetableControls source={source as WavetableSource} onChange={setSource} layer={layer} pianoOpen={pianoOpen} setPianoOpen={setPianoOpen} />
       )}
     </div>
   );
@@ -133,12 +134,15 @@ function OscillatorControls({
   source,
   onChange,
   layer,
+  pianoOpen,
+  setPianoOpen,
 }: {
   source: OscillatorSource;
   onChange: (s: Source) => void;
   layer: Layer;
+  pianoOpen: boolean;
+  setPianoOpen: (open: boolean) => void;
 }) {
-  const [pianoOpen, setPianoOpen] = useState(false);
   const [fmCollapsed, setFmCollapsed] = useState(false);
   const freq =
     typeof source.frequency === "number"
@@ -282,13 +286,15 @@ function WavetableControls({
   source,
   onChange,
   layer,
+  pianoOpen,
+  setPianoOpen,
 }: {
   source: WavetableSource;
   onChange: (s: Source) => void;
   layer: Layer;
+  pianoOpen: boolean;
+  setPianoOpen: (open: boolean) => void;
 }) {
-  const [pianoOpen, setPianoOpen] = useState(false);
-
   const handleNotePreview = useCallback(
     (frequency: number) => {
       previewNote(layer, frequency);
