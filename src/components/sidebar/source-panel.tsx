@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useStore } from "@/lib/store";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { PianoKeyboardDialog } from "@/components/ui/piano-keyboard";
-import { Piano } from "lucide-react";
+import { Piano, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { previewNote } from "@/lib/audio/engine";
 import { RotaryKnob } from "@/components/ui/rotary-knob";
 import { KnobRow } from "@/components/ui/knob-row";
 import { ToggleGroup } from "@/components/ui/toggle-group";
@@ -92,6 +92,7 @@ function getSourceMode(source: Source): string {
 
 export function SourcePanel({ layer }: { layer: Layer }) {
   const updateLayerSource = useStore((s) => s.updateLayerSource);
+  const [pianoOpen, setPianoOpen] = useState(false);
   const source = layer.source;
   const mode = getSourceMode(source);
 
@@ -117,13 +118,13 @@ export function SourcePanel({ layer }: { layer: Layer }) {
       <Separator className="-mx-4 data-horizontal:w-auto" />
 
       {mode === "oscillator" && (
-        <OscillatorControls source={source as OscillatorSource} onChange={setSource} />
+        <OscillatorControls source={source as OscillatorSource} onChange={setSource} layer={layer} pianoOpen={pianoOpen} setPianoOpen={setPianoOpen} />
       )}
       {mode === "noise" && (
         <NoiseControls source={source as NoiseSource} onChange={setSource} />
       )}
       {mode === "wavetable" && (
-        <WavetableControls source={source as WavetableSource} onChange={setSource} />
+        <WavetableControls source={source as WavetableSource} onChange={setSource} layer={layer} pianoOpen={pianoOpen} setPianoOpen={setPianoOpen} />
       )}
     </div>
   );
@@ -132,16 +133,29 @@ export function SourcePanel({ layer }: { layer: Layer }) {
 function OscillatorControls({
   source,
   onChange,
+  layer,
+  pianoOpen,
+  setPianoOpen,
 }: {
   source: OscillatorSource;
   onChange: (s: Source) => void;
+  layer: Layer;
+  pianoOpen: boolean;
+  setPianoOpen: (open: boolean) => void;
 }) {
-  const [pianoOpen, setPianoOpen] = useState(false);
+  const [fmCollapsed, setFmCollapsed] = useState(false);
   const freq =
     typeof source.frequency === "number"
       ? source.frequency
       : source.frequency.start;
   const hasFM = !!source.fm;
+
+  const handleNotePreview = useCallback(
+    (frequency: number) => {
+      previewNote(layer, frequency);
+    },
+    [layer]
+  );
 
   return (
     <div className="space-y-4">
@@ -190,50 +204,63 @@ function OscillatorControls({
         onClose={() => setPianoOpen(false)}
         currentFrequency={freq}
         onNoteSelect={(v) => onChange({ ...source, frequency: v })}
+        onNotePreview={handleNotePreview}
       />
 
       <Separator className="-mx-4 data-horizontal:w-auto" />
 
-      <div className="flex items-center justify-between">
-        <Label className="text-xs">FM Synthesis</Label>
-        <Switch
-          checked={hasFM}
-          onCheckedChange={(checked) =>
-            onChange({
-              ...source,
-              fm: checked ? { ratio: 2, depth: 100 } : undefined,
-            })
-          }
-          size="sm"
-        />
-      </div>
-
-      {source.fm && (
-        <div className="pl-2 border-l-2 border-muted">
-          <KnobRow>
-            <RotaryKnob
-              label="Ratio"
-              min={0.1}
-              max={16}
-              step={0.1}
-              value={source.fm.ratio}
-              onChange={(v) =>
-                onChange({ ...source, fm: { ...source.fm!, ratio: v } })
-              }
-            />
-            <RotaryKnob
-              label="Depth"
-              min={0}
-              max={1000}
-              step={1}
-              value={source.fm.depth}
-              onChange={(v) =>
-                onChange({ ...source, fm: { ...source.fm!, depth: v } })
-              }
-            />
-          </KnobRow>
+      <div className={`rounded-md border ${!hasFM ? "opacity-50" : ""}`}>
+        <div
+          className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted/50"
+          onClick={() => hasFM && setFmCollapsed(!fmCollapsed)}
+        >
+          <div className="flex items-center gap-1.5">
+            {hasFM && !fmCollapsed ? (
+              <ChevronDownIcon className="h-3 w-3" />
+            ) : (
+              <ChevronRightIcon className="h-3 w-3" />
+            )}
+            <span className="text-xs font-medium">FM Synthesis</span>
+          </div>
+          <Switch
+            checked={hasFM}
+            onCheckedChange={(checked) =>
+              onChange({
+                ...source,
+                fm: checked ? { ratio: 2, depth: 100 } : undefined,
+              })
+            }
+            size="sm"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          />
         </div>
-      )}
+        {hasFM && !fmCollapsed && (
+          <div className="px-3 pb-3">
+            <KnobRow>
+              <RotaryKnob
+                label="Ratio"
+                min={0.1}
+                max={16}
+                step={0.1}
+                value={source.fm!.ratio}
+                onChange={(v) =>
+                  onChange({ ...source, fm: { ...source.fm!, ratio: v } })
+                }
+              />
+              <RotaryKnob
+                label="Depth"
+                min={0}
+                max={1000}
+                step={1}
+                value={source.fm!.depth}
+                onChange={(v) =>
+                  onChange({ ...source, fm: { ...source.fm!, depth: v } })
+                }
+              />
+            </KnobRow>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -258,11 +285,22 @@ function NoiseControls({
 function WavetableControls({
   source,
   onChange,
+  layer,
+  pianoOpen,
+  setPianoOpen,
 }: {
   source: WavetableSource;
   onChange: (s: Source) => void;
+  layer: Layer;
+  pianoOpen: boolean;
+  setPianoOpen: (open: boolean) => void;
 }) {
-  const [pianoOpen, setPianoOpen] = useState(false);
+  const handleNotePreview = useCallback(
+    (frequency: number) => {
+      previewNote(layer, frequency);
+    },
+    [layer]
+  );
 
   return (
     <div className="space-y-4">
@@ -294,6 +332,7 @@ function WavetableControls({
         onClose={() => setPianoOpen(false)}
         currentFrequency={source.frequency}
         onNoteSelect={(v) => onChange({ ...source, frequency: v })}
+        onNotePreview={handleNotePreview}
       />
       <HarmonicsEditor
         harmonics={source.harmonics}

@@ -12,6 +12,14 @@ const HARMONIC_PRESETS: Record<string, number[]> = {
   ).map(Math.abs),
   organ: [1, 0.8, 0, 0.6, 0, 0.4, 0, 0.3, 0, 0.2, 0, 0.15, 0, 0.1, 0, 0.08],
   bell: [1, 0.6, 0.3, 0.1, 0.4, 0.05, 0.2, 0.02, 0.15, 0.01, 0.08, 0, 0.05, 0, 0.03, 0],
+  brass: [1, 0.85, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1, 0.06, 0.04, 0.02, 0.01, 0, 0, 0, 0],
+  strings: [1, 0.5, 0.35, 0.25, 0.2, 0.15, 0.12, 0.1, 0.08, 0.06, 0.05, 0.04, 0.03, 0.02, 0.015, 0.01],
+  flute: [1, 0.15, 0.06, 0.02, 0.01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  clarinet: Array.from({ length: 16 }, (_, i) => (i % 2 === 0 ? 1 / (i + 1) ** 0.6 : 0)),
+  pluck: Array.from({ length: 16 }, (_, i) => 1 / (i + 1) ** 0.8),
+  warm: Array.from({ length: 16 }, (_, i) => 1 / (i + 1) ** 2),
+  bright: Array.from({ length: 16 }, (_, i) => 1 / (i + 1) ** 0.4),
+  hollow: Array.from({ length: 16 }, (_, i) => (i % 2 === 0 ? 1 / (i + 1) ** 1.5 : 0)),
 };
 
 interface HarmonicsEditorProps {
@@ -95,9 +103,9 @@ export function HarmonicsEditor({ harmonics, onChange }: HarmonicsEditorProps) {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="space-y-1.5">
         <Label className="text-xs">Harmonics ({harmonics.length})</Label>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           {Object.entries(HARMONIC_PRESETS).map(([name, values]) => (
             <Button
               key={name}

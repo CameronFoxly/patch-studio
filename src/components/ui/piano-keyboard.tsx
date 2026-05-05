@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown, X } from "lucide-react";
+import { useSidebarContainer } from "@/components/sidebar/sidebar-context";
 
 const NOTE_NAMES = [
   "C",
@@ -50,6 +51,7 @@ interface PianoKeyboardDialogProps {
   onClose: () => void;
   currentFrequency: number;
   onNoteSelect: (frequency: number) => void;
+  onNotePreview?: (frequency: number) => void;
 }
 
 export function PianoKeyboardDialog({
@@ -57,84 +59,89 @@ export function PianoKeyboardDialog({
   onClose,
   currentFrequency,
   onNoteSelect,
+  onNotePreview,
 }: PianoKeyboardDialogProps) {
   const [octave, setOctave] = useState(() => {
     const midi = frequencyToMidi(currentFrequency);
     return Math.max(0, Math.min(8, Math.floor(midi / 12) - 1));
   });
 
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const hasPositioned = useRef(false);
-  const dragRef = useRef<{
-    startX: number;
-    startY: number;
-    origX: number;
-    origY: number;
-  } | null>(null);
-
-  // Center dialog on first open
-  useEffect(() => {
-    if (open && !hasPositioned.current) {
-      setPosition({
-        x: Math.max(16, (window.innerWidth - 304) / 2),
-        y: Math.max(16, (window.innerHeight - 260) / 2),
-      });
-      hasPositioned.current = true;
+  const sidebarRef = useSidebarContainer();
+  const [anchorRight, setAnchorRight] = useState(() => {
+    if (sidebarRef?.current) {
+      const r = sidebarRef.current.getBoundingClientRect();
+      return window.innerWidth - r.left;
     }
+    return 0;
+  });
+  const [phase, setPhase] = useState<"closed" | "entering" | "open" | "exiting">(
+    open ? "open" : "closed"
+  );
+  const prevOpenRef = useRef(open);
+
+  // Only animate on actual open/close transitions, not on remount
+  useEffect(() => {
+    if (open && !prevOpenRef.current) {
+      setPhase("entering");
+    } else if (!open && prevOpenRef.current) {
+      setPhase("exiting");
+    }
+    prevOpenRef.current = open;
   }, [open]);
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if (e.target !== e.currentTarget) return;
-      dragRef.current = {
-        startX: e.clientX,
-        startY: e.clientY,
-        origX: position.x,
-        origY: position.y,
-      };
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    },
-    [position]
-  );
+  const handleAnimationEnd = useCallback(() => {
+    if (phase === "entering") setPhase("open");
+    if (phase === "exiting") setPhase("closed");
+  }, [phase]);
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragRef.current) return;
-    setPosition({
-      x: dragRef.current.origX + (e.clientX - dragRef.current.startX),
-      y: dragRef.current.origY + (e.clientY - dragRef.current.startY),
-    });
-  }, []);
+  // Track sidebar position so the picker stays anchored on resize
+  useLayoutEffect(() => {
+    if (phase === "closed" || !sidebarRef?.current) return;
 
-  const handlePointerUp = useCallback(() => {
-    dragRef.current = null;
-  }, []);
+    const update = () => {
+      const el = sidebarRef.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        setAnchorRight(window.innerWidth - r.left);
+      }
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    const observer = new ResizeObserver(update);
+    observer.observe(sidebarRef.current);
+
+    return () => {
+      window.removeEventListener("resize", update);
+      observer.disconnect();
+    };
+  }, [phase, sidebarRef]);
 
   const handleKeyClick = useCallback(
     (noteIndex: number) => {
       const midi = midiNoteNumber(noteIndex, octave);
-      onNoteSelect(midiToFrequency(midi));
+      const freq = midiToFrequency(midi);
+      onNoteSelect(freq);
+      onNotePreview?.(freq);
     },
-    [octave, onNoteSelect]
+    [octave, onNoteSelect, onNotePreview]
   );
 
   const currentMidi = frequencyToMidi(currentFrequency);
   const currentNoteIndex = currentMidi % 12;
   const currentNoteOctave = Math.floor(currentMidi / 12) - 1;
 
-  if (!open || typeof document === "undefined") return null;
+  if (phase === "closed" || typeof document === "undefined") return null;
+
+  const animClass = phase === "entering" ? "animate-slide-left" : phase === "exiting" ? "animate-slide-right" : "";
 
   return createPortal(
     <div
-      className="fixed z-50 w-[304px] rounded-md bg-popover p-3 text-popover-foreground ring-1 ring-foreground/10 shadow-lg"
-      style={{ left: position.x, top: position.y }}
-    >
-      {/* Draggable title bar */}
-      <div
-        className="flex items-center justify-between mb-2 cursor-grab active:cursor-grabbing select-none"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-      >
+      className={`fixed z-30 w-[304px] rounded-md bg-popover p-3 text-popover-foreground ring-1 ring-foreground/10 shadow-lg ${animClass}`}
+      style={{ bottom: 8, right: anchorRight + 8 }}
+      onAnimationEnd={handleAnimationEnd}
+    >      {/* Title bar */}
+      <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium">Note Picker</span>
         <Button variant="ghost" size="icon-xs" onClick={onClose}>
           <X className="size-3" />

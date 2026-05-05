@@ -1,8 +1,10 @@
 "use client";
 
+import { useRef } from "react";
 import { useStore } from "@/lib/store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SidebarContainerContext } from "./sidebar-context";
 import { SourcePanel } from "./source-panel";
 import { FilterPanel } from "./filter-panel";
 import { EnvelopePanel } from "./envelope-panel";
@@ -17,45 +19,49 @@ export function Sidebar() {
   const layer = useStore((s) =>
     s.layers.find((l) => l.id === s.selectedLayerId),
   );
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   // When no layer is selected, only show the Master panel
   if (!layer) {
     return (
-      <div className="h-full md:border-l bg-card flex flex-col">
-        <div className="px-4 py-3 border-b">
-          <h2 className="font-semibold text-sm">Master</h2>
-        </div>
-        <Tabs
-          value="global-effects"
-          onValueChange={(v) => {
-            if (v) setActiveSidebarPanel(v as typeof activeSidebarPanel);
-          }}
-          className="flex-1 flex flex-col min-h-0"
-        >
-          <div className="px-2 border-b">
-            <TabsList className="w-full group-data-horizontal/tabs:h-auto flex-wrap gap-1 bg-transparent p-1">
-              <TabsTrigger value="global-effects" className="text-xs px-2 py-1">
-                Master FX
-              </TabsTrigger>
-            </TabsList>
+      <SidebarContainerContext.Provider value={sidebarRef}>
+        <div ref={sidebarRef} className="h-full md:border-l bg-card flex flex-col relative">
+          <div className="px-4 py-3 border-b">
+            <h2 className="font-semibold text-sm">Master</h2>
           </div>
-          <ScrollArea className="flex-1 min-h-0">
-            <div className="p-4 min-h-full bg-card">
-              <TabsContent value="global-effects" className="mt-0">
-                <GlobalEffectsPanel />
-              </TabsContent>
+          <Tabs
+            value="global-effects"
+            onValueChange={(v) => {
+              if (v) setActiveSidebarPanel(v as typeof activeSidebarPanel);
+            }}
+            className="flex-1 flex flex-col min-h-0"
+          >
+            <div className="px-2 border-b">
+              <TabsList className="w-full group-data-horizontal/tabs:h-auto flex-wrap gap-1 bg-transparent p-1">
+                <TabsTrigger value="global-effects" className="text-xs px-2 py-1">
+                  Master FX
+                </TabsTrigger>
+              </TabsList>
             </div>
-          </ScrollArea>
-        </Tabs>
-      </div>
+            <ScrollArea className="flex-1 min-h-0">
+              <div className="p-4 min-h-full bg-card">
+                <TabsContent value="global-effects" className="mt-0">
+                  <GlobalEffectsPanel />
+                </TabsContent>
+              </div>
+            </ScrollArea>
+          </Tabs>
+        </div>
+      </SidebarContainerContext.Provider>
     );
   }
 
   return (
-    <div className="h-full md:border-l bg-card flex flex-col">
-      <div className="px-4 py-3 border-b">
-        <h2 className="font-semibold text-sm truncate">{layer.name}</h2>
-      </div>
+    <SidebarContainerContext.Provider value={sidebarRef}>
+      <div ref={sidebarRef} className="h-full md:border-l bg-card flex flex-col relative">
+        <div className="px-4 py-3 border-b">
+          <h2 className="font-semibold text-sm truncate">{layer.name}</h2>
+        </div>
       <Tabs
         value={activeSidebarPanel}
         onValueChange={(v) => {
@@ -113,7 +119,8 @@ export function Sidebar() {
             </TabsContent>
           </div>
         </ScrollArea>
-      </Tabs>
-    </div>
+        </Tabs>
+      </div>
+    </SidebarContainerContext.Provider>
   );
 }

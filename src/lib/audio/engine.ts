@@ -96,3 +96,37 @@ export async function playSound(layers: Layer[], globalEffects?: Effect[]) {
   const play = defineSound(definition as any);
   return play();
 }
+
+// Preview a single layer at a specific frequency (for note picker)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let previewVoice: any = null;
+
+export async function previewNote(layer: Layer, frequency: number) {
+  await ensureReady();
+
+  if (previewVoice?.stop) {
+    previewVoice.stop();
+  }
+  previewVoice = null;
+
+  const tempLayer: Layer = {
+    ...layer,
+    source: { ...layer.source, frequency } as Layer["source"],
+  };
+
+  const def = layerToSoundDef(tempLayer);
+  try {
+    const play = defineSound(def as any);
+    const voice = await play();
+    previewVoice = voice;
+
+    // Auto-stop after 2s as a safety net
+    setTimeout(() => {
+      if (previewVoice === voice && voice?.stop) {
+        voice.stop(0.1);
+      }
+    }, 2000);
+  } catch (e) {
+    console.error("Preview error:", e);
+  }
+}
