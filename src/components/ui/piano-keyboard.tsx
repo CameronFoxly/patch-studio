@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown, X } from "lucide-react";
@@ -65,6 +65,30 @@ export function PianoKeyboardDialog({
   });
 
   const sidebarRef = useSidebarContainer();
+  const [anchorRight, setAnchorRight] = useState(0);
+
+  // Track sidebar position so the picker stays anchored on resize
+  useEffect(() => {
+    if (!open || !sidebarRef?.current) return;
+
+    const update = () => {
+      const el = sidebarRef.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        setAnchorRight(window.innerWidth - r.left);
+      }
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    const observer = new ResizeObserver(update);
+    observer.observe(sidebarRef.current);
+
+    return () => {
+      window.removeEventListener("resize", update);
+      observer.disconnect();
+    };
+  }, [open, sidebarRef]);
 
   const handleKeyClick = useCallback(
     (noteIndex: number) => {
@@ -80,11 +104,11 @@ export function PianoKeyboardDialog({
 
   if (!open || typeof document === "undefined") return null;
 
-  const container = sidebarRef?.current ?? document.body;
-
   return createPortal(
-    <div className="absolute bottom-0 inset-x-0 z-50 rounded-t-md bg-popover p-3 text-popover-foreground border-t ring-1 ring-foreground/10 shadow-lg animate-slide-up">
-      {/* Title bar */}
+    <div
+      className="fixed z-50 w-[304px] rounded-md bg-popover p-3 text-popover-foreground ring-1 ring-foreground/10 shadow-lg animate-slide-left"
+      style={{ bottom: 8, right: anchorRight + 8 }}
+    >      {/* Title bar */}
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium">Note Picker</span>
         <Button variant="ghost" size="icon-xs" onClick={onClose}>
@@ -180,6 +204,6 @@ export function PianoKeyboardDialog({
         <span>{currentFrequency} Hz</span>
       </div>
     </div>,
-    container
+    document.body
   );
 }
