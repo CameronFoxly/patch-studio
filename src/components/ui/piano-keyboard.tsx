@@ -51,6 +51,7 @@ interface PianoKeyboardDialogProps {
   onClose: () => void;
   currentFrequency: number;
   onNoteSelect: (frequency: number) => void;
+  onNotePreview?: (frequency: number) => void;
 }
 
 export function PianoKeyboardDialog({
@@ -58,6 +59,7 @@ export function PianoKeyboardDialog({
   onClose,
   currentFrequency,
   onNoteSelect,
+  onNotePreview,
 }: PianoKeyboardDialogProps) {
   const [octave, setOctave] = useState(() => {
     const midi = frequencyToMidi(currentFrequency);
@@ -110,9 +112,11 @@ export function PianoKeyboardDialog({
   const handleKeyClick = useCallback(
     (noteIndex: number) => {
       const midi = midiNoteNumber(noteIndex, octave);
-      onNoteSelect(midiToFrequency(midi));
+      const freq = midiToFrequency(midi);
+      onNoteSelect(freq);
+      onNotePreview?.(freq);
     },
-    [octave, onNoteSelect]
+    [octave, onNoteSelect, onNotePreview]
   );
 
   const currentMidi = frequencyToMidi(currentFrequency);

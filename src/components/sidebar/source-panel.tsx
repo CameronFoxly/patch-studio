@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useStore } from "@/lib/store";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { PianoKeyboardDialog } from "@/components/ui/piano-keyboard";
 import { Piano, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { previewNote } from "@/lib/audio/engine";
 import { RotaryKnob } from "@/components/ui/rotary-knob";
 import { KnobRow } from "@/components/ui/knob-row";
 import { ToggleGroup } from "@/components/ui/toggle-group";
@@ -116,13 +117,13 @@ export function SourcePanel({ layer }: { layer: Layer }) {
       <Separator className="-mx-4 data-horizontal:w-auto" />
 
       {mode === "oscillator" && (
-        <OscillatorControls source={source as OscillatorSource} onChange={setSource} />
+        <OscillatorControls source={source as OscillatorSource} onChange={setSource} layer={layer} />
       )}
       {mode === "noise" && (
         <NoiseControls source={source as NoiseSource} onChange={setSource} />
       )}
       {mode === "wavetable" && (
-        <WavetableControls source={source as WavetableSource} onChange={setSource} />
+        <WavetableControls source={source as WavetableSource} onChange={setSource} layer={layer} />
       )}
     </div>
   );
@@ -131,9 +132,11 @@ export function SourcePanel({ layer }: { layer: Layer }) {
 function OscillatorControls({
   source,
   onChange,
+  layer,
 }: {
   source: OscillatorSource;
   onChange: (s: Source) => void;
+  layer: Layer;
 }) {
   const [pianoOpen, setPianoOpen] = useState(false);
   const [fmCollapsed, setFmCollapsed] = useState(false);
@@ -142,6 +145,13 @@ function OscillatorControls({
       ? source.frequency
       : source.frequency.start;
   const hasFM = !!source.fm;
+
+  const handleNotePreview = useCallback(
+    (frequency: number) => {
+      previewNote(layer, frequency);
+    },
+    [layer]
+  );
 
   return (
     <div className="space-y-4">
@@ -190,6 +200,7 @@ function OscillatorControls({
         onClose={() => setPianoOpen(false)}
         currentFrequency={freq}
         onNoteSelect={(v) => onChange({ ...source, frequency: v })}
+        onNotePreview={handleNotePreview}
       />
 
       <Separator className="-mx-4 data-horizontal:w-auto" />
@@ -270,11 +281,20 @@ function NoiseControls({
 function WavetableControls({
   source,
   onChange,
+  layer,
 }: {
   source: WavetableSource;
   onChange: (s: Source) => void;
+  layer: Layer;
 }) {
   const [pianoOpen, setPianoOpen] = useState(false);
+
+  const handleNotePreview = useCallback(
+    (frequency: number) => {
+      previewNote(layer, frequency);
+    },
+    [layer]
+  );
 
   return (
     <div className="space-y-4">
@@ -306,6 +326,7 @@ function WavetableControls({
         onClose={() => setPianoOpen(false)}
         currentFrequency={source.frequency}
         onNoteSelect={(v) => onChange({ ...source, frequency: v })}
+        onNotePreview={handleNotePreview}
       />
       <HarmonicsEditor
         harmonics={source.harmonics}
