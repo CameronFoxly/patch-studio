@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useStore } from "@/lib/store";
 import { TimelineLayer } from "./timeline-layer";
 import { Button } from "@/components/ui/button";
@@ -28,8 +29,19 @@ export function Timeline() {
   const reorderLayers = useStore((s) => s.reorderLayers);
   const quantizeEnabled = useStore((s) => s.quantizeEnabled);
   const bpm = useStore((s) => s.bpm);
+  const setSelectedLayerIds = useStore((s) => s.setSelectedLayerIds);
   const containerRef = useRef<HTMLDivElement>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
+  const layersContainerRef = useRef<HTMLDivElement>(null);
+
+  // Marquee selection state
+  const [marquee, setMarquee] = useState<{
+    startX: number;
+    startY: number;
+    currentX: number;
+    currentY: number;
+  } | null>(null);
+  const marqueeJustFinishedRef = useRef(false);
 
   // Resizable controls width — sync to narrower default on mobile after mount
   const [controlsWidth, setControlsWidth] = useState(DEFAULT_CONTROLS_WIDTH);
@@ -162,6 +174,64 @@ export function Timeline() {
       window.addEventListener("mouseup", onUp);
     },
     [controlsWidth],
+  );
+
+  // Marquee drag-to-select: click + drag on empty waveform area to select blocks
+  const handleLayersMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!layersContainerRef.current) return;
+      const containerRect = layersContainerRef.current.getBoundingClientRect();
+      // Only start marquee in the waveform area (past controls column)
+      if (e.clientX < containerRect.left + controlsWidth) return;
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      let lastX = startX;
+      let lastY = startY;
+      let isMarquee = false;
+
+      const handleMove = (moveE: MouseEvent) => {
+        lastX = moveE.clientX;
+        lastY = moveE.clientY;
+        if (!isMarquee && Math.abs(lastX - startX) + Math.abs(lastY - startY) > 5) {
+          isMarquee = true;
+        }
+        if (isMarquee) {
+          setMarquee({ startX, startY, currentX: lastX, currentY: lastY });
+        }
+      };
+
+      const handleUp = () => {
+        if (isMarquee && layersContainerRef.current) {
+          const mLeft = Math.min(startX, lastX);
+          const mRight = Math.max(startX, lastX);
+          const mTop = Math.min(startY, lastY);
+          const mBottom = Math.max(startY, lastY);
+
+          const blocks = layersContainerRef.current.querySelectorAll<HTMLElement>("[data-block-id]");
+          const hitIds: string[] = [];
+          blocks.forEach((block) => {
+            const rect = block.getBoundingClientRect();
+            if (rect.right >= mLeft && rect.left <= mRight &&
+                rect.bottom >= mTop && rect.top <= mBottom) {
+              const id = block.dataset.blockId;
+              if (id) hitIds.push(id);
+            }
+          });
+
+          setSelectedLayerIds(hitIds);
+          marqueeJustFinishedRef.current = true;
+          setTimeout(() => { marqueeJustFinishedRef.current = false; }, 0);
+        }
+        setMarquee(null);
+        window.removeEventListener("mousemove", handleMove);
+        window.removeEventListener("mouseup", handleUp);
+      };
+
+      window.addEventListener("mousemove", handleMove);
+      window.addEventListener("mouseup", handleUp);
+    },
+    [controlsWidth, setSelectedLayerIds],
   );
 
   return (
@@ -322,7 +392,18 @@ export function Timeline() {
               </div>
             </div>
           ) : (
-            <div className="divide-y relative">
+            <div
+              ref={layersContainerRef}
+              className="divide-y relative"
+              onMouseDown={handleLayersMouseDown}
+              onClickCapture={(e) => {
+                if (marqueeJustFinishedRef.current) {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  marqueeJustFinishedRef.current = false;
+                }
+              }}
+            >
               {layers.map((layer, index) => {
                 const anySolo = layers.some((l) => l.solo);
                 return (
@@ -397,6 +478,20 @@ export function Timeline() {
           )}
         </div>
       </ScrollArea>
+
+      {/* Marquee selection rectangle */}
+      {marquee && createPortal(
+        <div
+          className="fixed border border-primary/50 bg-primary/10 pointer-events-none z-50"
+          style={{
+            left: Math.min(marquee.startX, marquee.currentX),
+            top: Math.min(marquee.startY, marquee.currentY),
+            width: Math.abs(marquee.currentX - marquee.startX),
+            height: Math.abs(marquee.currentY - marquee.startY),
+          }}
+        />,
+        document.body,
+      )}
     </div>
   );
 }

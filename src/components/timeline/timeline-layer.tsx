@@ -503,6 +503,7 @@ export function TimelineLayer({
           });
         })()}
         <div
+          data-block-id={layer.id}
           className={`absolute inset-y-1 rounded-sm ${
             isDragging ? "cursor-grabbing ring-2 ring-primary/40" : "cursor-grab"
           }`}

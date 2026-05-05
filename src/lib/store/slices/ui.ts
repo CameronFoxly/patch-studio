@@ -22,6 +22,7 @@ export interface UISlice {
   selectLayer: (id: string | null) => void;
   toggleLayerInSelection: (id: string) => void;
   selectLayerRange: (targetId: string) => void;
+  setSelectedLayerIds: (ids: string[]) => void;
   setActiveSidebarPanel: (panel: SidebarPanel) => void;
   toggleSequenceEditor: () => void;
   setSidebarWidth: (width: number) => void;
@@ -78,6 +79,12 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (
     const rangeIds = layers.slice(start, end + 1).map((l) => l.id);
     set({ selectedLayerIds: rangeIds });
   },
+
+  setSelectedLayerIds: (ids) => set({
+    selectedLayerIds: ids,
+    selectedLayerId: ids.length > 0 ? ids[0] : null,
+  }),
+
   setActiveSidebarPanel: (panel) => set({ activeSidebarPanel: panel }),
   toggleSequenceEditor: () =>
     set({ showSequenceEditor: !get().showSequenceEditor }),
