@@ -107,8 +107,8 @@ export default function Home() {
           onPointerDown={onSeparatorPointerDown}
         />
 
-        {/* Sidebar: fixed pixel width */}
-        <div className="shrink-0 overflow-hidden" style={{ width: sidebarWidth }}>
+        {/* Sidebar: fixed pixel width — z-40 keeps it above the note picker */}
+        <div className="shrink-0 overflow-hidden relative z-40" style={{ width: sidebarWidth }}>
           <Sidebar />
         </div>
       </div>

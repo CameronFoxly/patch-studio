@@ -66,10 +66,27 @@ export function PianoKeyboardDialog({
 
   const sidebarRef = useSidebarContainer();
   const [anchorRight, setAnchorRight] = useState(0);
+  const [phase, setPhase] = useState<"closed" | "entering" | "exiting">("closed");
+
+  // Drive enter/exit phase from the open prop
+  useEffect(() => {
+    if (open) {
+      setPhase("entering");
+    } else if (phase !== "closed") {
+      setPhase("exiting");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const handleAnimationEnd = useCallback(() => {
+    if (phase === "exiting") {
+      setPhase("closed");
+    }
+  }, [phase]);
 
   // Track sidebar position so the picker stays anchored on resize
   useEffect(() => {
-    if (!open || !sidebarRef?.current) return;
+    if (phase === "closed" || !sidebarRef?.current) return;
 
     const update = () => {
       const el = sidebarRef.current;
@@ -88,7 +105,7 @@ export function PianoKeyboardDialog({
       window.removeEventListener("resize", update);
       observer.disconnect();
     };
-  }, [open, sidebarRef]);
+  }, [phase, sidebarRef]);
 
   const handleKeyClick = useCallback(
     (noteIndex: number) => {
@@ -102,12 +119,15 @@ export function PianoKeyboardDialog({
   const currentNoteIndex = currentMidi % 12;
   const currentNoteOctave = Math.floor(currentMidi / 12) - 1;
 
-  if (!open || typeof document === "undefined") return null;
+  if (phase === "closed" || typeof document === "undefined") return null;
+
+  const animClass = phase === "entering" ? "animate-slide-left" : "animate-slide-right";
 
   return createPortal(
     <div
-      className="fixed z-50 w-[304px] rounded-md bg-popover p-3 text-popover-foreground ring-1 ring-foreground/10 shadow-lg animate-slide-left"
+      className={`fixed z-30 w-[304px] rounded-md bg-popover p-3 text-popover-foreground ring-1 ring-foreground/10 shadow-lg ${animClass}`}
       style={{ bottom: 8, right: anchorRight + 8 }}
+      onAnimationEnd={handleAnimationEnd}
     >      {/* Title bar */}
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium">Note Picker</span>

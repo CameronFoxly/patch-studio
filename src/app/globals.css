@@ -44,6 +44,7 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
   --animate-slide-left: slide-left 200ms ease-out;
+  --animate-slide-right: slide-right 200ms ease-in forwards;
 }
 
 :root {
@@ -171,10 +172,14 @@
   background: transparent;
 }
 
-/* Slide-left animation for note picker (slides out from behind sidebar) */
+/* Slide animations for note picker */
 @keyframes slide-left {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
+}
+@keyframes slide-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
 }
 
 /* Shiki dual-theme: map CSS variables to class-based dark mode */
