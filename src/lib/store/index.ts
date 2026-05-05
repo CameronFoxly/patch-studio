@@ -19,6 +19,7 @@ export const useStore = create<StoreState>()(
         ...createSequenceSlice(...a),
         ...createUISlice(...a),
         selectedLayerId: INITIAL_LAYER_ID,
+        selectedLayerIds: [INITIAL_LAYER_ID],
       }),
       {
         // Only track undoable state (layers, sequence) — not transient UI/timeline state
@@ -55,11 +56,12 @@ export const useStore = create<StoreState>()(
         if (!state) return;
         // Clear undo history so the hydration merge isn't undoable
         useStore.temporal.getState().clear();
-        // Ensure selectedLayerId still references a valid layer
+        // Ensure selectedLayerId still references a valid layer and sync selectedLayerIds
         const validIds = state.layers.map((l) => l.id);
-        if (state.selectedLayerId && !validIds.includes(state.selectedLayerId)) {
-          state.selectLayer(validIds[0] ?? null);
-        }
+        const targetId = state.selectedLayerId && validIds.includes(state.selectedLayerId)
+          ? state.selectedLayerId
+          : (validIds[0] ?? null);
+        state.selectLayer(targetId);
       },
     },
   ),

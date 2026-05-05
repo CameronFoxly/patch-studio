@@ -43,12 +43,15 @@ export function TimelineLayer({
   onDragEnd,
 }: Props) {
   const selectLayer = useStore((s) => s.selectLayer);
+  const toggleLayerInSelection = useStore((s) => s.toggleLayerInSelection);
+  const selectLayerRange = useStore((s) => s.selectLayerRange);
   const removeLayer = useStore((s) => s.removeLayer);
   const duplicateLayer = useStore((s) => s.duplicateLayer);
   const toggleLayerMute = useStore((s) => s.toggleLayerMute);
   const toggleLayerSolo = useStore((s) => s.toggleLayerSolo);
   const toggleLayerEnvelopeOverlay = useStore((s) => s.toggleLayerEnvelopeOverlay);
   const updateLayerDelay = useStore((s) => s.updateLayerDelay);
+  const updateLayerDelays = useStore((s) => s.updateLayerDelays);
   const updateLayerName = useStore((s) => s.updateLayerName);
   const updateLayerEnvelope = useStore((s) => s.updateLayerEnvelope);
   const updateLayerGain = useStore((s) => s.updateLayerGain);
@@ -67,20 +70,55 @@ export function TimelineLayer({
   const dragStartRef = useRef<{ mouseX: number; startDelay: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleClick = useCallback(() => {
-    selectLayer(layer.id);
-  }, [selectLayer, layer.id]);
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (e.metaKey || e.ctrlKey) {
+      toggleLayerInSelection(layer.id);
+    } else if (e.shiftKey) {
+      selectLayerRange(layer.id);
+    } else {
+      selectLayer(layer.id);
+    }
+  }, [selectLayer, toggleLayerInSelection, selectLayerRange, layer.id]);
 
   // Drag-to-reposition: update onset delay (batched as single undo entry)
+  // Supports multi-select: if this layer is in the current selection,
+  // all selected layers move together as a group.
   const handleBlockMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      selectLayer(layer.id);
+
+      // Modifier clicks adjust selection without starting a drag
+      if (e.metaKey || e.ctrlKey) {
+        toggleLayerInSelection(layer.id);
+        return;
+      }
+      if (e.shiftKey) {
+        selectLayerRange(layer.id);
+        return;
+      }
+
+      const state = useStore.getState();
+      const isInSelection = state.selectedLayerIds.includes(layer.id);
+
+      if (!isInSelection) {
+        selectLayer(layer.id);
+      }
+
       setIsDragging(true);
+
+      // Determine which layers participate in this drag
+      const dragIds = isInSelection ? [...state.selectedLayerIds] : [layer.id];
+      const startDelays: Record<string, number> = {};
+      for (const id of dragIds) {
+        const l = state.layers.find((ly) => ly.id === id);
+        if (l) startDelays[id] = l.delay || 0;
+      }
+      const anchorStartDelay = startDelays[layer.id] ?? (layer.delay || 0);
+
       dragStartRef.current = {
         mouseX: e.clientX,
-        startDelay: layer.delay || 0,
+        startDelay: anchorStartDelay,
       };
 
       // Snapshot pre-drag state and pause undo tracking so intermediate
@@ -92,12 +130,24 @@ export function TimelineLayer({
         if (!dragStartRef.current) return;
         const dx = moveEvent.clientX - dragStartRef.current.mouseX;
         const deltaSeconds = dx / zoom;
-        let newDelay = Math.max(0, dragStartRef.current.startDelay + deltaSeconds);
+
+        // Snap the anchor layer and derive a consistent delta for the group
+        let anchorDelay = Math.max(0, anchorStartDelay + deltaSeconds);
         if (snapEnabled) {
-          const snapStep = 60 / bpm / 8; // 1/32 note (beat / 8)
-          newDelay = Math.round(newDelay / snapStep) * snapStep;
+          const snapStep = 60 / bpm / 8; // 1/32 note
+          anchorDelay = Math.round(anchorDelay / snapStep) * snapStep;
         }
-        updateLayerDelay(layer.id, Math.round(newDelay * 1000) / 1000);
+        const snappedDelta = anchorDelay - anchorStartDelay;
+
+        if (dragIds.length === 1) {
+          updateLayerDelay(dragIds[0], Math.round(anchorDelay * 1000) / 1000);
+        } else {
+          const updates: Record<string, number> = {};
+          for (const id of dragIds) {
+            updates[id] = Math.round(Math.max(0, startDelays[id] + snappedDelta) * 1000) / 1000;
+          }
+          updateLayerDelays(updates);
+        }
       };
 
       const handleMouseUp = () => {
@@ -107,8 +157,13 @@ export function TimelineLayer({
         // Resume tracking and record the entire drag as one undo step
         const temporal = temporalStore.getState();
         temporal.resume();
-        const currentDelay = useStore.getState().layers.find(l => l.id === layer.id)?.delay ?? 0;
-        if (currentDelay !== (preDragState.layers.find(l => l.id === layer.id)?.delay ?? 0)) {
+        const currentLayers = useStore.getState().layers;
+        const anyChanged = dragIds.some((id) => {
+          const curr = currentLayers.find((l) => l.id === id);
+          const prev = preDragState.layers.find((l) => l.id === id);
+          return (curr?.delay ?? 0) !== (prev?.delay ?? 0);
+        });
+        if (anyChanged) {
           temporalStore.setState({
             pastStates: [...temporal.pastStates, preDragState],
             futureStates: [],
@@ -122,7 +177,7 @@ export function TimelineLayer({
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
     },
-    [layer.id, layer.delay, zoom, selectLayer, updateLayerDelay, snapEnabled, bpm],
+    [layer.id, layer.delay, zoom, selectLayer, toggleLayerInSelection, selectLayerRange, updateLayerDelay, updateLayerDelays, snapEnabled, bpm],
   );
 
   // Editable layer name

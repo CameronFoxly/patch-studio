@@ -28,6 +28,7 @@ export interface LayersSlice {
   updateLayerGain: (id: string, gain: number) => void;
   updateLayerPan: (id: string, pan: number) => void;
   updateLayerDelay: (id: string, delay: number) => void;
+  updateLayerDelays: (updates: Record<string, number>) => void;
   updateLayerPanner: (id: string, panner: Panner3D | undefined) => void;
   updateLayerLFO: (id: string, lfo: LFO | LFO[] | undefined) => void;
   updateLayerEffects: (id: string, effects: Effect[]) => void;
@@ -164,6 +165,14 @@ export const createLayersSlice: StateCreator<
 
   updateLayerDelay: (id, delay) => {
     set({ layers: updateLayer(get().layers, id, (l) => ({ ...l, delay })) });
+  },
+
+  updateLayerDelays: (updates) => {
+    set({
+      layers: get().layers.map((l) =>
+        l.id in updates ? { ...l, delay: updates[l.id] } : l,
+      ),
+    });
   },
 
   updateLayerPanner: (id, panner) => {

@@ -17,7 +17,7 @@ const MAX_CONTROLS_WIDTH = 400;
 export function Timeline() {
   const layers = useStore((s) => s.layers);
   const addLayer = useStore((s) => s.addLayer);
-  const selectedLayerId = useStore((s) => s.selectedLayerId);
+  const selectedLayerIds = useStore((s) => s.selectedLayerIds);
   const zoom = useStore((s) => s.zoom);
   const setZoom = useStore((s) => s.setZoom);
   const isPlaying = useStore((s) => s.isPlaying);
@@ -330,7 +330,7 @@ export function Timeline() {
                     key={layer.id}
                     layer={layer}
                     index={index}
-                    isSelected={layer.id === selectedLayerId}
+                    isSelected={selectedLayerIds.includes(layer.id)}
                     isDragOver={dragOverIndex === index}
                     isFaded={anySolo && !layer.solo}
                     controlsWidth={controlsWidth}
