@@ -515,6 +515,7 @@ export function TimelineLayer({
             borderColor: layer.color ? `color-mix(in srgb, ${layer.color} 30%, transparent)` : undefined,
           }}
           onMouseDown={handleBlockMouseDown}
+          onClick={(e) => e.stopPropagation()}
           onContextMenu={handleContextMenu}
           onMouseEnter={(e) => {
             if (!isDragging && layer.color) {
