@@ -117,3 +117,10 @@ export function getSoundNamesSync(collectionId: string): string[] | null {
   if (!cached) return null;
   return Object.keys(cached.sounds);
 }
+
+/** Read a raw sound definition synchronously from the cache. Returns null if the collection isn't loaded yet. */
+export function getRawSoundSync(collectionId: string, soundKey: string): RawSoundDefinition | null {
+  const cached = patchCache.get(collectionId);
+  if (!cached) return null;
+  return cached.sounds[soundKey] ?? null;
+}
