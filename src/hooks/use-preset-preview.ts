@@ -12,7 +12,11 @@ export function usePresetPreview() {
   const previewEnabled = useStore((s) => s.presetPreviewEnabled);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const enabledRef = useRef(previewEnabled);
-  enabledRef.current = previewEnabled;
+
+  // Sync ref with latest value without accessing during render
+  useEffect(() => {
+    enabledRef.current = previewEnabled;
+  }, [previewEnabled]);
 
   // Pre-warm AudioContext so first hover has no latency
   useEffect(() => {
