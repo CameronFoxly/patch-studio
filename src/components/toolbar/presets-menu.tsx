@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Library, Loader2, ChevronRight } from "lucide-react";
+import { Library, Loader2, ChevronRight, Volume2, VolumeOff } from "lucide-react";
 import { presetCollections } from "@/lib/presets/registry";
 import { getSoundNames, loadPresetSound } from "@/lib/presets/loader";
 import { useStore } from "@/lib/store";
+import { usePresetPreview } from "@/hooks/use-preset-preview";
+import { stopPresetPreview } from "@/lib/audio/engine";
 import { ConfirmDialog } from "./confirm-dialog";
 
 function formatSoundName(key: string): string {
@@ -29,6 +31,9 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
   const selectLayer = useStore((s) => s.selectLayer);
   const setPatchName = useStore((s) => s.setPatchName);
   const layers = useStore((s) => s.layers);
+  const presetPreviewEnabled = useStore((s) => s.presetPreviewEnabled);
+  const togglePresetPreview = useStore((s) => s.togglePresetPreview);
+  const { handlePointerEnter, handlePointerLeave } = usePresetPreview();
   const [open, setOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
   const [soundsMap, setSoundsMap] = useState<Record<string, string[]>>({});
@@ -98,6 +103,7 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
         selectLayer(loadedLayers[0].id);
         setPatchName(soundKey);
       }
+      stopPresetPreview();
       setOpen(false);
     },
     [mode, setLayers, appendLayers, setGlobalEffects, selectLayer, setPatchName],
@@ -147,7 +153,7 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
       {open && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 z-[100]" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-[100]" onClick={() => { stopPresetPreview(); setOpen(false); }} />
 
           {/* Panel — fixed positioning to escape parent overflow/stacking */}
           <div
@@ -191,11 +197,31 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {activeCollection.name}
                   </p>
-                  {activeKeys && (
-                    <span className="text-[10px] text-muted-foreground">
-                      {activeKeys.length} sounds
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePresetPreview();
+                      }}
+                      className={`p-0.5 rounded transition-colors ${
+                        presetPreviewEnabled
+                          ? "text-foreground hover:text-muted-foreground"
+                          : "text-muted-foreground/50 hover:text-muted-foreground"
+                      }`}
+                      title={presetPreviewEnabled ? "Disable hover preview" : "Enable hover preview"}
+                    >
+                      {presetPreviewEnabled ? (
+                        <Volume2 className="h-3.5 w-3.5" />
+                      ) : (
+                        <VolumeOff className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                    {activeKeys && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {activeKeys.length} sounds
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
               <div className="p-2 overflow-y-auto flex-1 min-h-0">
@@ -209,6 +235,8 @@ export function PresetsMenu({ mode = "replace", trigger }: PresetsMenuProps) {
                       <button
                         key={key}
                         onClick={() => handleSelect(selectedCollection!, key)}
+                        onPointerEnter={() => handlePointerEnter(selectedCollection!, key)}
+                        onPointerLeave={handlePointerLeave}
                         className="px-2 py-1.5 text-xs text-left rounded-md hover:bg-accent hover:text-accent-foreground transition-colors truncate"
                         title={formatSoundName(key)}
                       >

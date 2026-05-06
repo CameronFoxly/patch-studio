@@ -43,6 +43,7 @@ export const useStore = create<StoreState>()(
         selectedLayerId: state.selectedLayerId,
         activeSidebarPanel: state.activeSidebarPanel,
         showSequenceEditor: state.showSequenceEditor,
+        presetPreviewEnabled: state.presetPreviewEnabled,
         zoom: state.zoom,
         scrollX: state.scrollX,
         isLooping: state.isLooping,

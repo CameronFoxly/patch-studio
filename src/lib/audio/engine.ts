@@ -130,3 +130,36 @@ export async function previewNote(layer: Layer, frequency: number) {
     console.error("Preview error:", e);
   }
 }
+
+// Preview a raw preset sound definition (used for hover previews in preset menu)
+export async function previewPresetSound(rawDefinition: Record<string, unknown>) {
+  await ensureReady();
+
+  if (previewVoice?.stop) {
+    previewVoice.stop();
+  }
+  previewVoice = null;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const play = defineSound(rawDefinition as any);
+    const voice = await play();
+    previewVoice = voice;
+
+    // Auto-stop after 2s as a safety net
+    setTimeout(() => {
+      if (previewVoice === voice && voice?.stop) {
+        voice.stop(0.1);
+      }
+    }, 2000);
+  } catch (e) {
+    console.error("Preset preview error:", e);
+  }
+}
+
+export function stopPresetPreview() {
+  if (previewVoice?.stop) {
+    previewVoice.stop();
+  }
+  previewVoice = null;
+}

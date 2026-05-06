@@ -18,6 +18,7 @@ export interface UISlice {
   sidebarWidth: number;
   lfoInteractionLayerId: string | null;
   patchName: string;
+  presetPreviewEnabled: boolean;
 
   selectLayer: (id: string | null) => void;
   toggleLayerInSelection: (id: string) => void;
@@ -28,6 +29,7 @@ export interface UISlice {
   setSidebarWidth: (width: number) => void;
   setLfoInteractionLayerId: (layerId: string | null) => void;
   setPatchName: (name: string) => void;
+  togglePresetPreview: () => void;
 }
 
 // Sanitize patch name for safe use as JSON key / filename
@@ -46,6 +48,7 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (
   sidebarWidth: 256,
   lfoInteractionLayerId: null,
   patchName: "Untitled",
+  presetPreviewEnabled: true,
 
   selectLayer: (id) => set({ selectedLayerId: id, selectedLayerIds: id ? [id] : [] }),
 
@@ -91,4 +94,5 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (
   setSidebarWidth: (width) => set({ sidebarWidth: width }),
   setLfoInteractionLayerId: (layerId) => set({ lfoInteractionLayerId: layerId }),
   setPatchName: (name) => set({ patchName: sanitizePatchName(name) || "Untitled" }),
+  togglePresetPreview: () => set({ presetPreviewEnabled: !get().presetPreviewEnabled }),
 });
