@@ -18,13 +18,13 @@ const DEFAULT_HEIGHT = 120;
 const MAX_HEIGHT = 300;
 
 // Dot grid settings (in CSS pixels, scaled by DPR at draw time)
-const DOT_RADIUS = 2;
-const DOT_GAP = 2; // gap between dots
+const DOT_RADIUS = 2; // 4px diameter
+const DOT_GAP = 2.5; // gap between dots
 const DOT_STEP = DOT_RADIUS * 2 + DOT_GAP; // centre-to-centre distance
 
-// Gradient colours: emerald-500 (bottom) → lilac/violet-400 (top)
-const COLOR_LOW: [number, number, number] = [16, 185, 129]; // #10b981
-const COLOR_HIGH: [number, number, number] = [167, 139, 250]; // #a78bfa
+// Gradient colours: lilac/violet-400 (bottom) → emerald-500 (top)
+const COLOR_LOW: [number, number, number] = [167, 139, 250]; // #a78bfa
+const COLOR_HIGH: [number, number, number] = [16, 185, 129]; // #10b981
 
 function lerpColor(t: number): string {
   const r = Math.round(COLOR_LOW[0] + (COLOR_HIGH[0] - COLOR_LOW[0]) * t);
