@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useStore } from "@/lib/store";
-import { generateBuffer, ANALYSIS_SR } from "@/lib/audio/sample-generator";
+import { generateBuffer, ANALYSIS_SR, WAVEFORM_SR } from "@/lib/audio/sample-generator";
 import { computeFFT } from "@/lib/audio/fft";
 import { ENVELOPE_TAIL } from "@/lib/audio/constants";
 import type { Layer } from "@/lib/types";
@@ -10,6 +10,7 @@ import type { Layer } from "@/lib/types";
 const FFT_SIZE = 4096;
 const BUFFER_DEBOUNCE_MS = 300;
 const SCRUB_THROTTLE_MS = 60;
+const LIVE_TWEAK_THROTTLE_MS = 80;
 
 /**
  * Compute the total duration of a layer (envelope-based).
@@ -79,9 +80,11 @@ export function useOfflineAnalyser(
   const regenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastComputeRef = useRef<number>(0);
+  const lastTweakRegenRef = useRef<number>(0);
+  const tweakThrottleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Stable reference to generate the mixed buffer from current store state
-  const regenerateBuffer = useCallback(() => {
+  // Generate the mixed buffer from current store state at a given sample rate
+  const regenerateBuffer = useCallback((sampleRate: number = ANALYSIS_SR) => {
     const { layers } = useStore.getState();
     const active = getActiveLayers(layers);
     if (active.length === 0) {
@@ -91,7 +94,7 @@ export function useOfflineAnalyser(
 
     const buffers = active.map((layer) => {
       const dur = layerDuration(layer);
-      return generateBuffer(layer, dur, ANALYSIS_SR);
+      return generateBuffer(layer, dur, sampleRate);
     });
 
     mixedBufferRef.current = mixBuffers(active, buffers);
@@ -105,7 +108,14 @@ export function useOfflineAnalyser(
         drawRef.current(new Uint8Array(FFT_SIZE / 2), FFT_SIZE / 2);
         return;
       }
-      const sampleOffset = Math.round(time * ANALYSIS_SR);
+      // Determine sample rate from buffer length vs duration
+      const { layers } = useStore.getState();
+      const active = getActiveLayers(layers);
+      const maxDur = active.length > 0
+        ? Math.max(...active.map(layerDuration))
+        : 2;
+      const bufferSR = buffer.length / maxDur;
+      const sampleOffset = Math.round(time * bufferSR);
       const clampedOffset = Math.max(0, Math.min(buffer.length - 1, sampleOffset));
       const freqData = computeFFT(buffer, FFT_SIZE, clampedOffset);
       drawRef.current(freqData, FFT_SIZE / 2);
@@ -113,12 +123,12 @@ export function useOfflineAnalyser(
     [],
   );
 
-  // Subscribe to layer/effect changes → debounced buffer regeneration
+  // Subscribe to layer/effect changes → immediate low-res + deferred high-res buffer regen
   useEffect(() => {
     if (!enabled) return;
 
-    // Initial generation
-    regenerateBuffer();
+    // Initial generation (high-res)
+    regenerateBuffer(ANALYSIS_SR);
 
     let prevLayers = useStore.getState().layers;
     let prevFx = useStore.getState().globalEffects;
@@ -128,10 +138,30 @@ export function useOfflineAnalyser(
       prevLayers = state.layers;
       prevFx = state.globalEffects;
 
+      // Immediate low-res regen (throttled) for live visual feedback during drags
+      const now = performance.now();
+      const tweakElapsed = now - lastTweakRegenRef.current;
+
+      if (tweakElapsed >= LIVE_TWEAK_THROTTLE_MS) {
+        lastTweakRegenRef.current = now;
+        regenerateBuffer(WAVEFORM_SR);
+        if (!state.isPlaying) {
+          computeAndDraw(state.currentTime);
+        }
+      } else if (!tweakThrottleTimerRef.current) {
+        tweakThrottleTimerRef.current = setTimeout(() => {
+          tweakThrottleTimerRef.current = null;
+          lastTweakRegenRef.current = performance.now();
+          regenerateBuffer(WAVEFORM_SR);
+          const { currentTime, isPlaying } = useStore.getState();
+          if (!isPlaying) computeAndDraw(currentTime);
+        }, LIVE_TWEAK_THROTTLE_MS - tweakElapsed);
+      }
+
+      // Deferred high-res regen for full-quality display once adjustments settle
       if (regenTimerRef.current) clearTimeout(regenTimerRef.current);
       regenTimerRef.current = setTimeout(() => {
-        regenerateBuffer();
-        // Re-draw at current position after regen
+        regenerateBuffer(ANALYSIS_SR);
         const { currentTime, isPlaying } = useStore.getState();
         if (!isPlaying) {
           computeAndDraw(currentTime);
@@ -142,6 +172,7 @@ export function useOfflineAnalyser(
     return () => {
       unsub();
       if (regenTimerRef.current) clearTimeout(regenTimerRef.current);
+      if (tweakThrottleTimerRef.current) clearTimeout(tweakThrottleTimerRef.current);
     };
   }, [enabled, regenerateBuffer, computeAndDraw]);
 
