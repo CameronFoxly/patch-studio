@@ -3,6 +3,8 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import { useSpectrumAnalyser } from "@/hooks/use-spectrum-analyser";
 import { useStore } from "@/lib/store";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Frequency range constants
 const MIN_FREQ = 20;
@@ -100,8 +102,8 @@ export function SpectrumAnalyser() {
     return () => observer.disconnect();
   }, []);
 
-  const draw = useCallback(
-    (frequencyData: Uint8Array, binCount: number) => {
+  const drawGrid = useCallback(
+    (frequencyData: Uint8Array | null, binCount: number) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -114,7 +116,6 @@ export function SpectrumAnalyser() {
 
       ctx.clearRect(0, 0, w, h);
 
-      const binFreq = SAMPLE_RATE / (binCount * 2);
       const axisH = 16 * dpr;
       const plotH = h - axisH;
       const plotW = w;
@@ -140,21 +141,26 @@ export function SpectrumAnalyser() {
       const padX = (plotW - cols * step) / 2 + step / 2;
       const padY = (plotH - rows * step) / 2 + step / 2;
 
-      // Gather amplitude per column
-      for (let col = 0; col < cols; col++) {
-        const fLow = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, col / cols);
-        const fHigh = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, (col + 1) / cols);
-        const binLow = Math.max(0, Math.floor(fLow / binFreq));
-        const binHigh = Math.min(binCount - 1, Math.ceil(fHigh / binFreq));
-        if (binLow > binCount - 1) continue;
+      const binFreq = binCount > 0 ? SAMPLE_RATE / (binCount * 2) : 0;
 
-        let maxVal = 0;
-        for (let b = binLow; b <= binHigh; b++) {
-          if (frequencyData[b] > maxVal) maxVal = frequencyData[b];
+      for (let col = 0; col < cols; col++) {
+        let litRows = 0;
+        if (frequencyData && binCount > 0) {
+          const fLow = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, col / cols);
+          const fHigh = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, (col + 1) / cols);
+          const binLow = Math.max(0, Math.floor(fLow / binFreq));
+          const binHigh = Math.min(binCount - 1, Math.ceil(fHigh / binFreq));
+          if (binLow <= binCount - 1) {
+            let maxVal = 0;
+            for (let b = binLow; b <= binHigh; b++) {
+              if (frequencyData[b] > maxVal) maxVal = frequencyData[b];
+            }
+            litRows = Math.round((maxVal / 255) * rows);
+          }
         }
 
-        const litRows = Math.round((maxVal / 255) * rows);
         const cx = padX + col * step;
+        const dimColor = getComputedStyle(canvas).getPropertyValue("color");
 
         for (let row = 0; row < rows; row++) {
           const isLit = row < litRows;
@@ -166,7 +172,7 @@ export function SpectrumAnalyser() {
             ctx.fillStyle = lut[row] ?? lut[lut.length - 1];
             ctx.globalAlpha = 0.9;
           } else {
-            ctx.fillStyle = getComputedStyle(canvas).getPropertyValue("color");
+            ctx.fillStyle = dimColor;
             ctx.globalAlpha = 0.06;
           }
           ctx.fill();
@@ -176,45 +182,73 @@ export function SpectrumAnalyser() {
     [],
   );
 
-  useSpectrumAnalyser(draw, isPlaying);
+  const draw = useCallback(
+    (frequencyData: Uint8Array, binCount: number) => {
+      drawGrid(frequencyData, binCount);
+    },
+    [drawGrid],
+  );
 
-  // Clear canvas when playback stops
+  const [collapsed, setCollapsed] = useState(false);
+
+  useSpectrumAnalyser(draw, isPlaying && !collapsed);
+
+  // Draw empty grid when not playing or on mount
   useEffect(() => {
-    if (!isPlaying) {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!isPlaying && !collapsed) {
+      // Small delay to ensure canvas is sized
+      requestAnimationFrame(() => drawGrid(null, 0));
     }
-  }, [isPlaying]);
+  }, [isPlaying, height, collapsed, drawGrid]);
 
   return (
     <div className="border-t bg-card shrink-0">
-      {/* Resize handle */}
-      <div
-        className="h-1.5 shrink-0 bg-border hover:bg-primary/20 transition-colors cursor-row-resize active:bg-primary/40"
-        onPointerDown={onResizePointerDown}
-      />
+      {/* Resize handle — hidden when collapsed */}
+      {!collapsed && (
+        <div
+          className="h-1.5 shrink-0 bg-border hover:bg-primary/20 transition-colors cursor-row-resize active:bg-primary/40"
+          onPointerDown={onResizePointerDown}
+        />
+      )}
       {/* Label */}
       <div className="px-3 py-1 flex items-center justify-between">
         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-          Spectrum
+          Analyzer
         </span>
-        <span className="text-[10px] text-muted-foreground tabular-nums">
-          20 Hz — 20 kHz
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground tabular-nums">
+            20 Hz — 20 kHz
+          </span>
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={collapsed ? "Expand analyzer" : "Collapse analyzer"}
+          >
+            <ChevronDown
+              className={cn(
+                "h-3.5 w-3.5 transition-transform",
+                collapsed && "-rotate-90",
+              )}
+            />
+          </button>
+        </div>
       </div>
-      {/* Canvas container */}
-      <div
-        ref={containerRef}
-        className="relative"
-        style={{ height }}
-      >
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full text-foreground"
-        />
-      </div>
+      {/* Canvas container — inset card */}
+      {!collapsed && (
+        <div className="px-2 pb-2">
+          <div
+            ref={containerRef}
+            className="relative rounded-md border bg-background"
+            style={{ height }}
+          >
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 w-full h-full text-foreground"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
