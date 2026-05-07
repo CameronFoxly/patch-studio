@@ -1,4 +1,4 @@
-import type { Layer, Envelope } from "@/lib/types";
+import type { Layer, Envelope, Filter, BiquadFilter } from "@/lib/types";
 
 /** Default virtual sample rate for waveform display (low-res, fast). */
 export const WAVEFORM_SR = 8000;
@@ -23,7 +23,6 @@ export function getEnvelopeAmplitude(
     return 1 - (1 - sustain) * decayProgress;
   }
 
-  // Release starts immediately after decay (matches @web-kits/audio behavior)
   const releaseStart = attack + decay;
   if (release > 0 && t < releaseStart + release) {
     const releaseProgress = (t - releaseStart) / release;
@@ -75,6 +74,133 @@ export function getSourceSample(
   }
 }
 
+// ── Biquad filter state machine (Audio EQ Cookbook) ──────────────────
+
+interface BiquadState {
+  x1: number; x2: number; y1: number; y2: number;
+  b0: number; b1: number; b2: number; a1: number; a2: number;
+}
+
+function createBiquadState(
+  filter: BiquadFilter,
+  sampleRate: number,
+): BiquadState {
+  const f0 = filter.frequency;
+  const Q = filter.resonance ?? 1;
+  const dbGain = filter.gain ?? 0;
+  const w0 = (2 * Math.PI * f0) / sampleRate;
+  const cosW0 = Math.cos(w0);
+  const sinW0 = Math.sin(w0);
+  const alpha = sinW0 / (2 * Q);
+  const A = Math.pow(10, dbGain / 40);
+
+  let b0 = 1, b1 = 0, b2 = 0, a0 = 1, a1 = 0, a2 = 0;
+
+  switch (filter.type) {
+    case "lowpass":
+      b0 = (1 - cosW0) / 2;
+      b1 = 1 - cosW0;
+      b2 = (1 - cosW0) / 2;
+      a0 = 1 + alpha;
+      a1 = -2 * cosW0;
+      a2 = 1 - alpha;
+      break;
+    case "highpass":
+      b0 = (1 + cosW0) / 2;
+      b1 = -(1 + cosW0);
+      b2 = (1 + cosW0) / 2;
+      a0 = 1 + alpha;
+      a1 = -2 * cosW0;
+      a2 = 1 - alpha;
+      break;
+    case "bandpass":
+      b0 = alpha;
+      b1 = 0;
+      b2 = -alpha;
+      a0 = 1 + alpha;
+      a1 = -2 * cosW0;
+      a2 = 1 - alpha;
+      break;
+    case "notch":
+      b0 = 1;
+      b1 = -2 * cosW0;
+      b2 = 1;
+      a0 = 1 + alpha;
+      a1 = -2 * cosW0;
+      a2 = 1 - alpha;
+      break;
+    case "allpass":
+      b0 = 1 - alpha;
+      b1 = -2 * cosW0;
+      b2 = 1 + alpha;
+      a0 = 1 + alpha;
+      a1 = -2 * cosW0;
+      a2 = 1 - alpha;
+      break;
+    case "peaking": {
+      b0 = 1 + alpha * A;
+      b1 = -2 * cosW0;
+      b2 = 1 - alpha * A;
+      a0 = 1 + alpha / A;
+      a1 = -2 * cosW0;
+      a2 = 1 - alpha / A;
+      break;
+    }
+    case "lowshelf": {
+      const sq = 2 * Math.sqrt(A) * alpha;
+      b0 = A * ((A + 1) - (A - 1) * cosW0 + sq);
+      b1 = 2 * A * ((A - 1) - (A + 1) * cosW0);
+      b2 = A * ((A + 1) - (A - 1) * cosW0 - sq);
+      a0 = (A + 1) + (A - 1) * cosW0 + sq;
+      a1 = -2 * ((A - 1) + (A + 1) * cosW0);
+      a2 = (A + 1) + (A - 1) * cosW0 - sq;
+      break;
+    }
+    case "highshelf": {
+      const sq = 2 * Math.sqrt(A) * alpha;
+      b0 = A * ((A + 1) + (A - 1) * cosW0 + sq);
+      b1 = -2 * A * ((A - 1) + (A + 1) * cosW0);
+      b2 = A * ((A + 1) + (A - 1) * cosW0 - sq);
+      a0 = (A + 1) - (A - 1) * cosW0 + sq;
+      a1 = 2 * ((A - 1) - (A + 1) * cosW0);
+      a2 = (A + 1) - (A - 1) * cosW0 - sq;
+      break;
+    }
+  }
+
+  // Normalise coefficients
+  return {
+    x1: 0, x2: 0, y1: 0, y2: 0,
+    b0: b0 / a0,
+    b1: b1 / a0,
+    b2: b2 / a0,
+    a1: a1 / a0,
+    a2: a2 / a0,
+  };
+}
+
+function processBiquad(state: BiquadState, input: number): number {
+  const out =
+    state.b0 * input +
+    state.b1 * state.x1 +
+    state.b2 * state.x2 -
+    state.a1 * state.y1 -
+    state.a2 * state.y2;
+  state.x2 = state.x1;
+  state.x1 = input;
+  state.y2 = state.y1;
+  state.y1 = out;
+  return out;
+}
+
+function getActiveFilters(filter: Filter | Filter[] | undefined): BiquadFilter[] {
+  if (!filter) return [];
+  const filters = Array.isArray(filter) ? filter : [filter];
+  return filters.filter(
+    (f): f is BiquadFilter => f.type !== "iir" && !f.bypassed,
+  );
+}
+
 /**
  * Generate a full sample buffer for a single layer.
  * @param sampleRate - samples per second (default WAVEFORM_SR for display, ANALYSIS_SR for FFT)
@@ -88,16 +214,32 @@ export function generateBuffer(
   const buffer = new Float32Array(numSamples);
   const rng = mulberry32(42);
 
-  const freq =
-    layer.source.type !== "noise" && "frequency" in layer.source
-      ? typeof layer.source.frequency === "number"
+  // Compute effective frequency including detune
+  let freq: number;
+  if (layer.source.type !== "noise" && "frequency" in layer.source) {
+    const baseFreq =
+      typeof layer.source.frequency === "number"
         ? layer.source.frequency
-        : layer.source.frequency.start
-      : 440;
+        : layer.source.frequency.start;
+    const detune =
+      layer.source.type !== "wavetable" && "detune" in layer.source
+        ? (layer.source.detune ?? 0)
+        : 0;
+    freq = baseFreq * Math.pow(2, detune / 1200);
+  } else {
+    freq = 440;
+  }
+
   const gain = layer.gain ?? 1;
 
   const hasDistortion = layer.effects?.some((e) => e.type === "distortion");
   const tremoloEffect = layer.effects?.find((e) => e.type === "tremolo");
+
+  // Initialize biquad filter chain
+  const activeFilters = getActiveFilters(layer.filter);
+  const filterStates = activeFilters.map((f) =>
+    createBiquadState(f, sampleRate),
+  );
 
   for (let i = 0; i < numSamples; i++) {
     const t = i / sampleRate;
@@ -120,6 +262,11 @@ export function generateBuffer(
       const tRate = tremoloEffect.rate || 5;
       const tDepth = tremoloEffect.depth || 0.5;
       sample *= 1 - tDepth * 0.5 * (1 + Math.sin(t * tRate * 2 * Math.PI));
+    }
+
+    // Apply biquad filter chain
+    for (const state of filterStates) {
+      sample = processBiquad(state, sample);
     }
 
     buffer[i] = sample;
