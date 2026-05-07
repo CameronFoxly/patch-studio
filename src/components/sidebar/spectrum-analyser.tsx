@@ -186,13 +186,6 @@ export function SpectrumAnalyser() {
   useSpectrumAnalyser(draw, isPlaying && !collapsed);
   useOfflineAnalyser(drawGrid, !isPlaying && !collapsed);
 
-  // Draw empty grid when not playing or on mount
-  useEffect(() => {
-    if (!isPlaying && !collapsed) {
-      requestAnimationFrame(() => drawGrid(null, 0));
-    }
-  }, [isPlaying, height, collapsed, drawGrid]);
-
   return (
     <div className="border-t bg-card shrink-0">
       {/* Label */}
