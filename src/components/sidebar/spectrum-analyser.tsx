@@ -28,10 +28,16 @@ const DOT_STEP = DOT_RADIUS * 2 + DOT_GAP; // centre-to-centre distance
 const COLOR_LOW: [number, number, number] = [167, 139, 250]; // #a78bfa
 const COLOR_HIGH: [number, number, number] = [16, 185, 129]; // #10b981
 
+// 4 discrete gradient steps: lilac → mid-blend → mid-blend → emerald
+const GRADIENT_STEPS = 4;
+
 function lerpColor(t: number): string {
-  const r = Math.round(COLOR_LOW[0] + (COLOR_HIGH[0] - COLOR_LOW[0]) * t);
-  const g = Math.round(COLOR_LOW[1] + (COLOR_HIGH[1] - COLOR_LOW[1]) * t);
-  const b = Math.round(COLOR_LOW[2] + (COLOR_HIGH[2] - COLOR_LOW[2]) * t);
+  // Quantize t into GRADIENT_STEPS discrete bands
+  const step = Math.min(GRADIENT_STEPS - 1, Math.floor(t * GRADIENT_STEPS));
+  const q = step / (GRADIENT_STEPS - 1);
+  const r = Math.round(COLOR_LOW[0] + (COLOR_HIGH[0] - COLOR_LOW[0]) * q);
+  const g = Math.round(COLOR_LOW[1] + (COLOR_HIGH[1] - COLOR_LOW[1]) * q);
+  const b = Math.round(COLOR_LOW[2] + (COLOR_HIGH[2] - COLOR_LOW[2]) * q);
   return `rgb(${r},${g},${b})`;
 }
 
