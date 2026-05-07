@@ -20,6 +20,7 @@ import type {
   WavetableSource,
   OscillatorType,
   NoiseColor,
+  FrequencySweep,
 } from "@/lib/types";
 
 /* ── SVG wave shape icons ── */
@@ -130,6 +131,10 @@ export function SourcePanel({ layer }: { layer: Layer }) {
   );
 }
 
+function isSweep(freq: number | FrequencySweep): freq is FrequencySweep {
+  return typeof freq === "object" && "start" in freq && "end" in freq;
+}
+
 function OscillatorControls({
   source,
   onChange,
@@ -144,10 +149,9 @@ function OscillatorControls({
   setPianoOpen: (open: boolean) => void;
 }) {
   const [fmCollapsed, setFmCollapsed] = useState(false);
-  const freq =
-    typeof source.frequency === "number"
-      ? source.frequency
-      : source.frequency.start;
+  const hasSweep = isSweep(source.frequency);
+  const startFreq = typeof source.frequency === "number" ? source.frequency : source.frequency.start;
+  const endFreq = typeof source.frequency === "number" ? source.frequency : source.frequency.end;
   const hasFM = !!source.fm;
 
   const handleNotePreview = useCallback(
@@ -156,6 +160,36 @@ function OscillatorControls({
     },
     [layer]
   );
+
+  function handleSweepToggle(enabled: boolean) {
+    if (enabled) {
+      onChange({ ...source, frequency: { start: startFreq, end: startFreq } });
+    } else {
+      onChange({ ...source, frequency: startFreq });
+    }
+  }
+
+  function handleStartChange(v: number) {
+    if (hasSweep) {
+      onChange({ ...source, frequency: { start: v, end: endFreq } });
+    } else {
+      onChange({ ...source, frequency: v });
+    }
+  }
+
+  function handleEndChange(v: number) {
+    if (hasSweep) {
+      onChange({ ...source, frequency: { start: startFreq, end: v } });
+    }
+  }
+
+  function handleNoteSelect(v: number) {
+    if (hasSweep) {
+      onChange({ ...source, frequency: { start: v, end: endFreq } });
+    } else {
+      onChange({ ...source, frequency: v });
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -166,27 +200,67 @@ function OscillatorControls({
         onChange={(v) => onChange({ ...source, type: v })}
       />
 
-      <KnobRow>
-        <RotaryKnob
-          label="Frequency"
-          unit="Hz"
-          min={20}
-          max={20000}
-          step={1}
-          value={freq}
-          onChange={(v) => onChange({ ...source, frequency: v })}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">Pitch Sweep</span>
+        <Switch
+          checked={hasSweep}
+          onCheckedChange={handleSweepToggle}
+          size="sm"
         />
+      </div>
 
-        <RotaryKnob
-          label="Detune"
-          unit="¢"
-          min={-1200}
-          max={1200}
-          step={1}
-          value={source.detune ?? 0}
-          onChange={(v) => onChange({ ...source, detune: v })}
-        />
-      </KnobRow>
+      {hasSweep ? (
+        <KnobRow>
+          <RotaryKnob
+            label="Start"
+            unit="Hz"
+            min={20}
+            max={20000}
+            step={1}
+            value={startFreq}
+            onChange={handleStartChange}
+          />
+          <RotaryKnob
+            label="End"
+            unit="Hz"
+            min={20}
+            max={20000}
+            step={1}
+            value={endFreq}
+            onChange={handleEndChange}
+          />
+          <RotaryKnob
+            label="Detune"
+            unit="¢"
+            min={-1200}
+            max={1200}
+            step={1}
+            value={source.detune ?? 0}
+            onChange={(v) => onChange({ ...source, detune: v })}
+          />
+        </KnobRow>
+      ) : (
+        <KnobRow>
+          <RotaryKnob
+            label="Frequency"
+            unit="Hz"
+            min={20}
+            max={20000}
+            step={1}
+            value={startFreq}
+            onChange={handleStartChange}
+          />
+          <RotaryKnob
+            label="Detune"
+            unit="¢"
+            min={-1200}
+            max={1200}
+            step={1}
+            value={source.detune ?? 0}
+            onChange={(v) => onChange({ ...source, detune: v })}
+          />
+        </KnobRow>
+      )}
 
       <div className="flex justify-center">
         <Button
@@ -202,9 +276,13 @@ function OscillatorControls({
       <PianoKeyboardDialog
         open={pianoOpen}
         onClose={() => setPianoOpen(false)}
-        currentFrequency={freq}
-        onNoteSelect={(v) => onChange({ ...source, frequency: v })}
+        currentFrequency={startFreq}
+        onNoteSelect={handleNoteSelect}
         onNotePreview={handleNotePreview}
+        sweep={hasSweep ? {
+          endFrequency: endFreq,
+          onEndNoteSelect: handleEndChange,
+        } : undefined}
       />
 
       <Separator className="-mx-4 data-horizontal:w-auto" />
