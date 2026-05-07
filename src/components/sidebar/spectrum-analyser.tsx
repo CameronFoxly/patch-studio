@@ -2,6 +2,7 @@
 
 import { useRef, useCallback, useEffect, useState } from "react";
 import { useSpectrumAnalyser } from "@/hooks/use-spectrum-analyser";
+import { useOfflineAnalyser } from "@/hooks/use-offline-analyser";
 import { useStore } from "@/lib/store";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -198,6 +199,7 @@ export function SpectrumAnalyser() {
   const [collapsed, setCollapsed] = useState(false);
 
   useSpectrumAnalyser(draw, isPlaying && !collapsed);
+  useOfflineAnalyser(drawGrid, !isPlaying && !collapsed);
 
   // Draw empty grid when not playing or on mount
   useEffect(() => {
