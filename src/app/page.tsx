@@ -9,8 +9,10 @@ import { CodePreview } from "@/components/timeline/code-preview";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { SequenceEditor } from "@/components/sequence/sequence-editor";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useUrlImport } from "@/hooks/use-url-import";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { CollapsibleSection } from "@/components/shared/collapsible-section";
+import { ConfirmDialog } from "@/components/toolbar/confirm-dialog";
 import { Layers, SlidersHorizontal, Code } from "lucide-react";
 
 const SIDEBAR_DEFAULT = 280;
@@ -18,6 +20,7 @@ const SIDEBAR_MIN = 220;
 
 export default function Home() {
   useKeyboardShortcuts();
+  const { showConfirm: showUrlImportConfirm, handleConfirm: handleUrlImportConfirm, handleOpenChange: handleUrlImportOpenChange } = useUrlImport();
 
   const isMobile = useIsMobile();
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT);
@@ -43,6 +46,16 @@ export default function Home() {
       document.addEventListener("pointerup", onUp);
     },
     [sidebarWidth],
+  );
+
+  const urlImportDialog = (
+    <ConfirmDialog
+      open={showUrlImportConfirm}
+      onOpenChange={handleUrlImportOpenChange}
+      onConfirm={handleUrlImportConfirm}
+      title="Replace current patch?"
+      description="A patch was included in the URL. Importing will replace your current layers and effects. This action can be undone."
+    />
   );
 
   if (isMobile) {
@@ -79,6 +92,7 @@ export default function Home() {
             </div>
           </CollapsibleSection>
         </div>
+        {urlImportDialog}
       </div>
     );
   }
@@ -112,6 +126,7 @@ export default function Home() {
           <Sidebar />
         </div>
       </div>
+      {urlImportDialog}
     </div>
   );
 }
