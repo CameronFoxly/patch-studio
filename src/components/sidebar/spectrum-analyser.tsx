@@ -17,12 +17,25 @@ const MIN_HEIGHT = 48;
 const DEFAULT_HEIGHT = 120;
 const MAX_HEIGHT = 300;
 
+// Dot grid settings (in CSS pixels, scaled by DPR at draw time)
+const DOT_RADIUS = 2;
+const DOT_GAP = 2; // gap between dots
+const DOT_STEP = DOT_RADIUS * 2 + DOT_GAP; // centre-to-centre distance
+
+// Gradient colours: emerald-500 (bottom) → lilac/violet-400 (top)
+const COLOR_LOW: [number, number, number] = [16, 185, 129]; // #10b981
+const COLOR_HIGH: [number, number, number] = [167, 139, 250]; // #a78bfa
+
+function lerpColor(t: number): string {
+  const r = Math.round(COLOR_LOW[0] + (COLOR_HIGH[0] - COLOR_LOW[0]) * t);
+  const g = Math.round(COLOR_LOW[1] + (COLOR_HIGH[1] - COLOR_LOW[1]) * t);
+  const b = Math.round(COLOR_LOW[2] + (COLOR_HIGH[2] - COLOR_LOW[2]) * t);
+  return `rgb(${r},${g},${b})`;
+}
+
 /** Map a frequency (Hz) to a normalised 0–1 position (log scale). */
 function freqToX(freq: number): number {
-  return (
-    (Math.log(freq / MIN_FREQ)) /
-    (Math.log(MAX_FREQ / MIN_FREQ))
-  );
+  return Math.log(freq / MIN_FREQ) / Math.log(MAX_FREQ / MIN_FREQ);
 }
 
 export function SpectrumAnalyser() {
@@ -31,6 +44,9 @@ export function SpectrumAnalyser() {
   const isPlaying = useStore((s) => s.isPlaying);
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
   const dragging = useRef(false);
+
+  // Pre-computed row colour LUT (rebuilt when height changes)
+  const colorLutRef = useRef<string[]>([]);
 
   // Resize handle at the top of the panel
   const onResizePointerDown = useCallback(
@@ -41,7 +57,6 @@ export function SpectrumAnalyser() {
       const startH = height;
 
       const onMove = (ev: PointerEvent) => {
-        // Dragging up increases height
         const delta = startY - ev.clientY;
         setHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, startH + delta)));
       };
@@ -56,18 +71,31 @@ export function SpectrumAnalyser() {
     [height],
   );
 
-  // Handle canvas resize
+  // Handle canvas resize & rebuild colour LUT
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const observer = new ResizeObserver(() => {
+    const sync = () => {
       const rect = container.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
-    });
+
+      // Rebuild colour LUT for current row count
+      const axisH = 16 * dpr;
+      const plotH = canvas.height - axisH;
+      const step = DOT_STEP * dpr;
+      const rows = Math.max(1, Math.floor(plotH / step));
+      const lut: string[] = new Array(rows);
+      for (let r = 0; r < rows; r++) {
+        lut[r] = lerpColor(r / (rows - 1 || 1));
+      }
+      colorLutRef.current = lut;
+    };
+
+    const observer = new ResizeObserver(sync);
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
@@ -84,66 +112,66 @@ export function SpectrumAnalyser() {
       const w = canvas.width;
       const h = canvas.height;
 
-      // Clear
       ctx.clearRect(0, 0, w, h);
 
-      // Compute frequency per bin
-      const binFreq = SAMPLE_RATE / (binCount * 2); // fftSize = binCount * 2
-
-      // Axis area
-      const axisBottom = 16 * dpr;
-      const plotH = h - axisBottom;
+      const binFreq = SAMPLE_RATE / (binCount * 2);
+      const axisH = 16 * dpr;
+      const plotH = h - axisH;
       const plotW = w;
+      const step = DOT_STEP * dpr;
+      const radius = DOT_RADIUS * dpr;
 
-      // Draw frequency labels
+      // Frequency labels
       ctx.save();
       ctx.fillStyle = getComputedStyle(canvas).getPropertyValue("color");
       ctx.font = `${9 * dpr}px system-ui, sans-serif`;
       ctx.textAlign = "center";
-      ctx.globalAlpha = 0.5;
-
+      ctx.globalAlpha = 0.35;
       for (let i = 0; i < FREQ_VALUES.length; i++) {
         const x = freqToX(FREQ_VALUES[i]) * plotW;
         ctx.fillText(String(FREQ_LABELS[i]), x, h - 2 * dpr);
       }
       ctx.restore();
 
-      // Draw bars — aggregate bins into pixel columns using log-frequency mapping
-      const barColor = getComputedStyle(canvas).getPropertyValue("color");
+      // Dot grid
+      const cols = Math.max(1, Math.floor(plotW / step));
+      const rows = Math.max(1, Math.floor(plotH / step));
+      const lut = colorLutRef.current;
+      const padX = (plotW - cols * step) / 2 + step / 2;
+      const padY = (plotH - rows * step) / 2 + step / 2;
 
-      ctx.save();
-      ctx.fillStyle = barColor;
-      ctx.globalAlpha = 0.7;
-
-      // For each pixel column, find the frequency range it covers, then average the bins
-      const cols = Math.floor(plotW / dpr);
-      const barW = Math.max(1, plotW / cols);
-
+      // Gather amplitude per column
       for (let col = 0; col < cols; col++) {
-        // Frequency range for this column (log scale)
         const fLow = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, col / cols);
         const fHigh = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, (col + 1) / cols);
-
-        // Map to bin indices
         const binLow = Math.max(0, Math.floor(fLow / binFreq));
         const binHigh = Math.min(binCount - 1, Math.ceil(fHigh / binFreq));
-
         if (binLow > binCount - 1) continue;
 
-        // Max value in the bin range (gives sharper peaks than averaging)
         let maxVal = 0;
         for (let b = binLow; b <= binHigh; b++) {
           if (frequencyData[b] > maxVal) maxVal = frequencyData[b];
         }
 
-        const normVal = maxVal / 255;
-        const barH = normVal * plotH;
+        const litRows = Math.round((maxVal / 255) * rows);
+        const cx = padX + col * step;
 
-        const x = col * barW;
-        ctx.fillRect(x, plotH - barH, barW - (dpr > 1 ? 0 : 0.5), barH);
+        for (let row = 0; row < rows; row++) {
+          const isLit = row < litRows;
+          const cy = plotH - padY - row * step;
+
+          ctx.beginPath();
+          ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+          if (isLit) {
+            ctx.fillStyle = lut[row] ?? lut[lut.length - 1];
+            ctx.globalAlpha = 0.9;
+          } else {
+            ctx.fillStyle = getComputedStyle(canvas).getPropertyValue("color");
+            ctx.globalAlpha = 0.06;
+          }
+          ctx.fill();
+        }
       }
-
-      ctx.restore();
     },
     [],
   );
@@ -156,10 +184,7 @@ export function SpectrumAnalyser() {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
-      if (ctx) {
-        // Fade out effect — draw frequency labels only
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
   }, [isPlaying]);
 
