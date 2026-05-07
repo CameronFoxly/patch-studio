@@ -212,13 +212,7 @@ export function SpectrumAnalyser() {
       )}
       {/* Label */}
       <div className="px-3 py-1 flex items-center justify-between">
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-          Analyzer
-        </span>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground tabular-nums">
-            20 Hz — 20 kHz
-          </span>
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setCollapsed((c) => !c)}
@@ -232,7 +226,13 @@ export function SpectrumAnalyser() {
               )}
             />
           </button>
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            Analyzer
+          </span>
         </div>
+        <span className="text-[10px] text-muted-foreground tabular-nums">
+          20 Hz — 20 kHz
+        </span>
       </div>
       {/* Canvas container — inset card */}
       {!collapsed && (
