@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
@@ -149,6 +149,8 @@ function OscillatorControls({
   setPianoOpen: (open: boolean) => void;
 }) {
   const [fmCollapsed, setFmCollapsed] = useState(false);
+  const lastFmRef = useRef(source.fm ?? { ratio: 2, depth: 100 });
+  if (source.fm) lastFmRef.current = source.fm;
   const hasSweep = isSweep(source.frequency);
   const startFreq = typeof source.frequency === "number" ? source.frequency : source.frequency.start;
   const endFreq = typeof source.frequency === "number" ? source.frequency : source.frequency.end;
@@ -305,7 +307,7 @@ function OscillatorControls({
             onCheckedChange={(checked) =>
               onChange({
                 ...source,
-                fm: checked ? { ratio: 2, depth: 100 } : undefined,
+                fm: checked ? { ...lastFmRef.current } : undefined,
               })
             }
             size="sm"
