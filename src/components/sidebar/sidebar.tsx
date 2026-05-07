@@ -12,6 +12,7 @@ import { EffectsPanel } from "./effects-panel";
 import { ModulationPanel } from "./modulation-panel";
 import { SpatialPanel } from "./spatial-panel";
 import { GlobalEffectsPanel } from "./global-effects-panel";
+import { SpectrumAnalyser } from "./spectrum-analyser";
 
 export function Sidebar() {
   const activeSidebarPanel = useStore((s) => s.activeSidebarPanel);
@@ -51,6 +52,7 @@ export function Sidebar() {
               </div>
             </ScrollArea>
           </Tabs>
+          <SpectrumAnalyser />
         </div>
       </SidebarContainerContext.Provider>
     );
@@ -120,6 +122,7 @@ export function Sidebar() {
           </div>
         </ScrollArea>
         </Tabs>
+        <SpectrumAnalyser />
       </div>
     </SidebarContainerContext.Provider>
   );
