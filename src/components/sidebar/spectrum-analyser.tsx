@@ -2,6 +2,7 @@
 
 import { useRef, useCallback, useEffect, useState } from "react";
 import { useSpectrumAnalyser } from "@/hooks/use-spectrum-analyser";
+import { useOfflineAnalyser } from "@/hooks/use-offline-analyser";
 import { useStore } from "@/lib/store";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,7 @@ import { cn } from "@/lib/utils";
 // Frequency range constants
 const MIN_FREQ = 20;
 const MAX_FREQ = 20_000;
-const SAMPLE_RATE = 44_100; // default Web Audio sample rate
+const SAMPLE_RATE = 44_100;
 
 // Frequency labels for the axis
 const FREQ_LABELS = [20, 50, 100, 200, 500, "1k", "2k", "5k", "10k", "20k"];
@@ -19,27 +20,10 @@ const MIN_HEIGHT = 48;
 const DEFAULT_HEIGHT = 120;
 const MAX_HEIGHT = 300;
 
-// Dot grid settings (in CSS pixels, scaled by DPR at draw time)
-const DOT_RADIUS = 2; // 4px diameter
-const DOT_GAP = 2.5; // gap between dots
-const DOT_STEP = DOT_RADIUS * 2 + DOT_GAP; // centre-to-centre distance
-
-// Gradient colours: lilac/violet-400 (bottom) → emerald-500 (top)
-const COLOR_LOW: [number, number, number] = [167, 139, 250]; // #a78bfa
-const COLOR_HIGH: [number, number, number] = [16, 185, 129]; // #10b981
-
-// 4 discrete gradient steps: lilac → mid-blend → mid-blend → emerald
-const GRADIENT_STEPS = 4;
-
-function lerpColor(t: number): string {
-  // Quantize t into GRADIENT_STEPS discrete bands
-  const step = Math.min(GRADIENT_STEPS - 1, Math.floor(t * GRADIENT_STEPS));
-  const q = step / (GRADIENT_STEPS - 1);
-  const r = Math.round(COLOR_LOW[0] + (COLOR_HIGH[0] - COLOR_LOW[0]) * q);
-  const g = Math.round(COLOR_LOW[1] + (COLOR_HIGH[1] - COLOR_LOW[1]) * q);
-  const b = Math.round(COLOR_LOW[2] + (COLOR_HIGH[2] - COLOR_LOW[2]) * q);
-  return `rgb(${r},${g},${b})`;
-}
+// Line colour: blue-500 (#3b82f6)
+const BAR_COLOR = "59, 130, 246";
+const BAR_ALPHA_TOP = 1.0;
+const BAR_ALPHA_BOTTOM = 0.1;
 
 /** Map a frequency (Hz) to a normalised 0–1 position (log scale). */
 function freqToX(freq: number): number {
@@ -52,9 +36,7 @@ export function SpectrumAnalyser() {
   const isPlaying = useStore((s) => s.isPlaying);
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
   const dragging = useRef(false);
-
-  // Pre-computed row colour LUT (rebuilt when height changes)
-  const colorLutRef = useRef<string[]>([]);
+  const lastFreqDataRef = useRef<{ data: Uint8Array; binCount: number } | null>(null);
 
   // Resize handle at the top of the panel
   const onResizePointerDown = useCallback(
@@ -79,7 +61,9 @@ export function SpectrumAnalyser() {
     [height],
   );
 
-  // Handle canvas resize & rebuild colour LUT
+  // Handle canvas resize — redraw last known data after resize
+  const drawGridRef = useRef<((data: Uint8Array | null, binCount: number) => void) | null>(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
@@ -91,16 +75,11 @@ export function SpectrumAnalyser() {
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
 
-      // Rebuild colour LUT for current row count
-      const axisH = 16 * dpr;
-      const plotH = canvas.height - axisH;
-      const step = DOT_STEP * dpr;
-      const rows = Math.max(1, Math.floor(plotH / step));
-      const lut: string[] = new Array(rows);
-      for (let r = 0; r < rows; r++) {
-        lut[r] = lerpColor(r / (rows - 1 || 1));
+      // Redraw with last known data so the graph survives resize
+      const cached = lastFreqDataRef.current;
+      if (cached && drawGridRef.current) {
+        drawGridRef.current(cached.data, cached.binCount);
       }
-      colorLutRef.current = lut;
     };
 
     const observer = new ResizeObserver(sync);
@@ -110,6 +89,11 @@ export function SpectrumAnalyser() {
 
   const drawGrid = useCallback(
     (frequencyData: Uint8Array | null, binCount: number) => {
+      // Cache for resize redraws
+      if (frequencyData && binCount > 0) {
+        lastFreqDataRef.current = { data: frequencyData, binCount };
+      }
+
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -125,8 +109,6 @@ export function SpectrumAnalyser() {
       const axisH = 16 * dpr;
       const plotH = h - axisH;
       const plotW = w;
-      const step = DOT_STEP * dpr;
-      const radius = DOT_RADIUS * dpr;
 
       // Frequency labels
       ctx.save();
@@ -140,53 +122,58 @@ export function SpectrumAnalyser() {
       }
       ctx.restore();
 
-      // Dot grid
-      const cols = Math.max(1, Math.floor(plotW / step));
-      const rows = Math.max(1, Math.floor(plotH / step));
-      const lut = colorLutRef.current;
-      const padX = (plotW - cols * step) / 2 + step / 2;
-      const padY = (plotH - rows * step) / 2 + step / 2;
+      // Line graph with gradient fill — 1px resolution per device pixel
+      if (!frequencyData || binCount <= 0) return;
 
-      const binFreq = binCount > 0 ? SAMPLE_RATE / (binCount * 2) : 0;
+      const binFreq = SAMPLE_RATE / (binCount * 2);
+      const cols = Math.max(1, Math.round(plotW));
 
+      // Compute heights using interpolation between FFT bin centers
+      // This eliminates stair-stepping at low frequencies where bins span many pixels
+      const heights = new Float32Array(cols);
       for (let col = 0; col < cols; col++) {
-        let litRows = 0;
-        if (frequencyData && binCount > 0) {
-          const fLow = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, col / cols);
-          const fHigh = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, (col + 1) / cols);
-          const binLow = Math.max(0, Math.floor(fLow / binFreq));
-          const binHigh = Math.min(binCount - 1, Math.ceil(fHigh / binFreq));
-          if (binLow <= binCount - 1) {
-            let maxVal = 0;
-            for (let b = binLow; b <= binHigh; b++) {
-              if (frequencyData[b] > maxVal) maxVal = frequencyData[b];
-            }
-            litRows = Math.round((maxVal / 255) * rows);
-          }
-        }
+        const freq = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, (col + 0.5) / cols);
+        const exactBin = freq / binFreq;
+        const binLow = Math.floor(exactBin);
+        const binHigh = Math.min(binLow + 1, binCount - 1);
+        const frac = exactBin - binLow;
 
-        const cx = padX + col * step;
-        const dimColor = getComputedStyle(canvas).getPropertyValue("color");
+        if (binLow >= binCount) continue;
 
-        for (let row = 0; row < rows; row++) {
-          const isLit = row < litRows;
-          const cy = plotH - padY - row * step;
-
-          ctx.beginPath();
-          ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-          if (isLit) {
-            ctx.fillStyle = lut[row] ?? lut[lut.length - 1];
-            ctx.globalAlpha = 0.9;
-          } else {
-            ctx.fillStyle = dimColor;
-            ctx.globalAlpha = 0.06;
-          }
-          ctx.fill();
-        }
+        // Linear interpolation between adjacent bins
+        const val = frequencyData[binLow] * (1 - frac) + frequencyData[binHigh] * frac;
+        heights[col] = (val / 255) * plotH;
       }
+
+      // Build the line path
+      ctx.beginPath();
+      ctx.moveTo(0, plotH - heights[0]);
+      for (let col = 1; col < cols; col++) {
+        ctx.lineTo(col, plotH - heights[col]);
+      }
+
+      // Stroke the line
+      ctx.strokeStyle = `rgba(${BAR_COLOR}, ${BAR_ALPHA_TOP})`;
+      ctx.lineWidth = 1;
+      ctx.lineJoin = "round";
+      ctx.stroke();
+
+      // Fill under the line with a vertical gradient
+      ctx.lineTo(plotW, plotH);
+      ctx.lineTo(0, plotH);
+      ctx.closePath();
+
+      const grad = ctx.createLinearGradient(0, 0, 0, plotH);
+      grad.addColorStop(0, `rgba(${BAR_COLOR}, ${BAR_ALPHA_TOP * 0.35})`);
+      grad.addColorStop(1, `rgba(${BAR_COLOR}, ${BAR_ALPHA_BOTTOM})`);
+      ctx.fillStyle = grad;
+      ctx.fill();
     },
     [],
   );
+
+  // Keep the ref in sync for the resize observer
+  drawGridRef.current = drawGrid;
 
   const draw = useCallback(
     (frequencyData: Uint8Array, binCount: number) => {
@@ -198,26 +185,12 @@ export function SpectrumAnalyser() {
   const [collapsed, setCollapsed] = useState(false);
 
   useSpectrumAnalyser(draw, isPlaying && !collapsed);
-
-  // Draw empty grid when not playing or on mount
-  useEffect(() => {
-    if (!isPlaying && !collapsed) {
-      // Small delay to ensure canvas is sized
-      requestAnimationFrame(() => drawGrid(null, 0));
-    }
-  }, [isPlaying, height, collapsed, drawGrid]);
+  useOfflineAnalyser(drawGrid, !isPlaying && !collapsed);
 
   return (
     <div className="border-t bg-card shrink-0">
-      {/* Resize handle — hidden when collapsed */}
-      {!collapsed && (
-        <div
-          className="h-1.5 shrink-0 bg-border hover:bg-primary/20 transition-colors cursor-row-resize active:bg-primary/40"
-          onPointerDown={onResizePointerDown}
-        />
-      )}
       {/* Label */}
-      <div className="px-3 py-1 flex items-center justify-between">
+      <div className="px-3 py-1 flex items-center">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -227,7 +200,7 @@ export function SpectrumAnalyser() {
           >
             <ChevronDown
               className={cn(
-                "h-3.5 w-3.5 transition-transform",
+                "h-3.5 w-3.5 transition-transform duration-200 ease-in-out",
                 collapsed && "-rotate-90",
               )}
             />
@@ -236,25 +209,32 @@ export function SpectrumAnalyser() {
             Analyzer
           </span>
         </div>
-        <span className="text-[10px] text-muted-foreground tabular-nums">
-          20 Hz — 20 kHz
-        </span>
       </div>
-      {/* Canvas container — inset card */}
-      {!collapsed && (
-        <div className="px-2 pb-2">
+      {/* Collapsible content with animated height */}
+      <div
+        className="grid transition-[grid-template-rows] duration-200 ease-in-out"
+        style={{ gridTemplateRows: collapsed ? "0fr" : "1fr" }}
+      >
+        <div className="overflow-hidden">
+          {/* Resize handle */}
           <div
-            ref={containerRef}
-            className="relative rounded-md border bg-background"
-            style={{ height }}
-          >
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 w-full h-full text-foreground"
-            />
+            className="h-1.5 shrink-0 bg-border hover:bg-primary/20 transition-colors cursor-row-resize active:bg-primary/40"
+            onPointerDown={onResizePointerDown}
+          />
+          <div className="px-2 pb-2">
+            <div
+              ref={containerRef}
+              className="relative rounded-md border bg-background"
+              style={{ height }}
+            >
+              <canvas
+                ref={canvasRef}
+                className="absolute inset-0 w-full h-full text-foreground"
+              />
+            </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
