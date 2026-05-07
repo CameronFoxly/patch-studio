@@ -2,19 +2,20 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useStore } from "@/lib/store";
-import { generateBuffer, ANALYSIS_SR } from "@/lib/audio/sample-generator";
+import { renderToBuffer } from "@web-kits/audio";
+import { layersToSoundDefinition } from "@/lib/audio/engine";
 import { computeFFT } from "@/lib/audio/fft";
 import { ENVELOPE_TAIL } from "@/lib/audio/constants";
 import type { Layer } from "@/lib/types";
 
 const FFT_SIZE = 4096;
+const SAMPLE_RATE = 44_100;
 const BUFFER_DEBOUNCE_MS = 300;
 const SCRUB_THROTTLE_MS = 60;
 const LIVE_TWEAK_THROTTLE_MS = 80;
 
 /**
  * Compute the total duration of a layer (envelope-based).
- * Mirrors the logic in waveform-canvas.tsx.
  */
 function layerDuration(layer: Layer): number {
   const env = layer.envelope;
@@ -23,37 +24,6 @@ function layerDuration(layer: Layer): number {
     : 2;
 }
 
-/**
- * Mix multiple layer buffers into a single mono buffer.
- * Layers may have different lengths — output length = longest layer.
- */
-function mixBuffers(
-  layers: Layer[],
-  buffers: Float32Array[],
-): Float32Array {
-  let maxLen = 0;
-  for (const buf of buffers) {
-    if (buf.length > maxLen) maxLen = buf.length;
-  }
-  const mix = new Float32Array(maxLen);
-  for (let li = 0; li < buffers.length; li++) {
-    const buf = buffers[li];
-    const gain = layers[li].gain ?? 1;
-    for (let i = 0; i < buf.length; i++) {
-      mix[i] += buf[i] * gain;
-    }
-  }
-  // Clamp to [-1, 1]
-  for (let i = 0; i < maxLen; i++) {
-    if (mix[i] > 1) mix[i] = 1;
-    else if (mix[i] < -1) mix[i] = -1;
-  }
-  return mix;
-}
-
-/**
- * Get the active (non-muted, solo-aware) layers.
- */
 function getActiveLayers(layers: Layer[]): Layer[] {
   const anySolo = layers.some((l) => l.solo);
   return layers.filter((l) => {
@@ -64,10 +34,8 @@ function getActiveLayers(layers: Layer[]): Layer[] {
 }
 
 /**
- * Hook that performs offline FFT analysis at the current scrub position
- * and calls the draw callback with frequency data.
- *
- * Active only when `enabled` is true (typically `!isPlaying && !collapsed`).
+ * Hook that uses @web-kits/audio's renderToBuffer() for 1:1 parity
+ * offline FFT analysis at the current scrub/paused position.
  */
 export function useOfflineAnalyser(
   draw: (frequencyData: Uint8Array, binCount: number) => void,
@@ -76,46 +44,62 @@ export function useOfflineAnalyser(
   const drawRef = useRef(draw);
   drawRef.current = draw;
 
-  const mixedBufferRef = useRef<Float32Array | null>(null);
+  const renderedBufferRef = useRef<Float32Array | null>(null);
+  const renderVersionRef = useRef(0);
   const regenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastComputeRef = useRef<number>(0);
   const lastTweakRegenRef = useRef<number>(0);
   const tweakThrottleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Generate the mixed buffer from current store state at a given sample rate
-  const regenerateBuffer = useCallback((sampleRate: number = ANALYSIS_SR) => {
-    const { layers } = useStore.getState();
+  // Render the sound offline using the real Web Audio pipeline
+  const regenerateBuffer = useCallback(async () => {
+    const { layers, globalEffects } = useStore.getState();
     const active = getActiveLayers(layers);
     if (active.length === 0) {
-      mixedBufferRef.current = null;
+      renderedBufferRef.current = null;
       return;
     }
 
-    const buffers = active.map((layer) => {
-      const dur = layerDuration(layer);
-      return generateBuffer(layer, dur, sampleRate);
-    });
+    const definition = layersToSoundDefinition(active, globalEffects);
+    if (!definition) {
+      renderedBufferRef.current = null;
+      return;
+    }
 
-    mixedBufferRef.current = mixBuffers(active, buffers);
+    const maxDur = Math.max(...active.map(layerDuration));
+    const version = ++renderVersionRef.current;
+
+    try {
+      const audioBuffer = await renderToBuffer(
+        definition as Parameters<typeof renderToBuffer>[0],
+        {
+          duration: maxDur,
+          sampleRate: SAMPLE_RATE,
+          numberOfChannels: 1,
+        },
+      );
+
+      // Discard if a newer render has started
+      if (version !== renderVersionRef.current) return;
+
+      // Extract channel 0 as Float32Array
+      renderedBufferRef.current = audioBuffer.getChannelData(0);
+    } catch (e) {
+      console.warn("Offline render failed:", e);
+      renderedBufferRef.current = null;
+    }
   }, []);
 
   // Compute FFT at a given time position and draw
   const computeAndDraw = useCallback(
     (time: number) => {
-      const buffer = mixedBufferRef.current;
+      const buffer = renderedBufferRef.current;
       if (!buffer || buffer.length === 0) {
         drawRef.current(new Uint8Array(FFT_SIZE / 2), FFT_SIZE / 2);
         return;
       }
-      // Determine sample rate from buffer length vs duration
-      const { layers } = useStore.getState();
-      const active = getActiveLayers(layers);
-      const maxDur = active.length > 0
-        ? Math.max(...active.map(layerDuration))
-        : 2;
-      const bufferSR = buffer.length / maxDur;
-      const sampleOffset = Math.round(time * bufferSR);
+      const sampleOffset = Math.round(time * SAMPLE_RATE);
       const clampedOffset = Math.max(0, Math.min(buffer.length - 1, sampleOffset));
       const freqData = computeFFT(buffer, FFT_SIZE, clampedOffset);
       drawRef.current(freqData, FFT_SIZE / 2);
@@ -123,12 +107,19 @@ export function useOfflineAnalyser(
     [],
   );
 
-  // Subscribe to layer/effect changes → immediate + deferred buffer regen
+  // Helper: regen + draw (async)
+  const regenAndDraw = useCallback(async () => {
+    await regenerateBuffer();
+    const { currentTime, isPlaying } = useStore.getState();
+    if (!isPlaying) computeAndDraw(currentTime);
+  }, [regenerateBuffer, computeAndDraw]);
+
+  // Subscribe to layer/effect changes → throttled + debounced offline renders
   useEffect(() => {
     if (!enabled) return;
 
-    // Initial generation
-    regenerateBuffer(ANALYSIS_SR);
+    // Initial render
+    regenAndDraw();
 
     let prevLayers = useStore.getState().layers;
     let prevFx = useStore.getState().globalEffects;
@@ -144,28 +135,19 @@ export function useOfflineAnalyser(
 
       if (tweakElapsed >= LIVE_TWEAK_THROTTLE_MS) {
         lastTweakRegenRef.current = now;
-        regenerateBuffer(ANALYSIS_SR);
-        if (!state.isPlaying) {
-          computeAndDraw(state.currentTime);
-        }
+        regenAndDraw();
       } else if (!tweakThrottleTimerRef.current) {
         tweakThrottleTimerRef.current = setTimeout(() => {
           tweakThrottleTimerRef.current = null;
           lastTweakRegenRef.current = performance.now();
-          regenerateBuffer(ANALYSIS_SR);
-          const { currentTime, isPlaying } = useStore.getState();
-          if (!isPlaying) computeAndDraw(currentTime);
+          regenAndDraw();
         }, LIVE_TWEAK_THROTTLE_MS - tweakElapsed);
       }
 
-      // Final regen after adjustments settle (catches the trailing edge)
+      // Final regen after adjustments settle
       if (regenTimerRef.current) clearTimeout(regenTimerRef.current);
       regenTimerRef.current = setTimeout(() => {
-        regenerateBuffer(ANALYSIS_SR);
-        const { currentTime, isPlaying } = useStore.getState();
-        if (!isPlaying) {
-          computeAndDraw(currentTime);
-        }
+        regenAndDraw();
       }, BUFFER_DEBOUNCE_MS);
     });
 
@@ -174,13 +156,12 @@ export function useOfflineAnalyser(
       if (regenTimerRef.current) clearTimeout(regenTimerRef.current);
       if (tweakThrottleTimerRef.current) clearTimeout(tweakThrottleTimerRef.current);
     };
-  }, [enabled, regenerateBuffer, computeAndDraw]);
+  }, [enabled, regenAndDraw]);
 
   // Subscribe to currentTime changes → throttled FFT computation
   useEffect(() => {
     if (!enabled) return;
 
-    // Draw once for current position on mount
     const { currentTime } = useStore.getState();
     computeAndDraw(currentTime);
 

@@ -20,8 +20,8 @@ const MIN_HEIGHT = 48;
 const DEFAULT_HEIGHT = 120;
 const MAX_HEIGHT = 300;
 
-// Bar colour: emerald-600 (#059669)
-const BAR_COLOR = "5, 150, 105";
+// Line colour: blue-500 (#3b82f6)
+const BAR_COLOR = "59, 130, 246";
 const BAR_ALPHA_TOP = 1.0;
 const BAR_ALPHA_BOTTOM = 0.1;
 
@@ -128,20 +128,21 @@ export function SpectrumAnalyser() {
       const binFreq = SAMPLE_RATE / (binCount * 2);
       const cols = Math.max(1, Math.round(plotW));
 
-      // Compute heights at each pixel column
+      // Compute heights using interpolation between FFT bin centers
+      // This eliminates stair-stepping at low frequencies where bins span many pixels
       const heights = new Float32Array(cols);
       for (let col = 0; col < cols; col++) {
-        const fLow = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, col / cols);
-        const fHigh = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, (col + 1) / cols);
-        const binLow = Math.max(0, Math.floor(fLow / binFreq));
-        const binHigh = Math.min(binCount - 1, Math.ceil(fHigh / binFreq));
-        if (binLow > binCount - 1) continue;
+        const freq = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, (col + 0.5) / cols);
+        const exactBin = freq / binFreq;
+        const binLow = Math.floor(exactBin);
+        const binHigh = Math.min(binLow + 1, binCount - 1);
+        const frac = exactBin - binLow;
 
-        let maxVal = 0;
-        for (let b = binLow; b <= binHigh; b++) {
-          if (frequencyData[b] > maxVal) maxVal = frequencyData[b];
-        }
-        heights[col] = (maxVal / 255) * plotH;
+        if (binLow >= binCount) continue;
+
+        // Linear interpolation between adjacent bins
+        const val = frequencyData[binLow] * (1 - frac) + frequencyData[binHigh] * frac;
+        heights[col] = (val / 255) * plotH;
       }
 
       // Build the line path

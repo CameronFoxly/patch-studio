@@ -1,4 +1,5 @@
-import type { Layer, Envelope, Filter, BiquadFilter } from "@/lib/types";
+import type { Layer, Envelope, Filter, BiquadFilter, BiquadFilterType } from "@/lib/types";
+import type { Effect } from "@/lib/types/effects";
 
 /** Default virtual sample rate for waveform display (low-res, fast). */
 export const WAVEFORM_SR = 8000;
@@ -232,9 +233,6 @@ export function generateBuffer(
 
   const gain = layer.gain ?? 1;
 
-  const hasDistortion = layer.effects?.some((e) => e.type === "distortion");
-  const tremoloEffect = layer.effects?.find((e) => e.type === "tremolo");
-
   // Initialize biquad filter chain
   const activeFilters = getActiveFilters(layer.filter);
   const filterStates = activeFilters.map((f) =>
@@ -250,20 +248,6 @@ export function generateBuffer(
     let sample = getSourceSample(layer.source, phase, rng);
     sample *= envAmp * gain;
 
-    if (hasDistortion) {
-      sample = Math.max(-0.8, Math.min(0.8, sample * 1.5));
-    }
-
-    if (
-      tremoloEffect &&
-      "rate" in tremoloEffect &&
-      "depth" in tremoloEffect
-    ) {
-      const tRate = tremoloEffect.rate || 5;
-      const tDepth = tremoloEffect.depth || 0.5;
-      sample *= 1 - tDepth * 0.5 * (1 + Math.sin(t * tRate * 2 * Math.PI));
-    }
-
     // Apply biquad filter chain
     for (const state of filterStates) {
       sample = processBiquad(state, sample);
@@ -272,5 +256,107 @@ export function generateBuffer(
     buffer[i] = sample;
   }
 
+  // Apply per-layer effects (distortion, EQ, bitcrusher, compressor, etc.)
+  if (layer.effects && layer.effects.length > 0) {
+    applyEffectsToBuffer(buffer, layer.effects, sampleRate);
+  }
+
   return buffer;
 }
+
+// ── Effects processing (shared by per-layer and master bus) ─────────
+
+/**
+ * Apply an array of effects to a buffer in-place.
+ * Supports: EQ, distortion, bitcrusher, compressor, gain, tremolo.
+ */
+function applyEffectsToBuffer(
+  buffer: Float32Array,
+  effects: Effect[],
+  sampleRate: number = ANALYSIS_SR,
+): void {
+  for (const effect of effects) {
+    if ("bypassed" in effect && effect.bypassed) continue;
+
+    switch (effect.type) {
+      case "eq": {
+        const bands = effect.bands;
+        if (!bands || bands.length === 0) break;
+        for (const band of bands) {
+          const bq = createBiquadState(
+            {
+              type: band.type as BiquadFilterType,
+              frequency: band.frequency,
+              gain: band.gain,
+              resonance: band.Q ?? 1,
+            },
+            sampleRate,
+          );
+          for (let i = 0; i < buffer.length; i++) {
+            buffer[i] = processBiquad(bq, buffer[i]);
+          }
+        }
+        break;
+      }
+      case "distortion": {
+        const amount = effect.amount ?? 50;
+        const k = (2 * amount) / (100 - amount + 1);
+        for (let i = 0; i < buffer.length; i++) {
+          const x = buffer[i];
+          buffer[i] = ((1 + k) * x) / (1 + k * Math.abs(x));
+        }
+        break;
+      }
+      case "bitcrusher": {
+        const bits = effect.bits ?? 8;
+        const srReduction = effect.sampleRateReduction ?? 1;
+        const levels = Math.pow(2, bits);
+        let held = 0;
+        for (let i = 0; i < buffer.length; i++) {
+          if (i % srReduction === 0) {
+            held = Math.round(buffer[i] * levels) / levels;
+          }
+          buffer[i] = held;
+        }
+        break;
+      }
+      case "compressor": {
+        const threshold = effect.threshold ?? -24;
+        const ratio = effect.ratio ?? 4;
+        const threshLin = Math.pow(10, threshold / 20);
+        for (let i = 0; i < buffer.length; i++) {
+          const abs = Math.abs(buffer[i]);
+          if (abs > threshLin) {
+            const over = abs - threshLin;
+            const compressed = threshLin + over / ratio;
+            buffer[i] = buffer[i] > 0 ? compressed : -compressed;
+          }
+        }
+        break;
+      }
+      case "gain": {
+        const val = effect.value ?? 1;
+        for (let i = 0; i < buffer.length; i++) {
+          buffer[i] *= val;
+        }
+        break;
+      }
+      case "tremolo": {
+        const rate = effect.rate ?? 5;
+        const depth = effect.depth ?? 0.5;
+        for (let i = 0; i < buffer.length; i++) {
+          const t = i / sampleRate;
+          buffer[i] *= 1 - depth * 0.5 * (1 + Math.sin(t * rate * 2 * Math.PI));
+        }
+        break;
+      }
+      // Effects like reverb, delay, chorus require delay lines /
+      // convolution that are hard to model on CPU cheaply — skip for now.
+      default:
+        break;
+    }
+  }
+}
+
+/** Public alias for applying master/global effects. */
+export { applyEffectsToBuffer as applyMasterEffects };
