@@ -183,7 +183,7 @@ export function PianoKeyboardDialog({
             onClick={() => setSweepTarget("end")}
             className={`flex-1 text-xs py-1 rounded-md border transition-colors cursor-pointer ${
               sweepTarget === "end"
-                ? "bg-red-500/15 border-red-500 text-red-700 dark:text-red-400 font-medium"
+                ? "bg-pink-500/15 border-pink-500 text-pink-700 dark:text-pink-400 font-medium"
                 : "border-border text-muted-foreground hover:bg-muted/50"
             }`}
           >
@@ -235,7 +235,7 @@ export function PianoKeyboardDialog({
                     : isStart
                       ? "bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-400"
                       : isEnd
-                        ? "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400"
+                        ? "bg-pink-500/20 border-pink-500 text-pink-700 dark:text-pink-400"
                         : isActive
                           ? "bg-primary/20 border-primary text-primary"
                           : "bg-white border-neutral-300 hover:bg-neutral-100 text-neutral-500 dark:border-neutral-400 dark:hover:bg-neutral-200 dark:text-neutral-400"
@@ -275,7 +275,7 @@ export function PianoKeyboardDialog({
                   : isStart
                     ? "bg-emerald-600 border border-emerald-500"
                     : isEnd
-                      ? "bg-red-600 border border-red-500"
+                      ? "bg-pink-600 border border-pink-500"
                       : isActive
                         ? "bg-primary text-primary-foreground border border-primary"
                         : "bg-neutral-900 border border-neutral-800 hover:bg-neutral-700 dark:bg-neutral-950 dark:border-neutral-800 dark:hover:bg-neutral-800"
@@ -292,7 +292,7 @@ export function PianoKeyboardDialog({
         sweep
           ? sweepTarget === "start"
             ? "text-emerald-700 dark:text-emerald-400"
-            : "text-red-700 dark:text-red-400"
+            : "text-pink-700 dark:text-pink-400"
           : "text-muted-foreground"
       }`}>
         <span>
@@ -305,7 +305,7 @@ export function PianoKeyboardDialog({
       {sweep && (
         <div className={`flex items-center justify-between mt-0.5 text-[10px] ${
           sweepTarget === "start"
-            ? "text-red-700/50 dark:text-red-400/50"
+            ? "text-pink-700/50 dark:text-pink-400/50"
             : "text-emerald-700/50 dark:text-emerald-400/50"
         }`}>
           <span>
