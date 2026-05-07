@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
 import { RotaryKnob } from "@/components/ui/rotary-knob";
@@ -141,6 +141,9 @@ function BiquadFilterControls({
   index: number;
   onChange: (index: number, updated: Filter) => void;
 }) {
+  const lastEnvelopeRef = useRef(filter.envelope ?? { attack: 0.01, peak: 2000, decay: 0.3 });
+  if (filter.envelope) lastEnvelopeRef.current = filter.envelope;
+
   return (
     <>
       <div className="space-y-2">
@@ -206,7 +209,7 @@ function BiquadFilterControls({
               onChange(index, {
                 ...filter,
                 envelope: checked
-                  ? { attack: 0.01, peak: 2000, decay: 0.3 }
+                  ? { ...lastEnvelopeRef.current }
                   : undefined,
               })
             }

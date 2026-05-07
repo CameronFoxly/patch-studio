@@ -202,21 +202,25 @@ function ADSRGraph({
   );
 }
 
+const DEFAULT_ENVELOPE: Envelope = {
+  attack: 0.01,
+  decay: 0.3,
+  sustain: 0.7,
+  release: 0.1,
+};
+
 export function EnvelopePanel({ layer }: { layer: Layer }) {
   const updateLayerEnvelope = useStore((s) => s.updateLayerEnvelope);
   const envelope = layer.envelope;
   const enabled = !!envelope;
+  const lastEnvelopeRef = useRef(envelope ?? DEFAULT_ENVELOPE);
+  if (envelope) lastEnvelopeRef.current = envelope;
 
   function setEnvelope(next: Envelope) {
     updateLayerEnvelope(layer.id, next);
   }
 
-  const env: Envelope = envelope ?? {
-    attack: 0.01,
-    decay: 0.3,
-    sustain: 0.7,
-    release: 0.1,
-  };
+  const env: Envelope = envelope ?? DEFAULT_ENVELOPE;
 
   return (
     <div className="space-y-4">
@@ -225,7 +229,7 @@ export function EnvelopePanel({ layer }: { layer: Layer }) {
         <Switch
           checked={enabled}
           onCheckedChange={(checked) =>
-            updateLayerEnvelope(layer.id, checked ? env : undefined)
+            updateLayerEnvelope(layer.id, checked ? { ...lastEnvelopeRef.current } : undefined)
           }
           size="sm"
         />

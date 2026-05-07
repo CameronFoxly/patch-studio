@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { useStore } from "@/lib/store";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -36,6 +37,8 @@ function defaultPanner(): Panner3D {
 export function SpatialPanel({ layer }: { layer: Layer }) {
   const updateLayerPanner = useStore((s) => s.updateLayerPanner);
   const enabled = !!layer.panner;
+  const lastPannerRef = useRef(layer.panner ?? defaultPanner());
+  if (layer.panner) lastPannerRef.current = layer.panner;
   const panner = layer.panner ?? defaultPanner();
 
   function update(partial: Partial<Panner3D>) {
@@ -49,7 +52,7 @@ export function SpatialPanel({ layer }: { layer: Layer }) {
         <Switch
           checked={enabled}
           onCheckedChange={(checked) =>
-            updateLayerPanner(layer.id, checked ? defaultPanner() : undefined)
+            updateLayerPanner(layer.id, checked ? { ...lastPannerRef.current } : undefined)
           }
           size="sm"
         />
