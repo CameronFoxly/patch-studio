@@ -164,7 +164,7 @@ export function SpectrumAnalyser() {
   }, [isPlaying]);
 
   return (
-    <div className="border-t bg-card flex flex-col">
+    <div className="border-t bg-card shrink-0">
       {/* Resize handle */}
       <div
         className="h-1.5 shrink-0 bg-border hover:bg-primary/20 transition-colors cursor-row-resize active:bg-primary/40"
@@ -182,7 +182,7 @@ export function SpectrumAnalyser() {
       {/* Canvas container */}
       <div
         ref={containerRef}
-        className="relative flex-1 min-h-0"
+        className="relative"
         style={{ height }}
       >
         <canvas
