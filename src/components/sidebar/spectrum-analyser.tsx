@@ -122,13 +122,15 @@ export function SpectrumAnalyser() {
       }
       ctx.restore();
 
-      // Vertical 1px lines — one per CSS pixel across the x axis
-      const cols = Math.max(1, Math.floor(plotW / dpr));
-      const binFreq = binCount > 0 ? SAMPLE_RATE / (binCount * 2) : 0;
+      // Line graph with gradient fill — 1px resolution per device pixel
+      if (!frequencyData || binCount <= 0) return;
 
+      const binFreq = SAMPLE_RATE / (binCount * 2);
+      const cols = Math.max(1, Math.round(plotW));
+
+      // Compute heights at each pixel column
+      const heights = new Float32Array(cols);
       for (let col = 0; col < cols; col++) {
-        if (!frequencyData || binCount <= 0) continue;
-
         const fLow = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, col / cols);
         const fHigh = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, (col + 1) / cols);
         const binLow = Math.max(0, Math.floor(fLow / binFreq));
@@ -139,21 +141,32 @@ export function SpectrumAnalyser() {
         for (let b = binLow; b <= binHigh; b++) {
           if (frequencyData[b] > maxVal) maxVal = frequencyData[b];
         }
-
-        const barHeight = (maxVal / 255) * plotH;
-        if (barHeight < 0.5) continue;
-
-        const x = col * dpr;
-        const yTop = plotH - barHeight;
-
-        // Gradient: full opacity at top → 50% opacity at bottom
-        const grad = ctx.createLinearGradient(0, yTop, 0, plotH);
-        grad.addColorStop(0, `rgba(${BAR_COLOR}, ${BAR_ALPHA_TOP})`);
-        grad.addColorStop(1, `rgba(${BAR_COLOR}, ${BAR_ALPHA_BOTTOM})`);
-
-        ctx.fillStyle = grad;
-        ctx.fillRect(x, yTop, dpr, barHeight);
+        heights[col] = (maxVal / 255) * plotH;
       }
+
+      // Build the line path
+      ctx.beginPath();
+      ctx.moveTo(0, plotH - heights[0]);
+      for (let col = 1; col < cols; col++) {
+        ctx.lineTo(col, plotH - heights[col]);
+      }
+
+      // Stroke the line
+      ctx.strokeStyle = `rgba(${BAR_COLOR}, ${BAR_ALPHA_TOP})`;
+      ctx.lineWidth = 1;
+      ctx.lineJoin = "round";
+      ctx.stroke();
+
+      // Fill under the line with a vertical gradient
+      ctx.lineTo(plotW, plotH);
+      ctx.lineTo(0, plotH);
+      ctx.closePath();
+
+      const grad = ctx.createLinearGradient(0, 0, 0, plotH);
+      grad.addColorStop(0, `rgba(${BAR_COLOR}, ${BAR_ALPHA_TOP * 0.35})`);
+      grad.addColorStop(1, `rgba(${BAR_COLOR}, ${BAR_ALPHA_BOTTOM})`);
+      ctx.fillStyle = grad;
+      ctx.fill();
     },
     [],
   );
