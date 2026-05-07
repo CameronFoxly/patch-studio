@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useStore } from "@/lib/store";
-import { generateBuffer, ANALYSIS_SR, WAVEFORM_SR } from "@/lib/audio/sample-generator";
+import { generateBuffer, ANALYSIS_SR } from "@/lib/audio/sample-generator";
 import { computeFFT } from "@/lib/audio/fft";
 import { ENVELOPE_TAIL } from "@/lib/audio/constants";
 import type { Layer } from "@/lib/types";
@@ -123,11 +123,11 @@ export function useOfflineAnalyser(
     [],
   );
 
-  // Subscribe to layer/effect changes → immediate low-res + deferred high-res buffer regen
+  // Subscribe to layer/effect changes → immediate + deferred buffer regen
   useEffect(() => {
     if (!enabled) return;
 
-    // Initial generation (high-res)
+    // Initial generation
     regenerateBuffer(ANALYSIS_SR);
 
     let prevLayers = useStore.getState().layers;
@@ -138,13 +138,13 @@ export function useOfflineAnalyser(
       prevLayers = state.layers;
       prevFx = state.globalEffects;
 
-      // Immediate low-res regen (throttled) for live visual feedback during drags
+      // Immediate regen (throttled) for live visual feedback during drags
       const now = performance.now();
       const tweakElapsed = now - lastTweakRegenRef.current;
 
       if (tweakElapsed >= LIVE_TWEAK_THROTTLE_MS) {
         lastTweakRegenRef.current = now;
-        regenerateBuffer(WAVEFORM_SR);
+        regenerateBuffer(ANALYSIS_SR);
         if (!state.isPlaying) {
           computeAndDraw(state.currentTime);
         }
@@ -152,13 +152,13 @@ export function useOfflineAnalyser(
         tweakThrottleTimerRef.current = setTimeout(() => {
           tweakThrottleTimerRef.current = null;
           lastTweakRegenRef.current = performance.now();
-          regenerateBuffer(WAVEFORM_SR);
+          regenerateBuffer(ANALYSIS_SR);
           const { currentTime, isPlaying } = useStore.getState();
           if (!isPlaying) computeAndDraw(currentTime);
         }, LIVE_TWEAK_THROTTLE_MS - tweakElapsed);
       }
 
-      // Deferred high-res regen for full-quality display once adjustments settle
+      // Final regen after adjustments settle (catches the trailing edge)
       if (regenTimerRef.current) clearTimeout(regenTimerRef.current);
       regenTimerRef.current = setTimeout(() => {
         regenerateBuffer(ANALYSIS_SR);
