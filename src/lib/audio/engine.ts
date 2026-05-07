@@ -90,7 +90,7 @@ export function layersToSoundDefinition(
 
 // Play the current sound
 export async function playSound(layers: Layer[], globalEffects?: Effect[]) {
-  await ensureReady();
+  await ensureReady({ latencyHint: "interactive" });
   const definition = layersToSoundDefinition(layers, globalEffects);
   if (!definition) return null;
   const play = defineSound(definition as any);
@@ -102,7 +102,7 @@ export async function playSound(layers: Layer[], globalEffects?: Effect[]) {
 let previewVoice: any = null;
 
 export async function previewNote(layer: Layer, frequency: number) {
-  await ensureReady();
+  await ensureReady({ latencyHint: "interactive" });
 
   if (previewVoice?.stop) {
     previewVoice.stop();
@@ -133,7 +133,7 @@ export async function previewNote(layer: Layer, frequency: number) {
 
 // Preview a raw preset sound definition (used for hover previews in preset menu)
 export async function previewPresetSound(rawDefinition: Record<string, unknown>) {
-  await ensureReady();
+  await ensureReady({ latencyHint: "interactive" });
 
   if (previewVoice?.stop) {
     previewVoice.stop();
