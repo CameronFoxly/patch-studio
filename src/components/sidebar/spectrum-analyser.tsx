@@ -23,7 +23,7 @@ const MAX_HEIGHT = 300;
 // Bar colour: emerald-600 (#059669)
 const BAR_COLOR = "5, 150, 105";
 const BAR_ALPHA_TOP = 1.0;
-const BAR_ALPHA_BOTTOM = 0.5;
+const BAR_ALPHA_BOTTOM = 0.1;
 
 /** Map a frequency (Hz) to a normalised 0–1 position (log scale). */
 function freqToX(freq: number): number {
@@ -36,6 +36,7 @@ export function SpectrumAnalyser() {
   const isPlaying = useStore((s) => s.isPlaying);
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
   const dragging = useRef(false);
+  const lastFreqDataRef = useRef<{ data: Uint8Array; binCount: number } | null>(null);
 
   // Resize handle at the top of the panel
   const onResizePointerDown = useCallback(
@@ -60,7 +61,9 @@ export function SpectrumAnalyser() {
     [height],
   );
 
-  // Handle canvas resize
+  // Handle canvas resize — redraw last known data after resize
+  const drawGridRef = useRef<((data: Uint8Array | null, binCount: number) => void) | null>(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
@@ -71,6 +74,12 @@ export function SpectrumAnalyser() {
       const dpr = window.devicePixelRatio || 1;
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
+
+      // Redraw with last known data so the graph survives resize
+      const cached = lastFreqDataRef.current;
+      if (cached && drawGridRef.current) {
+        drawGridRef.current(cached.data, cached.binCount);
+      }
     };
 
     const observer = new ResizeObserver(sync);
@@ -80,6 +89,11 @@ export function SpectrumAnalyser() {
 
   const drawGrid = useCallback(
     (frequencyData: Uint8Array | null, binCount: number) => {
+      // Cache for resize redraws
+      if (frequencyData && binCount > 0) {
+        lastFreqDataRef.current = { data: frequencyData, binCount };
+      }
+
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -143,6 +157,9 @@ export function SpectrumAnalyser() {
     },
     [],
   );
+
+  // Keep the ref in sync for the resize observer
+  drawGridRef.current = drawGrid;
 
   const draw = useCallback(
     (frequencyData: Uint8Array, binCount: number) => {
