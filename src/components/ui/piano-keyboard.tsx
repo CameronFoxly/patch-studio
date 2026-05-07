@@ -52,6 +52,11 @@ interface PianoKeyboardDialogProps {
   currentFrequency: number;
   onNoteSelect: (frequency: number) => void;
   onNotePreview?: (frequency: number) => void;
+  /** When provided, enables a Start/End toggle for pitch sweep mode */
+  sweep?: {
+    endFrequency: number;
+    onEndNoteSelect: (frequency: number) => void;
+  };
 }
 
 export function PianoKeyboardDialog({
@@ -60,9 +65,12 @@ export function PianoKeyboardDialog({
   currentFrequency,
   onNoteSelect,
   onNotePreview,
+  sweep,
 }: PianoKeyboardDialogProps) {
+  const [sweepTarget, setSweepTarget] = useState<"start" | "end">("start");
+  const activeFrequency = sweep && sweepTarget === "end" ? sweep.endFrequency : currentFrequency;
   const [octave, setOctave] = useState(() => {
-    const midi = frequencyToMidi(currentFrequency);
+    const midi = frequencyToMidi(activeFrequency);
     return Math.max(0, Math.min(8, Math.floor(midi / 12) - 1));
   });
 
@@ -121,15 +129,23 @@ export function PianoKeyboardDialog({
     (noteIndex: number) => {
       const midi = midiNoteNumber(noteIndex, octave);
       const freq = midiToFrequency(midi);
-      onNoteSelect(freq);
+      if (sweep && sweepTarget === "end") {
+        sweep.onEndNoteSelect(freq);
+      } else {
+        onNoteSelect(freq);
+      }
       onNotePreview?.(freq);
     },
-    [octave, onNoteSelect, onNotePreview]
+    [octave, onNoteSelect, onNotePreview, sweep, sweepTarget]
   );
 
-  const currentMidi = frequencyToMidi(currentFrequency);
+  const currentMidi = frequencyToMidi(activeFrequency);
   const currentNoteIndex = currentMidi % 12;
   const currentNoteOctave = Math.floor(currentMidi / 12) - 1;
+
+  // In sweep mode, compute midi for both endpoints for colored highlights
+  const startMidi = sweep ? frequencyToMidi(currentFrequency) : null;
+  const endMidi = sweep ? frequencyToMidi(sweep.endFrequency) : null;
 
   if (phase === "closed" || typeof document === "undefined") return null;
 
@@ -147,6 +163,34 @@ export function PianoKeyboardDialog({
           <X className="size-3" />
         </Button>
       </div>
+
+      {/* Sweep target toggle */}
+      {sweep && (
+        <div className="flex items-center gap-1 mb-2">
+          <button
+            type="button"
+            onClick={() => setSweepTarget("start")}
+            className={`flex-1 text-xs py-1 rounded-md border transition-colors cursor-pointer ${
+              sweepTarget === "start"
+                ? "bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-400 font-medium"
+                : "border-border text-muted-foreground hover:bg-muted/50"
+            }`}
+          >
+            Start
+          </button>
+          <button
+            type="button"
+            onClick={() => setSweepTarget("end")}
+            className={`flex-1 text-xs py-1 rounded-md border transition-colors cursor-pointer ${
+              sweepTarget === "end"
+                ? "bg-red-500/15 border-red-500 text-red-700 dark:text-red-400 font-medium"
+                : "border-border text-muted-foreground hover:bg-muted/50"
+            }`}
+          >
+            End
+          </button>
+        </div>
+      )}
 
       {/* Octave controls */}
       <div className="flex items-center justify-between mb-2">
@@ -177,16 +221,24 @@ export function PianoKeyboardDialog({
         <div className="flex h-full gap-0.5">
           {WHITE_INDICES.map((noteIndex) => {
             const midi = midiNoteNumber(noteIndex, octave);
-            const isActive = currentMidi === midi;
+            const isStart = startMidi !== null && startMidi === midi;
+            const isEnd = endMidi !== null && endMidi === midi;
+            const isActive = sweep ? false : currentMidi === midi;
             return (
               <button
                 key={noteIndex}
                 type="button"
                 onClick={() => handleKeyClick(noteIndex)}
                 className={`flex-1 rounded-b-md border transition-colors cursor-pointer flex flex-col items-center justify-end pb-1 ${
-                  isActive
-                    ? "bg-primary/20 border-primary text-primary"
-                    : "bg-white border-neutral-300 hover:bg-neutral-100 text-neutral-500 dark:border-neutral-400 dark:hover:bg-neutral-200 dark:text-neutral-400"
+                  isStart && isEnd
+                    ? "bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400"
+                    : isStart
+                      ? "bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-400"
+                      : isEnd
+                        ? "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400"
+                        : isActive
+                          ? "bg-primary/20 border-primary text-primary"
+                          : "bg-white border-neutral-300 hover:bg-neutral-100 text-neutral-500 dark:border-neutral-400 dark:hover:bg-neutral-200 dark:text-neutral-400"
                 }`}
                 title={`${NOTE_NAMES[noteIndex]}${octave} — ${midiToFrequency(midi)} Hz`}
               >
@@ -201,7 +253,9 @@ export function PianoKeyboardDialog({
         {/* Black keys */}
         {BLACK_KEYS.map(({ noteIndex, afterWhiteKey }) => {
           const midi = midiNoteNumber(noteIndex, octave);
-          const isActive = currentMidi === midi;
+          const isStart = startMidi !== null && startMidi === midi;
+          const isEnd = endMidi !== null && endMidi === midi;
+          const isActive = sweep ? false : currentMidi === midi;
           const whiteKeyWidth = 100 / 7;
           const blackKeyWidth = whiteKeyWidth * 0.65;
           const left =
@@ -216,9 +270,15 @@ export function PianoKeyboardDialog({
                 handleKeyClick(noteIndex);
               }}
               className={`absolute top-0 h-[58%] rounded-b-md transition-colors cursor-pointer z-10 ${
-                isActive
-                  ? "bg-primary text-primary-foreground border border-primary"
-                  : "bg-neutral-900 border border-neutral-800 hover:bg-neutral-700 dark:bg-neutral-950 dark:border-neutral-800 dark:hover:bg-neutral-800"
+                isStart && isEnd
+                  ? "bg-amber-600 border border-amber-500"
+                  : isStart
+                    ? "bg-emerald-600 border border-emerald-500"
+                    : isEnd
+                      ? "bg-red-600 border border-red-500"
+                      : isActive
+                        ? "bg-primary text-primary-foreground border border-primary"
+                        : "bg-neutral-900 border border-neutral-800 hover:bg-neutral-700 dark:bg-neutral-950 dark:border-neutral-800 dark:hover:bg-neutral-800"
               }`}
               style={{ left: `${left}%`, width: `${blackKeyWidth}%` }}
               title={`${NOTE_NAMES[noteIndex]}${octave} — ${midiToFrequency(midi)} Hz`}
@@ -228,13 +288,34 @@ export function PianoKeyboardDialog({
       </div>
 
       {/* Current note display */}
-      <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+      <div className={`flex items-center justify-between mt-2 text-xs ${
+        sweep
+          ? sweepTarget === "start"
+            ? "text-emerald-700 dark:text-emerald-400"
+            : "text-red-700 dark:text-red-400"
+          : "text-muted-foreground"
+      }`}>
         <span>
+          {sweep ? `${sweepTarget === "start" ? "Start" : "End"}: ` : ""}
           {NOTE_NAMES[currentNoteIndex]}
           {currentNoteOctave}
         </span>
-        <span>{currentFrequency} Hz</span>
+        <span>{activeFrequency} Hz</span>
       </div>
+      {sweep && (
+        <div className={`flex items-center justify-between mt-0.5 text-[10px] ${
+          sweepTarget === "start"
+            ? "text-red-700/50 dark:text-red-400/50"
+            : "text-emerald-700/50 dark:text-emerald-400/50"
+        }`}>
+          <span>
+            {sweepTarget === "start" ? "End" : "Start"}:{" "}
+            {NOTE_NAMES[(sweepTarget === "start" ? frequencyToMidi(sweep.endFrequency) : frequencyToMidi(currentFrequency)) % 12]}
+            {Math.floor((sweepTarget === "start" ? frequencyToMidi(sweep.endFrequency) : frequencyToMidi(currentFrequency)) / 12) - 1}
+          </span>
+          <span>{sweepTarget === "start" ? sweep.endFrequency : currentFrequency} Hz</span>
+        </div>
+      )}
     </div>,
     document.body
   );
