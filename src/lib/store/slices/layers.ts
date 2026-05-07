@@ -76,9 +76,12 @@ function nextLayerColor(): string {
   return color;
 }
 
-function defaultLayer(layerNumber: number): Layer {
+// Stable ID for the default initial layer to avoid SSR/client hydration mismatch
+const STABLE_INITIAL_LAYER_ID = "00000000-0000-4000-8000-000000000001";
+
+function defaultLayer(layerNumber: number, id?: string): Layer {
   return {
-    id: crypto.randomUUID(),
+    id: id ?? crypto.randomUUID(),
     name: `Layer ${layerNumber}`,
     color: nextLayerColor(),
     source: { ...DEFAULT_SOURCE },
@@ -97,7 +100,7 @@ function updateLayer(
   return layers.map((l) => (l.id === id ? updater(l) : l));
 }
 
-const INITIAL_LAYER = defaultLayer(1);
+const INITIAL_LAYER = defaultLayer(1, STABLE_INITIAL_LAYER_ID);
 export const INITIAL_LAYER_ID = INITIAL_LAYER.id;
 
 export const createLayersSlice: StateCreator<
