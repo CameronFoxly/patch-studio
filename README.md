@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-![Patch Studio screenshot](public/screenshot.png)
+<img width="1170" height="747" alt="Screenshot 2026-05-08 at 2 19 42 PM" src="https://github.com/user-attachments/assets/b7dce201-5d0f-46a3-854f-fb047a6aa3ae" />
 
 A web-based GUI for building synthesized sounds with the [`@web-kits/audio`](https://audio.raphaelsalaja.com) library. Design multi-layer sounds visually using a DAW-style timeline, tweak parameters in a sidebar, preview in real time, and export reusable patch files.
 
